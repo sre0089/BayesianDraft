@@ -27,3 +27,6 @@ Advanced projections, personalized opponent models, and ESPN synchronization mus
 - Milestone 3: core data schemas.
 - Milestone 4: synthetic baseline player snapshot.
 - Milestone 5: baseline ranking engine.
+- Milestone 6: local FastAPI backend.
+- Milestone 7: manual draft room UI.
+- Milestone 8: explainable baseline recommendations.

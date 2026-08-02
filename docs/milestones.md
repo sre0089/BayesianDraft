@@ -53,3 +53,6 @@
 - Milestone 3: complete
 - Milestone 4: complete
 - Milestone 5: complete
+- Milestone 6: complete
+- Milestone 7: complete
+- Milestone 8: complete

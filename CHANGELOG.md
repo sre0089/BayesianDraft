@@ -15,3 +15,4 @@ All notable project changes will be documented here.
 - Added transparent baseline rankings with VORP, value above starter, tiers, ADP deltas, sleeper/fade scores, and JSON/CSV export.
 - Added local FastAPI endpoints for league config, players, rankings, draft state, picks, rosters, undo/redo, and save/load.
 - Added a browser-local manual draft room with search, position filters, draft board, roster view, undo/redo, and save/restore.
+- Added explainable baseline recommendations in the backend, API, and draft room UI.

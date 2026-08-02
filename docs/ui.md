@@ -34,6 +34,7 @@ Implemented:
 - Primary user roster panel.
 - Undo and redo.
 - Browser-local save and restore.
+- Recommendation explanation bullets.
 
 ## Current Limitations
 
@@ -41,4 +42,4 @@ Implemented:
 - It does not yet call the FastAPI backend.
 - Edit-prior-pick UI is deferred.
 - Autosave and keyboard shortcuts are deferred.
-- Recommendation explanations are added in Milestone 8.
+- Recommendation explanations are baseline heuristics, not calibrated simulation outputs.

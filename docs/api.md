@@ -34,6 +34,7 @@ Request and response models must be typed, validation errors should be useful, a
 - `PATCH /drafts/{draft_id}/picks`
 - `GET /drafts/{draft_id}/rosters`
 - `GET /drafts/{draft_id}/rosters/user`
+- `GET /drafts/{draft_id}/recommendations`
 - `POST /drafts/{draft_id}/save`
 - `POST /drafts/load`
 
