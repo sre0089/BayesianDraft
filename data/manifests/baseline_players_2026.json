@@ -1,0 +1,9 @@
+{
+  "snapshot_id": "synthetic_players_2026_v1",
+  "dataset_name": "baseline_players",
+  "source": "synthetic",
+  "path": "data/fixtures/baseline_players_2026.json",
+  "schema_version": "1",
+  "preprocessing_version": "manual_v1",
+  "license_notes": "Synthetic public fixture data for tests and local development. Not real player projections."
+}

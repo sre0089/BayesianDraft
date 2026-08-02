@@ -1,0 +1,288 @@
+{
+  "snapshot": {
+    "snapshot_id": "synthetic_players_2026_v1",
+    "dataset_name": "baseline_players",
+    "source": "synthetic",
+    "retrieval_timestamp": "2026-08-02T00:00:00Z",
+    "season": 2026,
+    "checksum": "local-fixture",
+    "raw_path": null,
+    "processed_path": "data/fixtures/baseline_players_2026.json",
+    "schema_version": "1",
+    "preprocessing_version": "manual_v1",
+    "license_notes": "Synthetic public fixture data for tests and local development. Not real player projections.",
+    "source_url": null,
+    "row_count": 12
+  },
+  "players": [
+    {
+      "player_id": "qb_001",
+      "full_name": "Example QB One",
+      "position": "QB",
+      "nfl_team_id": "AAA",
+      "bye_week": 6
+    },
+    {
+      "player_id": "qb_002",
+      "full_name": "Example QB Two",
+      "position": "QB",
+      "nfl_team_id": "BBB",
+      "bye_week": 10
+    },
+    {
+      "player_id": "rb_001",
+      "full_name": "Example RB One",
+      "position": "RB",
+      "nfl_team_id": "CCC",
+      "bye_week": 8
+    },
+    {
+      "player_id": "rb_002",
+      "full_name": "Example RB Two",
+      "position": "RB",
+      "nfl_team_id": "DDD",
+      "bye_week": 11
+    },
+    {
+      "player_id": "rb_003",
+      "full_name": "Example RB Three",
+      "position": "RB",
+      "nfl_team_id": "EEE",
+      "bye_week": 7
+    },
+    {
+      "player_id": "wr_001",
+      "full_name": "Example WR One",
+      "position": "WR",
+      "nfl_team_id": "FFF",
+      "bye_week": 9
+    },
+    {
+      "player_id": "wr_002",
+      "full_name": "Example WR Two",
+      "position": "WR",
+      "nfl_team_id": "GGG",
+      "bye_week": 12
+    },
+    {
+      "player_id": "wr_003",
+      "full_name": "Example WR Three",
+      "position": "WR",
+      "nfl_team_id": "HHH",
+      "bye_week": 5
+    },
+    {
+      "player_id": "te_001",
+      "full_name": "Example TE One",
+      "position": "TE",
+      "nfl_team_id": "III",
+      "bye_week": 14
+    },
+    {
+      "player_id": "te_002",
+      "full_name": "Example TE Two",
+      "position": "TE",
+      "nfl_team_id": "JJJ",
+      "bye_week": 13
+    },
+    {
+      "player_id": "dst_001",
+      "full_name": "Example DST One",
+      "position": "DST",
+      "nfl_team_id": "KKK",
+      "bye_week": 6
+    },
+    {
+      "player_id": "k_001",
+      "full_name": "Example K One",
+      "position": "K",
+      "nfl_team_id": "LLL",
+      "bye_week": 10
+    }
+  ],
+  "projections": [
+    {
+      "projection_id": "proj_qb_001",
+      "player_id": "qb_001",
+      "season": 2026,
+      "scope": "season",
+      "mean": 330.0,
+      "median": 326.0,
+      "lower_quantile": 270.0,
+      "upper_quantile": 390.0,
+      "games_played_mean": 16.5,
+      "model_version": "synthetic_baseline_v1",
+      "data_snapshot_id": "synthetic_players_2026_v1",
+      "generated_at": "2026-08-02T00:00:00Z"
+    },
+    {
+      "projection_id": "proj_qb_002",
+      "player_id": "qb_002",
+      "season": 2026,
+      "scope": "season",
+      "mean": 295.0,
+      "median": 292.0,
+      "lower_quantile": 230.0,
+      "upper_quantile": 355.0,
+      "games_played_mean": 16.0,
+      "model_version": "synthetic_baseline_v1",
+      "data_snapshot_id": "synthetic_players_2026_v1",
+      "generated_at": "2026-08-02T00:00:00Z"
+    },
+    {
+      "projection_id": "proj_rb_001",
+      "player_id": "rb_001",
+      "season": 2026,
+      "scope": "season",
+      "mean": 285.0,
+      "median": 278.0,
+      "lower_quantile": 190.0,
+      "upper_quantile": 370.0,
+      "games_played_mean": 15.2,
+      "model_version": "synthetic_baseline_v1",
+      "data_snapshot_id": "synthetic_players_2026_v1",
+      "generated_at": "2026-08-02T00:00:00Z"
+    },
+    {
+      "projection_id": "proj_rb_002",
+      "player_id": "rb_002",
+      "season": 2026,
+      "scope": "season",
+      "mean": 245.0,
+      "median": 240.0,
+      "lower_quantile": 165.0,
+      "upper_quantile": 320.0,
+      "games_played_mean": 14.8,
+      "model_version": "synthetic_baseline_v1",
+      "data_snapshot_id": "synthetic_players_2026_v1",
+      "generated_at": "2026-08-02T00:00:00Z"
+    },
+    {
+      "projection_id": "proj_rb_003",
+      "player_id": "rb_003",
+      "season": 2026,
+      "scope": "season",
+      "mean": 185.0,
+      "median": 178.0,
+      "lower_quantile": 110.0,
+      "upper_quantile": 260.0,
+      "games_played_mean": 14.0,
+      "model_version": "synthetic_baseline_v1",
+      "data_snapshot_id": "synthetic_players_2026_v1",
+      "generated_at": "2026-08-02T00:00:00Z"
+    },
+    {
+      "projection_id": "proj_wr_001",
+      "player_id": "wr_001",
+      "season": 2026,
+      "scope": "season",
+      "mean": 270.0,
+      "median": 266.0,
+      "lower_quantile": 185.0,
+      "upper_quantile": 350.0,
+      "games_played_mean": 16.1,
+      "model_version": "synthetic_baseline_v1",
+      "data_snapshot_id": "synthetic_players_2026_v1",
+      "generated_at": "2026-08-02T00:00:00Z"
+    },
+    {
+      "projection_id": "proj_wr_002",
+      "player_id": "wr_002",
+      "season": 2026,
+      "scope": "season",
+      "mean": 238.0,
+      "median": 232.0,
+      "lower_quantile": 150.0,
+      "upper_quantile": 315.0,
+      "games_played_mean": 15.6,
+      "model_version": "synthetic_baseline_v1",
+      "data_snapshot_id": "synthetic_players_2026_v1",
+      "generated_at": "2026-08-02T00:00:00Z"
+    },
+    {
+      "projection_id": "proj_wr_003",
+      "player_id": "wr_003",
+      "season": 2026,
+      "scope": "season",
+      "mean": 205.0,
+      "median": 198.0,
+      "lower_quantile": 130.0,
+      "upper_quantile": 285.0,
+      "games_played_mean": 15.0,
+      "model_version": "synthetic_baseline_v1",
+      "data_snapshot_id": "synthetic_players_2026_v1",
+      "generated_at": "2026-08-02T00:00:00Z"
+    },
+    {
+      "projection_id": "proj_te_001",
+      "player_id": "te_001",
+      "season": 2026,
+      "scope": "season",
+      "mean": 205.0,
+      "median": 200.0,
+      "lower_quantile": 135.0,
+      "upper_quantile": 275.0,
+      "games_played_mean": 15.7,
+      "model_version": "synthetic_baseline_v1",
+      "data_snapshot_id": "synthetic_players_2026_v1",
+      "generated_at": "2026-08-02T00:00:00Z"
+    },
+    {
+      "projection_id": "proj_te_002",
+      "player_id": "te_002",
+      "season": 2026,
+      "scope": "season",
+      "mean": 145.0,
+      "median": 140.0,
+      "lower_quantile": 90.0,
+      "upper_quantile": 210.0,
+      "games_played_mean": 15.1,
+      "model_version": "synthetic_baseline_v1",
+      "data_snapshot_id": "synthetic_players_2026_v1",
+      "generated_at": "2026-08-02T00:00:00Z"
+    },
+    {
+      "projection_id": "proj_dst_001",
+      "player_id": "dst_001",
+      "season": 2026,
+      "scope": "season",
+      "mean": 118.0,
+      "median": 116.0,
+      "lower_quantile": 80.0,
+      "upper_quantile": 155.0,
+      "games_played_mean": 17.0,
+      "model_version": "synthetic_baseline_v1",
+      "data_snapshot_id": "synthetic_players_2026_v1",
+      "generated_at": "2026-08-02T00:00:00Z"
+    },
+    {
+      "projection_id": "proj_k_001",
+      "player_id": "k_001",
+      "season": 2026,
+      "scope": "season",
+      "mean": 135.0,
+      "median": 134.0,
+      "lower_quantile": 100.0,
+      "upper_quantile": 165.0,
+      "games_played_mean": 17.0,
+      "model_version": "synthetic_baseline_v1",
+      "data_snapshot_id": "synthetic_players_2026_v1",
+      "generated_at": "2026-08-02T00:00:00Z"
+    }
+  ],
+  "adp": [
+    {"adp_id": "adp_qb_001", "player_id": "qb_001", "source": "synthetic", "format": "redraft", "scoring": "full_ppr", "date": "2026-08-02", "overall_adp": 32.0, "position_adp": 1.0, "rank": 32, "sample_size": 100, "snapshot_id": "synthetic_players_2026_v1"},
+    {"adp_id": "adp_qb_002", "player_id": "qb_002", "source": "synthetic", "format": "redraft", "scoring": "full_ppr", "date": "2026-08-02", "overall_adp": 78.0, "position_adp": 2.0, "rank": 78, "sample_size": 100, "snapshot_id": "synthetic_players_2026_v1"},
+    {"adp_id": "adp_rb_001", "player_id": "rb_001", "source": "synthetic", "format": "redraft", "scoring": "full_ppr", "date": "2026-08-02", "overall_adp": 5.0, "position_adp": 1.0, "rank": 5, "sample_size": 100, "snapshot_id": "synthetic_players_2026_v1"},
+    {"adp_id": "adp_rb_002", "player_id": "rb_002", "source": "synthetic", "format": "redraft", "scoring": "full_ppr", "date": "2026-08-02", "overall_adp": 18.0, "position_adp": 2.0, "rank": 18, "sample_size": 100, "snapshot_id": "synthetic_players_2026_v1"},
+    {"adp_id": "adp_rb_003", "player_id": "rb_003", "source": "synthetic", "format": "redraft", "scoring": "full_ppr", "date": "2026-08-02", "overall_adp": 62.0, "position_adp": 3.0, "rank": 62, "sample_size": 100, "snapshot_id": "synthetic_players_2026_v1"},
+    {"adp_id": "adp_wr_001", "player_id": "wr_001", "source": "synthetic", "format": "redraft", "scoring": "full_ppr", "date": "2026-08-02", "overall_adp": 8.0, "position_adp": 1.0, "rank": 8, "sample_size": 100, "snapshot_id": "synthetic_players_2026_v1"},
+    {"adp_id": "adp_wr_002", "player_id": "wr_002", "source": "synthetic", "format": "redraft", "scoring": "full_ppr", "date": "2026-08-02", "overall_adp": 24.0, "position_adp": 2.0, "rank": 24, "sample_size": 100, "snapshot_id": "synthetic_players_2026_v1"},
+    {"adp_id": "adp_wr_003", "player_id": "wr_003", "source": "synthetic", "format": "redraft", "scoring": "full_ppr", "date": "2026-08-02", "overall_adp": 48.0, "position_adp": 3.0, "rank": 48, "sample_size": 100, "snapshot_id": "synthetic_players_2026_v1"},
+    {"adp_id": "adp_te_001", "player_id": "te_001", "source": "synthetic", "format": "redraft", "scoring": "full_ppr", "date": "2026-08-02", "overall_adp": 28.0, "position_adp": 1.0, "rank": 28, "sample_size": 100, "snapshot_id": "synthetic_players_2026_v1"},
+    {"adp_id": "adp_te_002", "player_id": "te_002", "source": "synthetic", "format": "redraft", "scoring": "full_ppr", "date": "2026-08-02", "overall_adp": 95.0, "position_adp": 2.0, "rank": 95, "sample_size": 100, "snapshot_id": "synthetic_players_2026_v1"},
+    {"adp_id": "adp_dst_001", "player_id": "dst_001", "source": "synthetic", "format": "redraft", "scoring": "full_ppr", "date": "2026-08-02", "overall_adp": 150.0, "position_adp": 1.0, "rank": 150, "sample_size": 100, "snapshot_id": "synthetic_players_2026_v1"},
+    {"adp_id": "adp_k_001", "player_id": "k_001", "source": "synthetic", "format": "redraft", "scoring": "full_ppr", "date": "2026-08-02", "overall_adp": 155.0, "position_adp": 1.0, "rank": 155, "sample_size": 100, "snapshot_id": "synthetic_players_2026_v1"}
+  ],
+  "injuries": []
+}
