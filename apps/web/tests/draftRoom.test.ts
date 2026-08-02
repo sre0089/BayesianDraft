@@ -14,8 +14,8 @@ import {
 
 describe("draftRoom", () => {
   it("calculates snake draft slots", () => {
-    expect(pickSlot(9)).toMatchObject({ managerId: "Primary User", round: 1, roundPick: 9 });
-    expect(pickSlot(16)).toMatchObject({ managerId: "Primary User", round: 2, roundPick: 4 });
+    expect(pickSlot(8)).toMatchObject({ managerId: "Primary User", round: 1, roundPick: 8 });
+    expect(pickSlot(21)).toMatchObject({ managerId: "Primary User", round: 2, roundPick: 7 });
   });
 
   it("records picks and updates availability", () => {

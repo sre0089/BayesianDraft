@@ -37,12 +37,16 @@ export const managers = [
   "Manager 05",
   "Manager 06",
   "Manager 07",
-  "Manager 08",
   "Primary User",
+  "Manager 09",
   "Manager 10",
   "Manager 11",
   "Manager 12",
+  "Manager 13",
+  "Manager 14",
 ];
+
+export const totalDraftPicks = managers.length * 16;
 
 export const players: Player[] = [
   {
@@ -289,7 +293,7 @@ export function explainRecommendation(player: Player, completedPickCount: number
 }
 
 export function nextUserPick(completedPickCount: number) {
-  for (let pick = completedPickCount + 1; pick <= 192; pick += 1) {
+  for (let pick = completedPickCount + 1; pick <= totalDraftPicks; pick += 1) {
     if (pickSlot(pick).managerId === "Primary User") {
       return pick;
     }
