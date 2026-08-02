@@ -13,8 +13,9 @@ def test_loads_espn_2026_league_config() -> None:
 
     assert config.platform == "ESPN"
     assert config.season == 2026
-    assert config.league.team_count == 12
+    assert config.league.team_count == 14
     assert config.league.user_manager_id == "user_manager"
+    assert config.league.user_draft_position == 8
     assert config.scoring.receiving.reception == 1
 
 

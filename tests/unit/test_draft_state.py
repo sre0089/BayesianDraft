@@ -23,7 +23,7 @@ def league_config() -> Iterator[LeagueConfig]:
 def players() -> list[Player]:
     return [
         Player(player_id=f"player_{index:03}", full_name=f"Player {index:03}", position="WR")
-        for index in range(1, 220)
+        for index in range(1, 240)
     ]
 
 
@@ -34,7 +34,7 @@ def test_default_total_rounds_excludes_ir(league_config: LeagueConfig) -> None:
 def test_round_one_draft_order(league_config: LeagueConfig) -> None:
     manager_ids = [
         pick_slot_for_overall_pick(overall_pick, league_config).manager_id
-        for overall_pick in range(1, 13)
+        for overall_pick in range(1, league_config.league.team_count + 1)
     ]
 
     assert manager_ids == [manager.id for manager in league_config.draft_order]
@@ -43,7 +43,10 @@ def test_round_one_draft_order(league_config: LeagueConfig) -> None:
 def test_round_two_reverses_draft_order(league_config: LeagueConfig) -> None:
     manager_ids = [
         pick_slot_for_overall_pick(overall_pick, league_config).manager_id
-        for overall_pick in range(13, 25)
+        for overall_pick in range(
+            league_config.league.team_count + 1,
+            (league_config.league.team_count * 2) + 1,
+        )
     ]
 
     assert manager_ids == [manager.id for manager in reversed(league_config.draft_order)]
@@ -52,10 +55,10 @@ def test_round_two_reverses_draft_order(league_config: LeagueConfig) -> None:
 @pytest.mark.parametrize(
     ("overall_pick", "round_number", "round_pick"),
     [
-        (9, 1, 9),
-        (16, 2, 4),
-        (33, 3, 9),
-        (40, 4, 4),
+        (8, 1, 8),
+        (21, 2, 7),
+        (36, 3, 8),
+        (49, 4, 7),
     ],
 )
 def test_user_snake_pick_positions(
@@ -81,7 +84,7 @@ def test_new_draft_state_tracks_current_pick_and_future_user_picks(
     assert state.current_round == 1
     assert state.current_round_pick == 1
     assert state.manager_on_clock == "manager_01"
-    assert [slot.overall_pick for slot in state.user_future_picks[:4]] == [9, 16, 33, 40]
+    assert [slot.overall_pick for slot in state.user_future_picks[:4]] == [8, 21, 36, 49]
 
 
 def test_record_pick_advances_state_and_roster(
@@ -205,5 +208,5 @@ def test_complete_mock_draft_can_be_entered(
     assert state.is_complete is True
     assert state.current_pick_slot is None
     assert state.manager_on_clock is None
-    assert len(state.completed_picks) == 192
-    assert state.available_player_ids == [player.player_id for player in players[192:]]
+    assert len(state.completed_picks) == 224
+    assert state.available_player_ids == [player.player_id for player in players[224:]]

@@ -134,6 +134,10 @@ class LeagueConfig(BaseModel):
         if self.league.user_draft_position > self.league.team_count:
             raise ValueError("league.user_draft_position cannot exceed league.team_count")
 
+        user_slot = self.draft_order[self.league.user_draft_position - 1]
+        if user_slot.id != self.league.user_manager_id:
+            raise ValueError("league.user_draft_position must match league.user_manager_id")
+
 
 class LeagueConfigError(ValueError):
     """Raised when a league config file cannot be loaded or validated."""

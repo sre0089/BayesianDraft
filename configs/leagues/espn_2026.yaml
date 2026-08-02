@@ -2,14 +2,14 @@ platform: ESPN
 season: 2026
 league:
   format: redraft
-  team_count: 12
+  team_count: 14
   draft_type: snake
   scoring_format: full_ppr
   trades_enabled: true
   waiver_rules: standard
   draft_date: 2026-08-08
   user_manager_id: user_manager
-  user_draft_position: 9
+  user_draft_position: 8
 draft_order:
   - id: manager_01
     name: Manager 01
@@ -25,16 +25,20 @@ draft_order:
     name: Manager 06
   - id: manager_07
     name: Manager 07
-  - id: manager_08
-    name: Manager 08
   - id: user_manager
     name: Primary User
+  - id: manager_09
+    name: Manager 09
   - id: manager_10
     name: Manager 10
   - id: manager_11
     name: Manager 11
   - id: manager_12
     name: Manager 12
+  - id: manager_13
+    name: Manager 13
+  - id: manager_14
+    name: Manager 14
 roster:
   starting_slots:
     QB: 1

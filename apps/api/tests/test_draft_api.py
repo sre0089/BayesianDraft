@@ -12,7 +12,7 @@ def test_api_exposes_league_players_and_rankings() -> None:
     rankings = client.get("/rankings")
 
     assert league.status_code == 200
-    assert league.json()["league"]["team_count"] == 12
+    assert league.json()["league"]["team_count"] == 14
     assert players.status_code == 200
     assert len(players.json()) == 12
     assert rankings.status_code == 200
