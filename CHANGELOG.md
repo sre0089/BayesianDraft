@@ -10,3 +10,4 @@ All notable project changes will be documented here.
 - Added PyYAML-backed league config loading and validation.
 - Implemented configurable fantasy scoring for passing, rushing, receiving, kicking, and D/ST.
 - Implemented deterministic snake draft state with rosters, availability, undo/redo, edit, and save/load.
+- Added core data schema records for players, teams, games, stats, projections, ADP, injuries, draft state, recommendations, simulations, and snapshots.
