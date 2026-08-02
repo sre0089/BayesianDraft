@@ -18,3 +18,12 @@ The reliable draft-day product comes first.
 12. Draft rehearsal
 
 Advanced projections, personalized opponent models, and ESPN synchronization must not jeopardize the reliable manual workflow.
+
+## Completed Foundation Milestones
+
+- Milestone 0: repository foundation.
+- Milestone 1: configurable scoring engine.
+- Milestone 2: deterministic draft-state engine.
+- Milestone 3: core data schemas.
+- Milestone 4: synthetic baseline player snapshot.
+- Milestone 5: baseline ranking engine.

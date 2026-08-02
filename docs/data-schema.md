@@ -150,3 +150,7 @@ Required fields: dataset name, source, retrieval timestamp, season, checksum, pr
 - The first schema pass is intentionally compact and will expand as ingestion, projections, injuries, and simulations mature.
 - Provider-specific raw fields should remain in raw/processed data layers until promoted into stable records.
 - League configuration is currently modeled separately in `bayesiandraft.config`.
+
+## Ranking Records
+
+Baseline ranking outputs are currently represented by `RankingRow` in `bayesiandraft.rankings`. They are derived records rather than source snapshot records and include projected points, floor, median, ceiling, position rank, overall rank, tier, VORP, value above starter, ADP delta, sleeper score, and fade score.

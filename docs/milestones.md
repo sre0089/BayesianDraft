@@ -44,3 +44,12 @@
 19. Historical backtesting
 20. Draft-day hardening
 21. Post-draft decision audit
+
+## Milestone Status
+
+- Milestone 0: complete
+- Milestone 1: complete
+- Milestone 2: complete
+- Milestone 3: complete
+- Milestone 4: complete
+- Milestone 5: complete

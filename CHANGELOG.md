@@ -12,3 +12,4 @@ All notable project changes will be documented here.
 - Implemented deterministic snake draft state with rosters, availability, undo/redo, edit, and save/load.
 - Added core data schema records for players, teams, games, stats, projections, ADP, injuries, draft state, recommendations, simulations, and snapshots.
 - Added a synthetic baseline player snapshot, manifest, loader, and offline validation tests.
+- Added transparent baseline rankings with VORP, value above starter, tiers, ADP deltas, sleeper/fade scores, and JSON/CSV export.
