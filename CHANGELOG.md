@@ -13,3 +13,4 @@ All notable project changes will be documented here.
 - Added core data schema records for players, teams, games, stats, projections, ADP, injuries, draft state, recommendations, simulations, and snapshots.
 - Added a synthetic baseline player snapshot, manifest, loader, and offline validation tests.
 - Added transparent baseline rankings with VORP, value above starter, tiers, ADP deltas, sleeper/fade scores, and JSON/CSV export.
+- Added local FastAPI endpoints for league config, players, rankings, draft state, picks, rosters, undo/redo, and save/load.
