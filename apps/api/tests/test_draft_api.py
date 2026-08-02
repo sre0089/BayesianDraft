@@ -41,6 +41,19 @@ def test_api_manual_draft_workflow() -> None:
     assert redone["current_overall_pick"] == 2
 
 
+def test_api_returns_recommendations_for_draft() -> None:
+    client = TestClient(create_app())
+    client.post("/drafts", json={"draft_id": "api_recs"})
+
+    response = client.get("/drafts/api_recs/recommendations")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["primary"]["player_id"] == "rb_001"
+    assert body["primary"]["explanation"]
+    assert len(body["alternatives"]) == 3
+
+
 def test_api_rejects_invalid_pick() -> None:
     client = TestClient(create_app())
     client.post("/drafts", json={"draft_id": "api_bad_pick"})

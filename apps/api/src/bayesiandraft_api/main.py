@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from bayesiandraft.draft import DraftState, DraftStateError
+from bayesiandraft.recommendations import recommend_players
 from bayesiandraft_api.service import DraftSessionService, to_api_draft_state
 
 
@@ -121,6 +122,15 @@ def create_app() -> FastAPI:
         state = _get_state_or_404(service, draft_id)
         user_manager_id = state.league_config.league.user_manager_id
         return state.rosters[user_manager_id].model_dump(mode="json")
+
+    @app.get("/drafts/{draft_id}/recommendations")
+    def recommendations(draft_id: str) -> dict[str, object]:
+        state = _get_state_or_404(service, draft_id)
+        try:
+            result = recommend_players(state, service.rankings())
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return result.model_dump(mode="json")
 
     @app.post("/drafts/{draft_id}/save")
     def save_draft(draft_id: str, request: SaveDraftRequest) -> dict[str, str]:
