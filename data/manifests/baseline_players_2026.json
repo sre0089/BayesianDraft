@@ -2,8 +2,12 @@
   "snapshot_id": "synthetic_players_2026_v1",
   "dataset_name": "baseline_players",
   "source": "synthetic",
-  "path": "data/fixtures/baseline_players_2026.json",
+  "retrieval_timestamp": "2026-08-02T00:00:00Z",
+  "season": 2026,
+  "checksum": "c48d3a0d2fd6ecc7b8d643e57a8a9e5bc937596bb068a6a220bbf1d89900de05",
+  "processed_path": "data/fixtures/baseline_players_2026.json",
   "schema_version": "1",
   "preprocessing_version": "manual_v1",
-  "license_notes": "Synthetic public fixture data for tests and local development. Not real player projections."
+  "license_notes": "Synthetic public fixture data for tests and local development. Not real player projections.",
+  "row_count": 12
 }
