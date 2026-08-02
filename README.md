@@ -38,6 +38,8 @@ ruff check .
 mypy bayesiandraft apps/api/src
 ```
 
+The project targets Python 3.12. The current local machine also has an older system `python3`; use a modern interpreter explicitly if needed.
+
 Frontend checks:
 
 ```bash
