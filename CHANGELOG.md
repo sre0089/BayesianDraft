@@ -18,3 +18,4 @@ All notable project changes will be documented here.
 - Added explainable baseline recommendations in the backend, API, and draft room UI.
 - Updated the league setup to a public-safe 14-team draft with the primary user in slot 8.
 - Added a seeded baseline availability model for next-pick survival estimates.
+- Added seeded remaining-draft simulation and candidate rollout summaries.

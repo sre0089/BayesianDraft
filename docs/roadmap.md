@@ -31,3 +31,4 @@ Advanced projections, personalized opponent models, and ESPN synchronization mus
 - Milestone 7: manual draft room UI.
 - Milestone 8: explainable baseline recommendations.
 - Milestone 9: seeded baseline availability model.
+- Milestone 10: seeded Monte Carlo draft simulator.
