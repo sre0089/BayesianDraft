@@ -22,3 +22,4 @@ All notable project changes will be documented here.
 - Added ingestion manifest validation, checksum verification, and a baseline manifest verifier.
 - Added baseline projection distributions and seeded weekly projection sampling.
 - Added injury-aware games-played estimates with risk labels and explanations.
+- Added weekly lineup optimization and seeded roster season simulation.

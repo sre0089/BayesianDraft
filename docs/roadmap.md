@@ -35,3 +35,4 @@ Advanced projections, personalized opponent models, and ESPN synchronization mus
 - Milestone 11: ingestion manifest foundation.
 - Milestone 12: baseline projection distributions.
 - Milestone 13: injury-aware games-played baseline.
+- Milestone 14: weekly lineup and roster season simulator.

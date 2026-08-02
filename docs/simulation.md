@@ -23,4 +23,17 @@ Current limitations:
 
 The season simulator should sample weekly player outcomes, account for injuries and byes, optimize legal lineups, simulate matchups, determine playoff qualification, and simulate playoffs.
 
+Current implementation:
+
+- `optimize_lineup` fills fixed starting slots and configured flex slots from weekly player scores.
+- `simulate_weekly_lineup` samples weekly projection outcomes for a roster and returns the optimized lineup.
+- `simulate_roster_season` repeats weekly lineup simulation across a configured week range and summarizes total and average points.
+- All weekly sampling uses explicit seeds.
+
+Current limitations:
+
+- This is a roster points simulator, not a full league schedule simulator.
+- Matchups, standings, playoff qualification, and playoff brackets are deferred.
+- Bye weeks, waiver moves, lineup locks, and injury-week availability are not integrated yet.
+
 Runtime, cache behavior, and seed reproducibility must be measured and tested.
