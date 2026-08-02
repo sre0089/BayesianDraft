@@ -27,6 +27,38 @@ Milestone 0 is in progress: repository foundation, documentation, tooling, and r
 
 No production recommendation logic exists yet.
 
+## Local Setup
+
+Backend checks:
+
+```bash
+pip install -e ".[dev]"
+pytest
+ruff check .
+mypy bayesiandraft apps/api/src
+```
+
+Frontend checks:
+
+```bash
+npm install
+npm test
+npm run lint
+npm run build
+```
+
+Run the local API:
+
+```bash
+uvicorn bayesiandraft_api.main:app --app-dir apps/api/src --reload
+```
+
+Run the web app:
+
+```bash
+npm run dev
+```
+
 ## Development Principles
 
 - Keep league settings configuration-driven.

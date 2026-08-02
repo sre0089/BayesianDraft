@@ -21,10 +21,14 @@ coverage/
 !.env.example
 
 # Local data and artifacts
-data/raw/
-data/processed/
-data/snapshots/
-models/artifacts/
+data/raw/*
+data/processed/*
+data/snapshots/*
+models/artifacts/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/snapshots/.gitkeep
+!models/artifacts/.gitkeep
 *.duckdb
 *.sqlite
 *.sqlite3

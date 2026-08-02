@@ -6,3 +6,4 @@ All notable project changes will be documented here.
 
 - Initialized source-of-truth project and engineering workflow documents.
 - Started Milestone 0 repository foundation.
+- Added documentation skeleton, backend package foundation, frontend scaffold, league config, and CI.

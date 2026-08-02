@@ -1,0 +1,153 @@
+platform: ESPN
+season: 2026
+league:
+  format: redraft
+  team_count: 12
+  draft_type: snake
+  scoring_format: full_ppr
+  trades_enabled: true
+  waiver_rules: standard
+  draft_date: 2026-08-08
+  user_manager_id: user_manager
+  user_draft_position: 9
+draft_order:
+  - id: manager_01
+    name: Manager 01
+  - id: manager_02
+    name: Manager 02
+  - id: manager_03
+    name: Manager 03
+  - id: manager_04
+    name: Manager 04
+  - id: manager_05
+    name: Manager 05
+  - id: manager_06
+    name: Manager 06
+  - id: manager_07
+    name: Manager 07
+  - id: manager_08
+    name: Manager 08
+  - id: user_manager
+    name: Primary User
+  - id: manager_10
+    name: Manager 10
+  - id: manager_11
+    name: Manager 11
+  - id: manager_12
+    name: Manager 12
+roster:
+  starting_slots:
+    QB: 1
+    RB: 2
+    WR: 2
+    TE: 1
+    FLEX: 1
+    DST: 1
+    K: 1
+  bench_slots: 7
+  ir_slots: 1
+  flex_eligibility:
+    FLEX:
+      - RB
+      - WR
+      - TE
+scoring:
+  passing:
+    yards: 0.04
+    touchdown: 4
+    interception: -2
+    two_point_conversion: 2
+  rushing:
+    yards: 0.1
+    touchdown: 6
+    two_point_conversion: 2
+  receiving:
+    yards: 0.1
+    reception: 1
+    touchdown: 6
+    two_point_conversion: 2
+  kicking:
+    pat_made: 1
+    field_goal_missed: -1
+    field_goal_made:
+      - min_yards: 0
+        max_yards: 39
+        points: 3
+      - min_yards: 40
+        max_yards: 49
+        points: 4
+      - min_yards: 50
+        max_yards: 59
+        points: 5
+      - min_yards: 60
+        max_yards: null
+        points: 6
+  defense_special_teams:
+    touchdowns:
+      kickoff_return: 6
+      punt_return: 6
+      interception_return: 6
+      fumble_return: 6
+      blocked_punt_or_field_goal_return: 6
+    returns:
+      two_point_return: 2
+      one_point_safety: 1
+    events:
+      sack: 1
+      blocked_punt_pat_or_field_goal: 2
+      interception: 2
+      fumble_recovery: 2
+      safety: 2
+    points_allowed:
+      - min: 0
+        max: 0
+        points: 5
+      - min: 1
+        max: 6
+        points: 4
+      - min: 7
+        max: 13
+        points: 3
+      - min: 14
+        max: 17
+        points: 1
+      - min: 18
+        max: 27
+        points: 0
+      - min: 28
+        max: 34
+        points: -1
+      - min: 35
+        max: 45
+        points: -3
+      - min: 46
+        max: null
+        points: -5
+    yards_allowed:
+      - min: 0
+        max: 99
+        points: 5
+      - min: 100
+        max: 199
+        points: 3
+      - min: 200
+        max: 299
+        points: 2
+      - min: 300
+        max: 349
+        points: 0
+      - min: 350
+        max: 399
+        points: -1
+      - min: 400
+        max: 449
+        points: -3
+      - min: 450
+        max: 499
+        points: -5
+      - min: 500
+        max: 549
+        points: -6
+      - min: 550
+        max: null
+        points: -7
