@@ -1,6 +1,6 @@
 # Draft Engine
 
-The draft-state engine models a deterministic 12-team snake draft.
+The draft-state engine models a deterministic 14-team snake draft.
 
 Required domain concepts:
 
@@ -38,7 +38,7 @@ Milestone 2 implements the initial backend draft-state engine in `bayesiandraft.
 
 ## Implemented Behavior
 
-- Deterministic 12-team snake order.
+- Deterministic 14-team snake order.
 - Current overall pick, round, round pick, and manager on clock.
 - Future user picks.
 - Manual pick recording with manager-on-clock validation.

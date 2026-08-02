@@ -276,7 +276,7 @@ Convert raw player/team statistics into exact fantasy points.
 
 ### Goal
 
-Implement the 12-team snake draft.
+Implement the 14-team snake draft.
 
 ### Domain entities
 
@@ -312,10 +312,10 @@ Implement the 12-team snake draft.
 - Round 1 order
 - Round 2 reverse order
 - Multi-round progression
-- the user at 1.09
-- the user at 2.04
-- the user at 3.09
-- the user at 4.04
+- the user at 1.08
+- the user at 2.07
+- the user at 3.08
+- the user at 4.07
 - Duplicate player rejection
 - Invalid manager rejection
 - Undo restoration
@@ -542,7 +542,7 @@ Create a usable manual draft room.
 
 ### Acceptance criteria
 
-- Full 12-team draft can be entered through UI
+- Full 14-team draft can be entered through UI
 - Draft board updates
 - Rosters update
 - Undo works
@@ -1045,7 +1045,7 @@ Make the tool dependable for August 8.
 
 ### Acceptance criteria
 
-- Full 12-team rehearsal completed
+- Full 14-team rehearsal completed
 - Restart recovery works
 - Manual mode works offline
 - Recommendation latency meets target

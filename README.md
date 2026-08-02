@@ -1,6 +1,6 @@
 # BayesianDraft
 
-BayesianDraft is a local-first probabilistic fantasy football draft assistant for a private 12-team ESPN full-PPR redraft league.
+BayesianDraft is a local-first probabilistic fantasy football draft assistant for a private 14-team ESPN full-PPR redraft league.
 
 Most fantasy tools rank players. BayesianDraft ranks decisions. The target product recommends the available player who maximizes expected final roster strength, and eventually playoff and championship probability, given the live draft state.
 

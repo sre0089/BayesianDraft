@@ -8,7 +8,7 @@
 
 **Core idea:** Most fantasy-football tools rank players. BayesianDraft ranks decisions.
 
-BayesianDraft is a local-first, machine-learning-powered fantasy football draft assistant for a private 12-team ESPN redraft league. The system should not simply predict which players will score the most fantasy points. It should model the full draft state and recommend the available player who maximizes the expected strength of the user's eventual roster.
+BayesianDraft is a local-first, machine-learning-powered fantasy football draft assistant for a private 14-team ESPN redraft league. The system should not simply predict which players will score the most fantasy points. It should model the full draft state and recommend the available player who maximizes the expected strength of the user's eventual roster.
 
 The project should be treated as a sequential decision-making system under uncertainty. Each recommendation should depend on:
 
@@ -48,14 +48,14 @@ The application should be optimized for the user's private league, while keeping
 
 ### League format
 
-- 12 teams
+- 14 teams
 - Redraft
 - Snake draft
 - Full PPR
 - Trades enabled
 - Standard waiver rules
 - Draft date: August 8, 2026
-- the user's draft position: 9
+- the user's draft position: 8
 
 ### Draft order
 
@@ -68,20 +68,22 @@ Always refer to managers by these names:
 5. Manager 05
 6. Manager 06
 7. Manager 07
-8. Manager 08
-9. Primary User
+8. Primary User
+9. Manager 09
 10. Manager 10
 11. Manager 11
 12. Manager 12
+13. Manager 13
+14. Manager 14
 
 ### Snake picks for the user
 
-- 1.09
-- 2.04
-- 3.09
-- 4.04
-- 5.09
-- 6.04
+- 1.08
+- 2.07
+- 3.08
+- 4.07
+- 5.08
+- 6.07
 - Continue the alternating pattern for all rounds
 
 ### Roster settings
@@ -293,7 +295,7 @@ Required capabilities:
 - Run complete mock drafts
 - Compare RB-first versus WR-first
 - Compare Hero RB, Zero RB, balanced, elite-QB, and elite-TE strategies
-- Force a player or position at 1.09
+- Force a player or position at 1.08
 - Compare two candidate players
 - Lock picks for particular managers
 - Simulate remaining rounds
@@ -361,7 +363,7 @@ Every recommendation must answer:
 
 Example:
 
-> This WR is the final player in the current tier and has only a 9% chance of reaching 4.04. Two similarly projected RBs have greater than 60% probability of remaining available, so WR now preserves more future options.
+> This WR is the final player in the current tier and has only a 9% chance of reaching 4.07. Two similarly projected RBs have greater than 60% probability of remaining available, so WR now preserves more future options.
 
 ### 7.5 Recommendation Tree
 
@@ -1339,4 +1341,3 @@ When this document is first provided to Codex:
 8. Propose ADRs.
 9. Wait before implementing major production features.
 10. Summarize files created, decisions made, and open questions.
-
