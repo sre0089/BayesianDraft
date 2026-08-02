@@ -10,6 +10,7 @@ export type Player = {
   positionRank: number;
   tier: number;
   adp: number;
+  vorp: number;
 };
 
 export type Pick = {
@@ -54,6 +55,7 @@ export const players: Player[] = [
     positionRank: 1,
     tier: 1,
     adp: 5,
+    vorp: 100,
   },
   {
     playerId: "wr_001",
@@ -65,6 +67,7 @@ export const players: Player[] = [
     positionRank: 1,
     tier: 1,
     adp: 8,
+    vorp: 65,
   },
   {
     playerId: "qb_001",
@@ -76,6 +79,7 @@ export const players: Player[] = [
     positionRank: 1,
     tier: 1,
     adp: 32,
+    vorp: 35,
   },
   {
     playerId: "rb_002",
@@ -87,6 +91,7 @@ export const players: Player[] = [
     positionRank: 2,
     tier: 2,
     adp: 18,
+    vorp: 60,
   },
   {
     playerId: "wr_002",
@@ -98,6 +103,7 @@ export const players: Player[] = [
     positionRank: 2,
     tier: 2,
     adp: 24,
+    vorp: 33,
   },
   {
     playerId: "te_001",
@@ -109,6 +115,7 @@ export const players: Player[] = [
     positionRank: 1,
     tier: 1,
     adp: 28,
+    vorp: 60,
   },
   {
     playerId: "wr_003",
@@ -120,6 +127,7 @@ export const players: Player[] = [
     positionRank: 3,
     tier: 3,
     adp: 48,
+    vorp: 0,
   },
   {
     playerId: "rb_003",
@@ -131,6 +139,7 @@ export const players: Player[] = [
     positionRank: 3,
     tier: 3,
     adp: 62,
+    vorp: 0,
   },
   {
     playerId: "te_002",
@@ -142,6 +151,7 @@ export const players: Player[] = [
     positionRank: 2,
     tier: 3,
     adp: 95,
+    vorp: 0,
   },
   {
     playerId: "k_001",
@@ -153,6 +163,7 @@ export const players: Player[] = [
     positionRank: 1,
     tier: 1,
     adp: 155,
+    vorp: 0,
   },
   {
     playerId: "dst_001",
@@ -164,6 +175,7 @@ export const players: Player[] = [
     positionRank: 1,
     tier: 1,
     adp: 150,
+    vorp: 0,
   },
   {
     playerId: "qb_002",
@@ -175,6 +187,7 @@ export const players: Player[] = [
     positionRank: 2,
     tier: 2,
     adp: 78,
+    vorp: 0,
   },
 ];
 
@@ -252,6 +265,36 @@ export function rosterForManager(state: DraftRoomState, managerId: string) {
     .filter((pick) => pick.managerId === managerId)
     .map((pick) => playerById.get(pick.playerId))
     .filter((player): player is Player => player !== undefined);
+}
+
+export function explainRecommendation(player: Player, completedPickCount: number) {
+  const nextPick = nextUserPick(completedPickCount);
+  const picksUntilUser = typeof nextPick === "number" ? nextPick - completedPickCount - 1 : 0;
+  const availability = Math.max(
+    2,
+    Math.min(98, Math.round(((player.adp - completedPickCount) / Math.max(picksUntilUser, 1) / 3) * 100)),
+  );
+  const notes = [
+    `${player.position}${player.positionRank} with ${player.projectedPoints} projected points.`,
+    `${player.vorp.toFixed(1)} points over replacement in the baseline model.`,
+    `Estimated ${availability}% chance to last to the next user pick.`,
+  ];
+  if (player.tier === 1) {
+    notes.push("Top tier at the position.");
+  }
+  if (player.position === "K" || player.position === "DST") {
+    notes.push("Early K/DST penalty applies.");
+  }
+  return notes;
+}
+
+export function nextUserPick(completedPickCount: number) {
+  for (let pick = completedPickCount + 1; pick <= 192; pick += 1) {
+    if (pickSlot(pick).managerId === "Primary User") {
+      return pick;
+    }
+  }
+  return "-";
 }
 
 export function saveDraftRoomState(state: DraftRoomState, storage: Storage = localStorage) {

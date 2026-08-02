@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   availablePlayers,
+  explainRecommendation,
   initialDraftRoomState,
   pickSlot,
   recordPick,
@@ -50,5 +51,12 @@ describe("draftRoom", () => {
     saveDraftRoomState(state, fakeStorage);
 
     expect(loadDraftRoomState(fakeStorage)).toEqual(state);
+  });
+
+  it("explains the baseline recommendation", () => {
+    const notes = explainRecommendation(availablePlayers(initialDraftRoomState)[0], 0);
+
+    expect(notes.some((note) => note.includes("points over replacement"))).toBe(true);
+    expect(notes.some((note) => note.includes("next user pick"))).toBe(true);
   });
 });

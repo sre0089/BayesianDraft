@@ -14,6 +14,7 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "BayesianDraft" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Players" })).toBeInTheDocument();
     expect(screen.getAllByText("Example RB One").length).toBeGreaterThan(1);
+    expect(screen.getByText(/points over replacement/)).toBeInTheDocument();
   });
 
   it("records and undoes a pick", () => {

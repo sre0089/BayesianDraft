@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 
 import {
   availablePlayers,
+  explainRecommendation,
   initialDraftRoomState,
   loadDraftRoomState,
   pickSlot,
@@ -10,6 +11,7 @@ import {
   redo,
   rosterForManager,
   saveDraftRoomState,
+  nextUserPick,
   type Position,
   undo,
 } from "./draftRoom";
@@ -36,6 +38,9 @@ export function App() {
     [position, query, remainingPlayers],
   );
   const primary = filteredPlayers[0] ?? remainingPlayers[0];
+  const explanation = primary
+    ? explainRecommendation(primary, draftState.completedPicks.length)
+    : [];
   const userRoster = rosterForManager(draftState, "Primary User");
 
   return (
@@ -65,6 +70,11 @@ export function App() {
               ? `${primary.position} - ${primary.team} - Rank ${primary.overallRank} - Tier ${primary.tier}`
               : "No available players remain in the fixture."}
           </p>
+          <ul className="explanation-list">
+            {explanation.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
         </div>
         {primary ? (
           <button
@@ -204,13 +214,4 @@ function Metric({ label, value }: { label: string; value: string }) {
       <strong>{value}</strong>
     </div>
   );
-}
-
-function nextUserPick(completedCount: number) {
-  for (let pick = completedCount + 1; pick <= 192; pick += 1) {
-    if (pickSlot(pick).managerId === "Primary User") {
-      return pick;
-    }
-  }
-  return "-";
 }

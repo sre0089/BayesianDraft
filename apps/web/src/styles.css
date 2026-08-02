@@ -116,6 +116,14 @@ h2 {
   color: #4c5961;
 }
 
+.explanation-list {
+  display: grid;
+  gap: 4px;
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: #4c5961;
+}
+
 .primary-action {
   min-width: 120px;
   background: #216869;
