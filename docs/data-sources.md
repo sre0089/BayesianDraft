@@ -26,6 +26,25 @@ Every dataset must include:
 
 Do not silently scrape or commit unlicensed proprietary data.
 
+## Ingestion Manifests
+
+Milestone 11 adds `bayesiandraft.data.ingestion` for reproducible manifest handling.
+
+Current helpers:
+
+- `IngestionManifestEntry` validates required provenance fields.
+- `sha256_file` calculates file checksums.
+- `load_ingestion_manifest` and `write_ingestion_manifest` handle JSON manifests.
+- `verify_ingestion_manifest` confirms processed files exist and match recorded checksums.
+
+The CLI verifier is:
+
+```bash
+PYTHONPATH=. python scripts/verify_ingestion_manifest.py data/manifests/baseline_players_2026.json
+```
+
+Use the project environment's Python interpreter when local system Python does not include project dependencies.
+
 ## Current Baseline Fixture
 
 Milestone 4 adds `data/fixtures/baseline_players_2026.json`.
@@ -33,6 +52,7 @@ Milestone 4 adds `data/fixtures/baseline_players_2026.json`.
 This file is synthetic public fixture data. It exists to exercise schemas, loaders, ranking logic, and UI/API workflows before real data ingestion is implemented. It must not be presented as real projections, real ADP, or real player analysis.
 
 The companion manifest is `data/manifests/baseline_players_2026.json`.
+It now follows the ingestion manifest schema and records a SHA-256 checksum for the processed fixture.
 
 The fixture includes:
 

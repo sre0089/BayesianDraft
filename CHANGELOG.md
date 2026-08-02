@@ -19,3 +19,4 @@ All notable project changes will be documented here.
 - Updated the league setup to a public-safe 14-team draft with the primary user in slot 8.
 - Added a seeded baseline availability model for next-pick survival estimates.
 - Added seeded remaining-draft simulation and candidate rollout summaries.
+- Added ingestion manifest validation, checksum verification, and a baseline manifest verifier.
