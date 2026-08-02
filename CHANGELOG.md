@@ -21,3 +21,4 @@ All notable project changes will be documented here.
 - Added seeded remaining-draft simulation and candidate rollout summaries.
 - Added ingestion manifest validation, checksum verification, and a baseline manifest verifier.
 - Added baseline projection distributions and seeded weekly projection sampling.
+- Added injury-aware games-played estimates with risk labels and explanations.

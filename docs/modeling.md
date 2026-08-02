@@ -40,3 +40,19 @@ Current limitations:
 - This is a transparent baseline, not a trained model.
 - Distribution shape is normal with a zero floor.
 - Position-specific model features, historical training, and calibration are deferred.
+
+## Current Games-Played Baseline
+
+Milestone 13 adds injury-aware games-played estimates in `bayesiandraft.projections`.
+
+Current behavior:
+
+- Uses the latest injury report per player.
+- Maps injury status to a baseline availability probability.
+- Multiplies status availability by source confidence.
+- Produces adjusted games played, adjusted season mean, risk label, and explanation text.
+
+Current limitations:
+
+- Status mappings are heuristic.
+- Injury history, player durability, practice participation trends, and team reporting behavior are not modeled yet.
