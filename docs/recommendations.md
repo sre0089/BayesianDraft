@@ -28,6 +28,7 @@ Current components:
 - `market_score`: boost when ADP is later than model rank.
 - `penalty`: early K/DST and duplicate K/DST penalty.
 - `next_pick_availability`: simple ADP and pick-distance heuristic.
+- Availability model support exists in `bayesiandraft.simulation`, but the baseline recommendation engine still uses a lightweight inline heuristic until recommendation orchestration is wired to the simulator.
 - `confidence`: deterministic heuristic derived from score shape.
 
 ## Output

@@ -30,3 +30,4 @@ Advanced projections, personalized opponent models, and ESPN synchronization mus
 - Milestone 6: local FastAPI backend.
 - Milestone 7: manual draft room UI.
 - Milestone 8: explainable baseline recommendations.
+- Milestone 9: seeded baseline availability model.
