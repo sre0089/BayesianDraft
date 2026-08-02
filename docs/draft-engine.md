@@ -22,3 +22,35 @@ Required behavior:
 - Save, load, serialize, and restore.
 
 State transitions must be deterministic and fully testable.
+
+## Implemented API
+
+Milestone 2 implements the initial backend draft-state engine in `bayesiandraft.draft`:
+
+- `Player`
+- `DraftPick`
+- `Roster`
+- `PickSlot`
+- `DraftState`
+- `pick_slot_for_overall_pick`
+- `default_total_rounds`
+- `build_rosters`
+
+## Implemented Behavior
+
+- Deterministic 12-team snake order.
+- Current overall pick, round, round pick, and manager on clock.
+- Future user picks.
+- Manual pick recording with manager-on-clock validation.
+- Duplicate player rejection.
+- Unknown player rejection.
+- Roster updates with positional counts.
+- Available-player tracking.
+- Undo and redo.
+- Prior-pick editing.
+- JSON save/load round trip.
+- Complete mock draft entry through backend logic.
+
+## Current Assumption
+
+Draft length is derived from starting slots plus bench slots. IR is excluded from draft length. A future milestone may add an explicit `draft_rounds` field to league configuration if the actual draft room differs.

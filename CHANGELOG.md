@@ -9,3 +9,4 @@ All notable project changes will be documented here.
 - Added documentation skeleton, backend package foundation, frontend scaffold, league config, and CI.
 - Added PyYAML-backed league config loading and validation.
 - Implemented configurable fantasy scoring for passing, rushing, receiving, kicking, and D/ST.
+- Implemented deterministic snake draft state with rosters, availability, undo/redo, edit, and save/load.
