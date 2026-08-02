@@ -3,11 +3,13 @@ import { useMemo, useState } from "react";
 import {
   availablePlayers,
   initialDraftRoomState,
+  loadDraftRoomState,
   pickSlot,
   players,
   recordPick,
   redo,
   rosterForManager,
+  saveDraftRoomState,
   type Position,
   undo,
 } from "./draftRoom";
@@ -15,7 +17,7 @@ import {
 const positions: Array<Position | "ALL"> = ["ALL", "QB", "RB", "WR", "TE", "DST", "K"];
 
 export function App() {
-  const [draftState, setDraftState] = useState(initialDraftRoomState);
+  const [draftState, setDraftState] = useState(() => loadDraftRoomState() ?? initialDraftRoomState);
   const [query, setQuery] = useState("");
   const [position, setPosition] = useState<Position | "ALL">("ALL");
   const currentSlot = pickSlot(draftState.completedPicks.length + 1);
@@ -82,6 +84,12 @@ export function App() {
               <h2 id="available-title">Players</h2>
             </div>
             <div className="toolbar">
+              <button aria-label="Save draft" onClick={() => saveDraftRoomState(draftState)}>
+                Save
+              </button>
+              <button aria-label="Restore draft" onClick={() => setDraftState(loadDraftRoomState() ?? draftState)}>
+                Restore
+              </button>
               <button aria-label="Undo pick" onClick={() => setDraftState(undo(draftState))}>
                 Undo
               </button>

@@ -26,6 +26,8 @@ export type DraftRoomState = {
   redoStack: Pick[][];
 };
 
+const storageKey = "bayesiandraft.draftRoomState";
+
 export const managers = [
   "Manager 01",
   "Manager 02",
@@ -250,4 +252,25 @@ export function rosterForManager(state: DraftRoomState, managerId: string) {
     .filter((pick) => pick.managerId === managerId)
     .map((pick) => playerById.get(pick.playerId))
     .filter((player): player is Player => player !== undefined);
+}
+
+export function saveDraftRoomState(state: DraftRoomState, storage: Storage = localStorage) {
+  storage.setItem(storageKey, JSON.stringify(state));
+}
+
+export function loadDraftRoomState(storage: Storage = localStorage): DraftRoomState | null {
+  const rawState = storage.getItem(storageKey);
+  if (!rawState) {
+    return null;
+  }
+
+  const parsed = JSON.parse(rawState) as DraftRoomState;
+  if (!Array.isArray(parsed.completedPicks)) {
+    return null;
+  }
+  return {
+    completedPicks: parsed.completedPicks,
+    undoStack: Array.isArray(parsed.undoStack) ? parsed.undoStack : [],
+    redoStack: Array.isArray(parsed.redoStack) ? parsed.redoStack : [],
+  };
 }
