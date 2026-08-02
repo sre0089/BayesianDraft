@@ -33,3 +33,4 @@ Advanced projections, personalized opponent models, and ESPN synchronization mus
 - Milestone 9: seeded baseline availability model.
 - Milestone 10: seeded Monte Carlo draft simulator.
 - Milestone 11: ingestion manifest foundation.
+- Milestone 12: baseline projection distributions.
