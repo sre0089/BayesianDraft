@@ -45,6 +45,17 @@ PYTHONPATH=. python scripts/verify_ingestion_manifest.py data/manifests/baseline
 
 Use the project environment's Python interpreter when local system Python does not include project dependencies.
 
+## Data Refresh Hooks
+
+Milestone 23 adds local refresh hooks:
+
+```bash
+PYTHONPATH=. python scripts/data_refresh.py
+PYTHONPATH=. python scripts/data_refresh.py --json
+```
+
+Current refresh behavior verifies local manifests and does not fetch external data.
+
 ## Current Baseline Fixture
 
 Milestone 4 adds `data/fixtures/baseline_players_2026.json`.
