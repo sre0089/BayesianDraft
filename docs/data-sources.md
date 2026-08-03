@@ -56,6 +56,16 @@ PYTHONPATH=. python scripts/data_refresh.py --json
 
 Current refresh behavior verifies local manifests and does not fetch external data.
 
+## Snapshot Health
+
+Milestone 29 adds:
+
+```bash
+PYTHONPATH=. python scripts/snapshot_health.py
+```
+
+This reports player count, projection coverage, ADP coverage, injury record count, and fixture warnings.
+
 ## Current Baseline Fixture
 
 Milestone 4 adds `data/fixtures/baseline_players_2026.json`.
