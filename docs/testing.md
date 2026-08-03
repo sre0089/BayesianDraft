@@ -61,3 +61,14 @@ PYTHONPATH=. python scripts/check_docs_index.py
 ```
 
 This verifies that links in `docs/README.md` point to existing local Markdown files.
+
+## Local CI Helper
+
+Milestone 36 adds:
+
+```bash
+PYTHONPATH=.:apps/api/src python scripts/ci_local.py --list
+PYTHONPATH=.:apps/api/src python scripts/ci_local.py
+```
+
+This gathers the Python, API, and web checks used before pushing milestone work.
