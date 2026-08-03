@@ -30,3 +30,4 @@ All notable project changes will be documented here.
 - Added historical backtesting metric helpers for rank error, Brier score, and log loss.
 - Added draft-day preflight checks and CLI output for local readiness validation.
 - Added local post-draft decision audit records and JSON persistence helpers.
+- Added local model registry metadata helpers and active-model lookup.

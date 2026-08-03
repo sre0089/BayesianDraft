@@ -44,6 +44,12 @@
 19. Historical backtesting
 20. Draft-day hardening
 21. Post-draft decision audit
+22. Model registry helpers
+23. Data refresh pipeline hooks
+24. API contract/schema checks
+25. Release/build metadata
+26. Draft rehearsal scenarios
+27. Runbook and operational polish
 
 ## Milestone Status
 
@@ -69,3 +75,4 @@
 - Milestone 19: complete
 - Milestone 20: complete
 - Milestone 21: complete
+- Milestone 22: complete

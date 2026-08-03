@@ -15,3 +15,17 @@ Each artifact should record:
 - Known limitations
 
 MLflow may be introduced only if the added operational complexity is justified.
+
+## Current Implementation
+
+Milestone 22 adds `bayesiandraft.modeling`.
+
+Current helpers:
+
+- `ModelRegistryEntry`
+- `ModelRegistry`
+- `load_model_registry`
+- `write_model_registry`
+- `active_model`
+
+The current registry is local JSON metadata only. Model binaries and external registry services are intentionally deferred.

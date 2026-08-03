@@ -43,3 +43,4 @@ Advanced projections, personalized opponent models, and ESPN synchronization mus
 - Milestone 19: historical backtesting metrics.
 - Milestone 20: draft-day preflight hardening.
 - Milestone 21: post-draft decision audit.
+- Milestone 22: local model registry helpers.
