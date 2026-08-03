@@ -45,3 +45,4 @@ All notable project changes will be documented here.
 - Added a repo privacy scan command for public-safe manager-name checks.
 - Added a documentation index and local link check for docs navigation.
 - Added a local CI helper that gathers Python, API, and web checks.
+- Added a project status report command for milestone and version handoff.

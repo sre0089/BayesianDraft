@@ -58,3 +58,4 @@ Advanced projections, personalized opponent models, and ESPN synchronization mus
 - Milestone 34: privacy scan command.
 - Milestone 35: documentation index and link check.
 - Milestone 36: local CI helper command.
+- Milestone 37: project status report.

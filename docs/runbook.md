@@ -22,6 +22,12 @@ npm run lint
 npm run build
 ```
 
+For a compact handoff snapshot:
+
+```bash
+PYTHONPATH=. python scripts/project_status.py
+```
+
 ## During Draft
 
 - Prefer manual draft tracking if ESPN credentials or sync behavior is uncertain.
