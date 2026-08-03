@@ -24,3 +24,4 @@ All notable project changes will be documented here.
 - Added injury-aware games-played estimates with risk labels and explanations.
 - Added weekly lineup optimization and seeded roster season simulation.
 - Added candidate rollout optimization and a local API endpoint for candidate rollouts.
+- Added a browser-local candidate rollout simulator panel to the draft room.

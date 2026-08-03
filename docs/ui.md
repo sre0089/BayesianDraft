@@ -35,6 +35,7 @@ Implemented:
 - Undo and redo.
 - Browser-local save and restore.
 - Recommendation explanation bullets.
+- Candidate rollout simulator panel when the primary user is on clock.
 
 ## Current Limitations
 
@@ -42,4 +43,4 @@ Implemented:
 - It does not yet call the FastAPI backend.
 - Edit-prior-pick UI is deferred.
 - Autosave and keyboard shortcuts are deferred.
-- Recommendation explanations are baseline heuristics, not calibrated simulation outputs.
+- Recommendation and rollout explanations are baseline heuristics, not calibrated simulation outputs.

@@ -37,3 +37,4 @@ Advanced projections, personalized opponent models, and ESPN synchronization mus
 - Milestone 13: injury-aware games-played baseline.
 - Milestone 14: weekly lineup and roster season simulator.
 - Milestone 15: candidate rollout optimizer.
+- Milestone 16: rankings and simulator UI slice.
