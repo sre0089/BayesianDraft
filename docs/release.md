@@ -1,6 +1,6 @@
 # Release Metadata
 
-Milestone 25 adds build and release metadata helpers.
+BayesianDraft exposes build and release metadata helpers.
 
 ## Current Behavior
 

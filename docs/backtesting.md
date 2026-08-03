@@ -14,7 +14,7 @@ Compare against simple baselines before trusting complex models.
 
 ## Current Implementation
 
-Milestone 19 adds `bayesiandraft.backtesting`.
+`bayesiandraft.backtesting` provides normalized metric helpers.
 
 Current helpers:
 

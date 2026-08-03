@@ -1,6 +1,6 @@
 # Decision Audit
 
-Milestone 21 adds post-draft decision audit helpers in `bayesiandraft.audit`.
+`bayesiandraft.audit` provides post-draft decision audit helpers.
 
 ## Current Behavior
 

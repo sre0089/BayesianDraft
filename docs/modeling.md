@@ -26,7 +26,7 @@ Initial implementations should start with transparent baselines before advanced 
 
 ## Current Projection Baseline
 
-Milestone 12 adds `bayesiandraft.projections`.
+`bayesiandraft.projections` provides the current projection baseline.
 
 Current behavior:
 
@@ -43,7 +43,7 @@ Current limitations:
 
 ## Current Games-Played Baseline
 
-Milestone 13 adds injury-aware games-played estimates in `bayesiandraft.projections`.
+`bayesiandraft.projections` also provides injury-aware games-played estimates.
 
 Current behavior:
 

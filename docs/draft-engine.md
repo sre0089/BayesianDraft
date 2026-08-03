@@ -25,7 +25,7 @@ State transitions must be deterministic and fully testable.
 
 ## Implemented API
 
-Milestone 2 implements the initial backend draft-state engine in `bayesiandraft.draft`:
+`bayesiandraft.draft` implements the backend draft-state engine:
 
 - `Player`
 - `DraftPick`
@@ -54,17 +54,17 @@ Milestone 2 implements the initial backend draft-state engine in `bayesiandraft.
 
 ## Rehearsal
 
-Milestone 26 adds:
+Use the rehearsal preview command:
 
 ```bash
 PYTHONPATH=. python scripts/rehearsal_preview.py
 ```
 
-The default scenario advances the fixture draft to pick 8 so the primary user is on clock.
+The default scenario advances the fixture draft to pick 8 so the configured user manager is on clock.
 
 ## Summary Export
 
-Milestone 31 adds:
+Use the draft summary command:
 
 ```bash
 PYTHONPATH=. python scripts/draft_summary.py --scenario data/fixtures/rehearsal_user_pick_8.json
@@ -74,7 +74,7 @@ This prints current pick, manager on clock, completed picks, available players, 
 
 ## Roster Balance
 
-Milestone 32 adds:
+Use the roster balance command:
 
 ```bash
 PYTHONPATH=. python scripts/roster_balance.py
@@ -84,4 +84,4 @@ This reports positional counts, starter targets, remaining starter needs, and su
 
 ## Current Assumption
 
-Draft length is derived from starting slots plus bench slots. IR is excluded from draft length. A future milestone may add an explicit `draft_rounds` field to league configuration if the actual draft room differs.
+Draft length is derived from starting slots plus bench slots. IR is excluded from draft length. A future config option may add an explicit `draft_rounds` field if a draft room differs.

@@ -31,7 +31,7 @@ npm test
 npm run lint
 ```
 
-If a command is not relevant to the change, note that in the handoff.
+If a command is not relevant to the change, note that in the change summary.
 
 ## Git
 

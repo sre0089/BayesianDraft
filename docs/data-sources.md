@@ -28,7 +28,7 @@ Do not silently scrape or commit unlicensed proprietary data.
 
 ## Ingestion Manifests
 
-Milestone 11 adds `bayesiandraft.data.ingestion` for reproducible manifest handling.
+`bayesiandraft.data.ingestion` handles reproducible manifest records.
 
 Current helpers:
 
@@ -47,7 +47,7 @@ Use the project environment's Python interpreter when local system Python does n
 
 ## Data Refresh Hooks
 
-Milestone 23 adds local refresh hooks:
+Local refresh hooks are available:
 
 ```bash
 PYTHONPATH=. python scripts/data_refresh.py
@@ -58,7 +58,7 @@ Current refresh behavior verifies local manifests and does not fetch external da
 
 ## Snapshot Health
 
-Milestone 29 adds:
+Snapshot health reporting is available:
 
 ```bash
 PYTHONPATH=. python scripts/snapshot_health.py
@@ -68,7 +68,7 @@ This reports player count, projection coverage, ADP coverage, injury record coun
 
 ## Current Baseline Fixture
 
-Milestone 4 adds `data/fixtures/baseline_players_2026.json`.
+The current baseline fixture is `data/fixtures/baseline_players_2026.json`.
 
 This file is synthetic public fixture data. It exists to exercise schemas, loaders, ranking logic, and UI/API workflows before real data ingestion is implemented. It must not be presented as real projections, real ADP, or real player analysis.
 

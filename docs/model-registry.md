@@ -18,7 +18,7 @@ MLflow may be introduced only if the added operational complexity is justified.
 
 ## Current Implementation
 
-Milestone 22 adds `bayesiandraft.modeling`.
+`bayesiandraft.modeling` provides local model registry helpers.
 
 Current helpers:
 

@@ -1,6 +1,6 @@
 # Recommendations
 
-Milestone 8 implements a deterministic baseline recommendation engine.
+BayesianDraft includes a deterministic baseline recommendation engine.
 
 ## Inputs
 
@@ -45,11 +45,11 @@ The engine returns:
 
 ## Candidate Rollout Optimizer
 
-Milestone 15 adds `optimize_candidates`.
+`optimize_candidates` evaluates draft candidates with seeded rollout summaries.
 
 Current behavior:
 
-- Requires the primary user to be on clock.
+- Requires the configured user manager to be on clock.
 - Evaluates a configurable pool of available candidates.
 - Records each candidate as the user's pick in a copied draft state.
 - Runs seeded remaining-draft simulations.
@@ -58,7 +58,7 @@ Current behavior:
 
 ## Export
 
-Milestone 30 adds:
+Use the export command to write recommendation snapshots:
 
 ```bash
 PYTHONPATH=. python scripts/export_recommendations.py --out /tmp/recommendations.json --scenario data/fixtures/rehearsal_user_pick_8.json

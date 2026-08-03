@@ -47,7 +47,7 @@ ESPN sync is currently represented by a dry-run integration boundary in `bayesia
 
 ## Contract Export
 
-Milestone 24 adds OpenAPI schema export:
+OpenAPI schema export is available:
 
 ```bash
 PYTHONPATH=.:apps/api/src python scripts/export_openapi.py --out /tmp/bayesiandraft-openapi.json

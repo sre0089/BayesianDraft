@@ -1,6 +1,6 @@
 # Availability
 
-Milestone 9 adds a seeded baseline availability model in `bayesiandraft.simulation`.
+`bayesiandraft.simulation` includes a seeded baseline availability model.
 
 ## Purpose
 

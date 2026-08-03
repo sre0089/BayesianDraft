@@ -15,6 +15,7 @@ import {
   nextUserPick,
   type Position,
   undo,
+  userManagerName,
 } from "./draftRoom";
 
 const positions: Array<Position | "ALL"> = ["ALL", "QB", "RB", "WR", "TE", "DST", "K"];
@@ -42,7 +43,7 @@ export function App() {
   const explanation = primary
     ? explainRecommendation(primary, draftState.completedPicks.length)
     : [];
-  const userRoster = rosterForManager(draftState, "Primary User");
+  const userRoster = rosterForManager(draftState, userManagerName);
   const rolloutCandidates = candidateRollouts(draftState);
   const playerById = new Map(players.map((player) => [player.playerId, player]));
 
@@ -190,7 +191,7 @@ export function App() {
 
           <section className="panel" aria-labelledby="roster-title">
             <p className="eyebrow">Roster</p>
-            <h2 id="roster-title">Primary User</h2>
+          <h2 id="roster-title">Your Team</h2>
             <div className="roster-list">
               {userRoster.length === 0 ? (
                 <p className="empty">No picks yet</p>
@@ -209,7 +210,7 @@ export function App() {
             <p className="eyebrow">Simulator</p>
             <h2 id="simulator-title">Candidate rollouts</h2>
             {rolloutCandidates.length === 0 ? (
-              <p className="empty">Available on the Primary User pick</p>
+              <p className="empty">Available on your pick</p>
             ) : (
               <div className="rollout-list">
                 {rolloutCandidates.map((candidate) => {

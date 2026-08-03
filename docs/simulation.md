@@ -41,7 +41,7 @@ Runtime, cache behavior, and seed reproducibility must be measured and tested.
 
 ## Benchmark Smoke Check
 
-Milestone 33 adds:
+Use the benchmark smoke check:
 
 ```bash
 PYTHONPATH=. python scripts/sim_benchmark.py

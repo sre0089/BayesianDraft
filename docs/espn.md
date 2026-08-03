@@ -1,6 +1,6 @@
 # ESPN Integration
 
-Milestone 18 adds a safe ESPN integration boundary.
+BayesianDraft keeps ESPN support behind a safe integration boundary.
 
 ## Current Behavior
 

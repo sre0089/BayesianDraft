@@ -15,8 +15,8 @@ import {
 
 describe("draftRoom", () => {
   it("calculates snake draft slots", () => {
-    expect(pickSlot(8)).toMatchObject({ managerId: "Primary User", round: 1, roundPick: 8 });
-    expect(pickSlot(21)).toMatchObject({ managerId: "Primary User", round: 2, roundPick: 7 });
+    expect(pickSlot(8)).toMatchObject({ managerId: "Your Team", round: 1, roundPick: 8 });
+    expect(pickSlot(21)).toMatchObject({ managerId: "Your Team", round: 2, roundPick: 7 });
   });
 
   it("records picks and updates availability", () => {
@@ -58,7 +58,7 @@ describe("draftRoom", () => {
     const notes = explainRecommendation(availablePlayers(initialDraftRoomState)[0], 0);
 
     expect(notes.some((note) => note.includes("points over replacement"))).toBe(true);
-    expect(notes.some((note) => note.includes("next user pick"))).toBe(true);
+    expect(notes.some((note) => note.includes("your next pick"))).toBe(true);
   });
 
   it("returns rollout candidates on the user pick", () => {

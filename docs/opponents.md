@@ -1,6 +1,6 @@
 # Opponents
 
-Milestone 17 adds a transparent opponent profile baseline in `bayesiandraft.opponents`.
+`bayesiandraft.opponents` includes a transparent opponent profile baseline.
 
 ## Current Behavior
 

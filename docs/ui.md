@@ -19,9 +19,9 @@ BayesianDraft's UI should prioritize draft-day speed, clear state, and manual re
 - Save and restore
 - Data freshness and sync status when available
 
-## Implemented Manual Draft Room Slice
+## Implemented Manual Draft Room
 
-Milestone 7 adds a browser-local draft room in `apps/web`.
+`apps/web` contains a browser-local draft room.
 
 Implemented:
 
@@ -31,11 +31,11 @@ Implemented:
 - Search and position filters.
 - Manual draft action.
 - Recent-picks draft board.
-- Primary user roster panel.
+- Configured user roster panel.
 - Undo and redo.
 - Browser-local save and restore.
 - Recommendation explanation bullets.
-- Candidate rollout simulator panel when the primary user is on clock.
+- Candidate rollout simulator panel when the configured user manager is on clock.
 
 ## Current Limitations
 

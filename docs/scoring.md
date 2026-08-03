@@ -8,7 +8,7 @@ Initial league configuration should live at:
 configs/leagues/espn_2026.yaml
 ```
 
-The first scoring milestone must cover:
+The scoring engine covers:
 
 - Passing
 - Rushing
@@ -23,7 +23,7 @@ Boundary tests are required for every bucket and negative scoring rule.
 
 ## Implemented API
 
-Milestone 1 implements pure Python scoring functions in `bayesiandraft.scoring`:
+`bayesiandraft.scoring` provides pure Python scoring functions:
 
 - `score_passing`
 - `score_rushing`
@@ -50,5 +50,5 @@ The functions accept immutable stat-line objects and a validated `LeagueConfig`.
 ## Current Limitations
 
 - Scoring functions operate on already-normalized stat-line objects.
-- Raw provider stat ingestion is intentionally deferred to later data milestones.
+- Raw provider stat ingestion is handled outside the scoring engine.
 - Roster and lineup legality are not part of the scoring engine.

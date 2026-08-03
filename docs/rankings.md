@@ -1,6 +1,6 @@
 # Rankings
 
-Milestone 5 implements transparent baseline rankings in `bayesiandraft.rankings`.
+`bayesiandraft.rankings` implements transparent baseline rankings.
 
 ## Inputs
 
@@ -68,5 +68,5 @@ PYTHONPATH=. python scripts/export_baseline_rankings.py --out /tmp/rankings.csv 
 - The fixture data is synthetic.
 - Replacement assumptions are simple defaults and will need league-calibrated tuning.
 - No roster-aware live rank exists yet.
-- No availability model is included yet.
+- Availability is modeled separately from baseline ranking.
 - Sleeper/fade scores are transparent heuristics, not calibrated probabilities.

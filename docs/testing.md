@@ -1,6 +1,6 @@
 # Testing
 
-Testing should scale with risk and milestone scope.
+Testing should scale with risk and change scope.
 
 ## Test Types
 
@@ -13,7 +13,7 @@ Tests must use fixtures instead of live services.
 
 ## Draft-Day Preflight
 
-Milestone 20 adds:
+Run the draft-day preflight with:
 
 ```bash
 PYTHONPATH=. python scripts/preflight.py
@@ -24,7 +24,7 @@ The preflight checks validate league config, player snapshot, ingestion manifest
 
 ## Local Validation Aggregator
 
-Milestone 27 adds:
+Run the local validation aggregator with:
 
 ```bash
 PYTHONPATH=.:apps/api/src python scripts/validate_local.py
@@ -34,7 +34,7 @@ This command runs the local preflight, data refresh verification, rehearsal prev
 
 ## League Sanity Report
 
-Milestone 28 adds:
+Run the league sanity report with:
 
 ```bash
 PYTHONPATH=. python scripts/league_report.py
@@ -44,7 +44,7 @@ This prints the validated league setup, draft size, user draft position, and non
 
 ## Privacy Scan
 
-Milestone 34 adds:
+Run the privacy scan with:
 
 ```bash
 PYTHONPATH=. python scripts/privacy_scan.py
@@ -54,7 +54,7 @@ This fails when real draft manager names appear as standalone words in committed
 
 ## Docs Index Check
 
-Milestone 35 adds:
+Run the docs index check with:
 
 ```bash
 PYTHONPATH=. python scripts/check_docs_index.py
@@ -64,11 +64,11 @@ This verifies that links in `docs/README.md` point to existing local Markdown fi
 
 ## Local CI Helper
 
-Milestone 36 adds:
+Run the local CI helper with:
 
 ```bash
 PYTHONPATH=.:apps/api/src python scripts/ci_local.py --list
 PYTHONPATH=.:apps/api/src python scripts/ci_local.py
 ```
 
-This gathers the Python, API, and web checks used before pushing milestone work.
+This gathers the Python, API, and web checks used before pushing larger changes.

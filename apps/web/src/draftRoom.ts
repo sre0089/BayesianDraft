@@ -36,6 +36,7 @@ export type CandidateRollout = {
 };
 
 const storageKey = "bayesiandraft.draftRoomState";
+export const userManagerName = "Your Team";
 
 export const managers = [
   "Manager 01",
@@ -45,7 +46,7 @@ export const managers = [
   "Manager 05",
   "Manager 06",
   "Manager 07",
-  "Primary User",
+  userManagerName,
   "Manager 09",
   "Manager 10",
   "Manager 11",
@@ -289,7 +290,7 @@ export function explainRecommendation(player: Player, completedPickCount: number
   const notes = [
     `${player.position}${player.positionRank} with ${player.projectedPoints} projected points.`,
     `${player.vorp.toFixed(1)} points over replacement in the baseline model.`,
-    `Estimated ${availability}% chance to last to the next user pick.`,
+    `Estimated ${availability}% chance to last to your next pick.`,
   ];
   if (player.tier === 1) {
     notes.push("Top tier at the position.");
@@ -302,11 +303,11 @@ export function explainRecommendation(player: Player, completedPickCount: number
 
 export function candidateRollouts(state: DraftRoomState, limit = 4): CandidateRollout[] {
   const slot = pickSlot(state.completedPicks.length + 1);
-  if (slot.managerId !== "Primary User") {
+  if (slot.managerId !== userManagerName) {
     return [];
   }
 
-  const draftedByUser = rosterForManager(state, "Primary User");
+  const draftedByUser = rosterForManager(state, userManagerName);
   const rosterVorp = draftedByUser.reduce((total, player) => total + player.vorp, 0);
   return availablePlayers(state)
     .slice(0, Math.max(limit * 2, limit))
@@ -348,7 +349,7 @@ function starterNeedBoost(player: Player, roster: Player[]) {
 
 export function nextUserPick(completedPickCount: number) {
   for (let pick = completedPickCount + 1; pick <= totalDraftPicks; pick += 1) {
-    if (pickSlot(pick).managerId === "Primary User") {
+    if (pickSlot(pick).managerId === userManagerName) {
       return pick;
     }
   }
