@@ -38,3 +38,13 @@ Current limitations:
 - Bye weeks, waiver moves, lineup locks, and injury-week availability are not integrated yet.
 
 Runtime, cache behavior, and seed reproducibility must be measured and tested.
+
+## Benchmark Smoke Check
+
+Milestone 33 adds:
+
+```bash
+PYTHONPATH=. python scripts/sim_benchmark.py
+```
+
+This reports elapsed time and completion metadata for a seeded remaining-draft smoke simulation.
