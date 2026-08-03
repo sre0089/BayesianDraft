@@ -31,6 +31,10 @@ Most fantasy tools rank players. BayesianDraft ranks decisions. The target produ
 - `docs/`: public product, architecture, data, modeling, and API notes.
 - `scripts/`: local validation, export, preflight, and reporting commands.
 
+## Technical Methodology
+
+The engine methodology is documented in [docs/math-methodology.md](docs/math-methodology.md), including draft-state notation, VORP, tiering, recommendation scoring, availability simulation, candidate rollouts, lineup simulation, and validation metrics.
+
 ## Local Setup
 
 Backend checks:

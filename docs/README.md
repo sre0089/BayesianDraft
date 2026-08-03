@@ -6,6 +6,7 @@ Start here when navigating the repository docs.
 
 - [Product Spec](product-spec.md)
 - [Architecture](architecture.md)
+- [Math And Methodology](math-methodology.md)
 - [Roadmap](roadmap.md)
 
 ## Draft Day
