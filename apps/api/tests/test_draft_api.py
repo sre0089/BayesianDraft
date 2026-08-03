@@ -54,6 +54,21 @@ def test_api_returns_recommendations_for_draft() -> None:
     assert len(body["alternatives"]) == 3
 
 
+def test_api_returns_candidate_rollouts_when_user_is_on_clock() -> None:
+    client = TestClient(create_app())
+    client.post("/drafts", json={"draft_id": "api_rollouts"})
+    for player_id in ["rb_001", "wr_001", "qb_001", "rb_002", "wr_002", "te_001", "wr_003"]:
+        client.post("/drafts/api_rollouts/picks", json={"player_id": player_id})
+
+    response = client.get("/drafts/api_rollouts/candidate-rollouts?limit=2&simulation_count=4")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["simulation_count"] == 4
+    assert body["primary"]["player_id"]
+    assert len(body["alternatives"]) == 1
+
+
 def test_api_rejects_invalid_pick() -> None:
     client = TestClient(create_app())
     client.post("/drafts", json={"draft_id": "api_bad_pick"})
