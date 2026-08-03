@@ -1,5 +1,6 @@
 """Data ingestion, snapshots, and provenance."""
 
+from bayesiandraft.data.health import SnapshotHealthReport, build_snapshot_health_report
 from bayesiandraft.data.ingestion import (
     IngestionManifestEntry,
     IngestionManifestError,
@@ -28,7 +29,9 @@ __all__ = [
     "PlayerSnapshot",
     "RefreshMode",
     "SnapshotLoadError",
+    "SnapshotHealthReport",
     "build_ingestion_manifest_entry",
+    "build_snapshot_health_report",
     "default_refresh_plan",
     "load_ingestion_manifest",
     "load_player_snapshot",
