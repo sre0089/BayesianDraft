@@ -1,0 +1,14 @@
+{
+  "scenario_id": "user_pick_8_fixture",
+  "name": "User pick 8 rehearsal",
+  "description": "Draft seven fixture players so the primary user is on the clock at pick 8.",
+  "picks": [
+    { "player_id": "rb_001" },
+    { "player_id": "wr_001" },
+    { "player_id": "qb_001" },
+    { "player_id": "rb_002" },
+    { "player_id": "wr_002" },
+    { "player_id": "te_001" },
+    { "player_id": "wr_003" }
+  ]
+}

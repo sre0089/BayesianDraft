@@ -1,5 +1,11 @@
 """Draft-state engine."""
 
+from bayesiandraft.draft.rehearsal import (
+    RehearsalPick,
+    RehearsalScenario,
+    apply_rehearsal_scenario,
+    load_rehearsal_scenario,
+)
 from bayesiandraft.draft.state import (
     DraftPick,
     DraftState,
@@ -18,8 +24,12 @@ __all__ = [
     "DraftStateError",
     "PickSlot",
     "Player",
+    "RehearsalPick",
+    "RehearsalScenario",
     "Roster",
+    "apply_rehearsal_scenario",
     "build_rosters",
     "default_total_rounds",
+    "load_rehearsal_scenario",
     "pick_slot_for_overall_pick",
 ]
