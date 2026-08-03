@@ -47,3 +47,4 @@ Advanced projections, personalized opponent models, and ESPN synchronization mus
 - Milestone 23: local data refresh hooks.
 - Milestone 24: API contract export and schema checks.
 - Milestone 25: release and build metadata.
+- Milestone 26: draft rehearsal scenarios.

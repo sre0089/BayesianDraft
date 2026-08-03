@@ -34,3 +34,4 @@ All notable project changes will be documented here.
 - Added local data refresh hooks that verify ingestion manifests without external fetches.
 - Added OpenAPI schema export and contract tests for key API endpoints.
 - Added build metadata helpers, a version CLI, and a local API version endpoint.
+- Added draft rehearsal scenarios and a CLI preview for repeatable mock-draft states.

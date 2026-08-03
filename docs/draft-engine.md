@@ -50,6 +50,17 @@ Milestone 2 implements the initial backend draft-state engine in `bayesiandraft.
 - Prior-pick editing.
 - JSON save/load round trip.
 - Complete mock draft entry through backend logic.
+- Rehearsal scenarios that apply scripted fixture picks to reach repeatable draft states.
+
+## Rehearsal
+
+Milestone 26 adds:
+
+```bash
+PYTHONPATH=. python scripts/rehearsal_preview.py
+```
+
+The default scenario advances the fixture draft to pick 8 so the primary user is on clock.
 
 ## Current Assumption
 
