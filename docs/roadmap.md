@@ -51,3 +51,4 @@ Advanced projections, personalized opponent models, and ESPN synchronization mus
 - Milestone 27: draft-day runbook and local validation aggregator.
 - Milestone 28: league configuration sanity report.
 - Milestone 29: snapshot health report.
+- Milestone 30: recommendation export.

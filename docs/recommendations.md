@@ -56,6 +56,16 @@ Current behavior:
 - Ranks candidates by rollout VORP with lightweight draft-value context.
 - Returns a primary optimized candidate, alternatives, rollout summaries, and explanations.
 
+## Export
+
+Milestone 30 adds:
+
+```bash
+PYTHONPATH=. python scripts/export_recommendations.py --out /tmp/recommendations.json --scenario data/fixtures/rehearsal_user_pick_8.json
+```
+
+This exports baseline recommendation JSON for a fresh draft state, optionally after applying a rehearsal scenario.
+
 ## Current Limitations
 
 - Availability is a heuristic, not a calibrated probability model.
