@@ -62,6 +62,16 @@ PYTHONPATH=. python scripts/rehearsal_preview.py
 
 The default scenario advances the fixture draft to pick 8 so the primary user is on clock.
 
+## Summary Export
+
+Milestone 31 adds:
+
+```bash
+PYTHONPATH=. python scripts/draft_summary.py --scenario data/fixtures/rehearsal_user_pick_8.json
+```
+
+This prints current pick, manager on clock, completed picks, available players, user roster size, and next user pick.
+
 ## Current Assumption
 
 Draft length is derived from starting slots plus bench slots. IR is excluded from draft length. A future milestone may add an explicit `draft_rounds` field to league configuration if the actual draft room differs.
