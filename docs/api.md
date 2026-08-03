@@ -42,6 +42,8 @@ Request and response models must be typed, validation errors should be useful, a
 The current service stores draft sessions in memory and uses the synthetic baseline player snapshot. Save/load can persist a draft JSON file locally.
 Candidate rollouts require the user manager to be on clock.
 
+ESPN sync is currently represented by a dry-run integration boundary in `bayesiandraft.integrations.espn`; no live ESPN endpoint is exposed yet.
+
 ## Current Limitations
 
 - No authentication is implemented, matching local-first development.
