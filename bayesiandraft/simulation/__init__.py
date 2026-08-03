@@ -6,6 +6,10 @@ from bayesiandraft.simulation.availability import (
     estimate_all_availability,
     estimate_availability,
 )
+from bayesiandraft.simulation.benchmark import (
+    SimulationBenchmarkResult,
+    benchmark_remaining_draft,
+)
 from bayesiandraft.simulation.draft import (
     CandidateRolloutResult,
     DraftSimulationConfig,
@@ -20,6 +24,8 @@ __all__ = [
     "CandidateRolloutResult",
     "DraftSimulationConfig",
     "SimulatedDraft",
+    "SimulationBenchmarkResult",
+    "benchmark_remaining_draft",
     "estimate_all_availability",
     "estimate_availability",
     "simulate_candidate_rollout",
