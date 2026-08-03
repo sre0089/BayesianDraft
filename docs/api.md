@@ -22,6 +22,7 @@ Request and response models must be typed, validation errors should be useful, a
 ## Implemented Local Endpoints
 
 - `GET /health`
+- `GET /version`
 - `GET /league`
 - `GET /players`
 - `GET /rankings`

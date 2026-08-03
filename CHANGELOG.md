@@ -33,3 +33,4 @@ All notable project changes will be documented here.
 - Added local model registry metadata helpers and active-model lookup.
 - Added local data refresh hooks that verify ingestion manifests without external fetches.
 - Added OpenAPI schema export and contract tests for key API endpoints.
+- Added build metadata helpers, a version CLI, and a local API version endpoint.
