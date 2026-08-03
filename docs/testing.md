@@ -41,3 +41,13 @@ PYTHONPATH=. python scripts/league_report.py
 ```
 
 This prints the validated league setup, draft size, user draft position, and non-blocking config warnings.
+
+## Privacy Scan
+
+Milestone 34 adds:
+
+```bash
+PYTHONPATH=. python scripts/privacy_scan.py
+```
+
+This fails when real draft manager names appear as standalone words in committed text files.
