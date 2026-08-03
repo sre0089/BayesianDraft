@@ -25,3 +25,4 @@ All notable project changes will be documented here.
 - Added weekly lineup optimization and seeded roster season simulation.
 - Added candidate rollout optimization and a local API endpoint for candidate rollouts.
 - Added a browser-local candidate rollout simulator panel to the draft room.
+- Added first-pass opponent draft profiles and simulator pick bias by manager preference.

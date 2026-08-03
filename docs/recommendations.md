@@ -60,5 +60,5 @@ Current behavior:
 
 - Availability is a heuristic, not a calibrated probability model.
 - Candidate rollout uses the current heuristic draft simulator.
-- No opponent personalization is included yet.
+- Opponent personalization is a first-pass profile heuristic, not a calibrated model.
 - Recommendation utility is not yet tied to season simulation or championship probability.
