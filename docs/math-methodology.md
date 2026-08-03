@@ -99,10 +99,7 @@ This is intentionally simple. It gives the simulator uncertainty-aware behavior 
 Fantasy points are computed from stat-line components and league scoring weights. For an offensive player:
 
 $$
-\mathrm{FP}(p) =
-\sum_{k \in K_{\mathrm{pass}}} w_k z_{p,k}
-+ \sum_{k \in K_{\mathrm{rush}}} w_k z_{p,k}
-+ \sum_{k \in K_{\mathrm{rec}}} w_k z_{p,k}
+\mathrm{FP}(p) = \sum_{k \in K_{\mathrm{pass}}} w_k z_{p,k} + \sum_{k \in K_{\mathrm{rush}}} w_k z_{p,k} + \sum_{k \in K_{\mathrm{rec}}} w_k z_{p,k}
 $$
 
 where $z_{p,k}$ is a stat value and $w_k$ is the configured fantasy scoring weight.
@@ -164,12 +161,7 @@ Tiers help the recommendation engine distinguish a replaceable rank difference f
 The current baseline recommendation score is additive and explainable:
 
 $$
-s_p =
-\mathrm{VORP}_p
-+ N(p, R_{m_u})
-+ T(p)
-+ V(p)
-- C(p, R_{m_u}, t)
+s_p = \mathrm{VORP}_p + N(p, R_{m_u}) + T(p) + V(p) - C(p, R_{m_u}, t)
 $$
 
 where:
@@ -227,12 +219,7 @@ $$
 Each simulated path drafts players according to a heuristic utility:
 
 $$
-u_{m,p} =
-\alpha \cdot \mathrm{rankValue}_p
-+ \beta \cdot \mathrm{need}_{m,p}
-+ \gamma \cdot \mathrm{market}_{p}
-+ \delta \cdot \mathrm{opponentPreference}_{m,p}
-+ \epsilon_{s,p}
+u_{m,p} = \alpha \cdot \mathrm{rankValue}_p + \beta \cdot \mathrm{need}_{m,p} + \gamma \cdot \mathrm{market}_{p} + \delta \cdot \mathrm{opponentPreference}_{m,p} + \epsilon_{s,p}
 $$
 
 where $\epsilon_{s,p}$ is seeded randomness. The same seed and state produce the same estimate.
@@ -320,10 +307,7 @@ $$
 This currently estimates roster scoring strength, not full league standings or playoff probability. A later model can extend the utility function to:
 
 $$
-U(R) =
-E[\mathrm{Points}(R)]
-+ \kappa_1 P(\mathrm{Playoffs} \mid R)
-+ \kappa_2 P(\mathrm{Championship} \mid R)
+U(R) = E[\mathrm{Points}(R)] + \kappa_1 P(\mathrm{Playoffs} \mid R) + \kappa_2 P(\mathrm{Championship} \mid R)
 $$
 
 ## Backtesting And Calibration
