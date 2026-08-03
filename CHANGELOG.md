@@ -36,3 +36,4 @@ All notable project changes will be documented here.
 - Added build metadata helpers, a version CLI, and a local API version endpoint.
 - Added draft rehearsal scenarios and a CLI preview for repeatable mock-draft states.
 - Added a draft-day runbook and local validation aggregator command.
+- Added a league sanity report for draft setup and non-blocking config warnings.

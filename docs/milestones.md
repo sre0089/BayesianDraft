@@ -50,6 +50,16 @@
 25. Release/build metadata
 26. Draft rehearsal scenarios
 27. Runbook and operational polish
+28. League config sanity report
+29. Snapshot health report
+30. Recommendation export
+31. Draft state summary export
+32. Roster balance report
+33. Simulator benchmark smoke check
+34. Privacy scan command
+35. Documentation index
+36. CI helper command
+37. Project status report
 
 ## Milestone Status
 
@@ -81,3 +91,4 @@
 - Milestone 25: complete
 - Milestone 26: complete
 - Milestone 27: complete
+- Milestone 28: complete

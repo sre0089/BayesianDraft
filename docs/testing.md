@@ -31,3 +31,13 @@ PYTHONPATH=.:apps/api/src python scripts/validate_local.py
 ```
 
 This command runs the local preflight, data refresh verification, rehearsal preview, and version metadata checks.
+
+## League Sanity Report
+
+Milestone 28 adds:
+
+```bash
+PYTHONPATH=. python scripts/league_report.py
+```
+
+This prints the validated league setup, draft size, user draft position, and non-blocking config warnings.
