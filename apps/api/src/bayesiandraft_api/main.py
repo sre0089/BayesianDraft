@@ -9,6 +9,7 @@ from bayesiandraft.recommendations import (
     optimize_candidates,
     recommend_players,
 )
+from bayesiandraft.release import BuildInfo, build_info_from_env
 from bayesiandraft_api.service import DraftSessionService, to_api_draft_state
 
 
@@ -45,6 +46,10 @@ def create_app() -> FastAPI:
     @app.get("/health", response_model=HealthResponse)
     def health() -> HealthResponse:
         return HealthResponse(status="ok")
+
+    @app.get("/version", response_model=BuildInfo)
+    def version() -> BuildInfo:
+        return build_info_from_env()
 
     @app.get("/league")
     def league() -> dict[str, object]:
