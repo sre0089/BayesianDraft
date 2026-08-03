@@ -5,6 +5,11 @@ from collections import Counter
 from pydantic import BaseModel, Field, PositiveInt
 
 from bayesiandraft.draft import DraftPick, DraftState
+from bayesiandraft.opponents import (
+    OpponentDraftProfile,
+    build_opponent_profiles,
+    opponent_pick_weight,
+)
 from bayesiandraft.rankings import RankingRow
 
 
@@ -43,6 +48,7 @@ def simulate_remaining_draft(
     simulation_config = config or DraftSimulationConfig(seed=seed)
     rng = random.Random(seed)
     ranking_by_id = _ranking_by_id(rankings, draft_state)
+    opponent_profiles = build_opponent_profiles(draft_state, rankings)
     state = draft_state
 
     while not state.is_complete:
@@ -58,6 +64,7 @@ def simulate_remaining_draft(
             available_ids,
             state=state,
             rankings=ranking_by_id,
+            opponent_profiles=opponent_profiles,
             rng=rng,
             config=simulation_config,
         )
@@ -131,6 +138,7 @@ def _sample_player(
     *,
     state: DraftState,
     rankings: dict[str, RankingRow],
+    opponent_profiles: dict[str, OpponentDraftProfile],
     rng: random.Random,
     config: DraftSimulationConfig,
 ) -> str:
@@ -144,7 +152,10 @@ def _sample_player(
         rank_pressure = 1 / max(ranking.overall_rank, 1)
         value_pressure = max(ranking.vorp, 0) / 100
         need_bonus = _manager_need_bonus(state, manager_id, ranking, config)
-        weights.append(max(adp_pressure + rank_pressure + value_pressure + need_bonus, 0.001))
+        opponent_bonus = opponent_pick_weight(manager_id, ranking, opponent_profiles)
+        weights.append(
+            max(adp_pressure + rank_pressure + value_pressure + need_bonus + opponent_bonus, 0.001)
+        )
     return rng.choices(available_ids, weights=weights, k=1)[0]
 
 
