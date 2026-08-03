@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from bayesiandraft.config.league import LeagueConfig
-from bayesiandraft.draft import default_total_rounds
+from bayesiandraft.draft.state import default_total_rounds
 
 
 class LeagueSanityReport(BaseModel):

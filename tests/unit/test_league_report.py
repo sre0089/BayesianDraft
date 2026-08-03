@@ -1,4 +1,5 @@
-from bayesiandraft.config import build_league_sanity_report, load_league_config
+from bayesiandraft.config import load_league_config
+from bayesiandraft.config.report import build_league_sanity_report
 
 
 def test_league_sanity_report_matches_14_team_setup() -> None:
