@@ -53,3 +53,4 @@ Advanced projections, personalized opponent models, and ESPN synchronization mus
 - Milestone 29: snapshot health report.
 - Milestone 30: recommendation export.
 - Milestone 31: draft state summary export.
+- Milestone 32: roster balance report.

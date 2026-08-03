@@ -72,6 +72,16 @@ PYTHONPATH=. python scripts/draft_summary.py --scenario data/fixtures/rehearsal_
 
 This prints current pick, manager on clock, completed picks, available players, user roster size, and next user pick.
 
+## Roster Balance
+
+Milestone 32 adds:
+
+```bash
+PYTHONPATH=. python scripts/roster_balance.py
+```
+
+This reports positional counts, starter targets, remaining starter needs, and surplus for a manager.
+
 ## Current Assumption
 
 Draft length is derived from starting slots plus bench slots. IR is excluded from draft length. A future milestone may add an explicit `draft_rounds` field to league configuration if the actual draft room differs.

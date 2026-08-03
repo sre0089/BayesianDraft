@@ -40,3 +40,4 @@ All notable project changes will be documented here.
 - Added a snapshot health report for projection, ADP, and injury coverage.
 - Added a recommendation export script for baseline draft-board snapshots.
 - Added a draft state summary helper and CLI for compact draft-room review.
+- Added a roster balance report for positional starter gaps and surplus.
