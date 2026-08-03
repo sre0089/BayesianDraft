@@ -45,3 +45,4 @@ Advanced projections, personalized opponent models, and ESPN synchronization mus
 - Milestone 21: post-draft decision audit.
 - Milestone 22: local model registry helpers.
 - Milestone 23: local data refresh hooks.
+- Milestone 24: API contract export and schema checks.

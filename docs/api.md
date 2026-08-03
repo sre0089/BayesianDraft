@@ -44,6 +44,16 @@ Candidate rollouts require the user manager to be on clock.
 
 ESPN sync is currently represented by a dry-run integration boundary in `bayesiandraft.integrations.espn`; no live ESPN endpoint is exposed yet.
 
+## Contract Export
+
+Milestone 24 adds OpenAPI schema export:
+
+```bash
+PYTHONPATH=.:apps/api/src python scripts/export_openapi.py --out /tmp/bayesiandraft-openapi.json
+```
+
+API contract tests assert that key draft, recommendation, and rollout endpoints remain present.
+
 ## Current Limitations
 
 - No authentication is implemented, matching local-first development.

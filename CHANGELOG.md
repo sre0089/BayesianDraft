@@ -32,3 +32,4 @@ All notable project changes will be documented here.
 - Added local post-draft decision audit records and JSON persistence helpers.
 - Added local model registry metadata helpers and active-model lookup.
 - Added local data refresh hooks that verify ingestion manifests without external fetches.
+- Added OpenAPI schema export and contract tests for key API endpoints.
