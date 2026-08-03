@@ -23,10 +23,10 @@ This document describes the current methodology and the intended direction of th
 The draft state at pick \(t\) is:
 
 $$
-D_t = \left(A_t, \{R_m(t)\}_{m \in M}, t, \operatorname{slot}(t)\right)
+D_t = \left(A_t, \{R_m(t)\}_{m \in M}, t, \mathrm{slot}(t)\right)
 $$
 
-where \(\operatorname{slot}(t)\) maps an overall pick to round, round pick, and manager on clock.
+where \(\mathrm{slot}(t)\) maps an overall pick to round, round pick, and manager on clock.
 
 ## Draft State And Snake Order
 
@@ -47,8 +47,8 @@ The manager index is:
 $$
 j(t) =
 \begin{cases}
-i(t), & r(t) \text{ is odd} \\
-N - i(t) - 1, & r(t) \text{ is even}
+i(t), & r(t)\ \mathrm{is\ odd} \\
+N - i(t) - 1, & r(t)\ \mathrm{is\ even}
 \end{cases}
 $$
 
@@ -61,8 +61,8 @@ $$
 $$
 R_{m}(t+1) =
 \begin{cases}
-R_m(t) \cup \{p\}, & m = \operatorname{manager}(t) \\
-R_m(t), & \text{otherwise}
+R_m(t) \cup \{p\}, & m = \mathrm{manager}(t) \\
+R_m(t), & \mathrm{otherwise}
 \end{cases}
 $$
 
@@ -97,10 +97,10 @@ This is intentionally simple. It gives the simulator uncertainty-aware behavior 
 Fantasy points are computed from stat-line components and league scoring weights. For an offensive player:
 
 $$
-\operatorname{FP}(p) =
-\sum_{k \in K_{\text{pass}}} w_k z_{p,k}
-+ \sum_{k \in K_{\text{rush}}} w_k z_{p,k}
-+ \sum_{k \in K_{\text{rec}}} w_k z_{p,k}
+\mathrm{FP}(p) =
+\sum_{k \in K_{\mathrm{pass}}} w_k z_{p,k}
++ \sum_{k \in K_{\mathrm{rush}}} w_k z_{p,k}
++ \sum_{k \in K_{\mathrm{rec}}} w_k z_{p,k}
 $$
 
 where \(z_{p,k}\) is a stat value and \(w_k\) is the configured fantasy scoring weight.
@@ -108,7 +108,7 @@ where \(z_{p,k}\) is a stat value and \(w_k\) is the configured fantasy scoring 
 Kicker and defense/special teams scoring use the same weighted-stat pattern plus bucketed rules. For bucketed scoring, the active bucket is selected by the observed value:
 
 $$
-\operatorname{bucket}(v) = b \quad \text{such that} \quad l_b \le v \le u_b
+\mathrm{bucket}(v) = b \quad \mathrm{such\ that} \quad l_b \le v \le u_b
 $$
 
 The implementation keeps scoring pure and configuration-driven so projections, simulations, and tests all use the same league rules.
@@ -118,30 +118,30 @@ The implementation keeps scoring pure and configuration-driven so projections, s
 The ranking baseline converts projected points into value over replacement. For player \(p\) at position \(c\):
 
 $$
-\operatorname{VORP}_p = \mu_p - \mu_{\operatorname{replacement}(c)}
+\mathrm{VORP}_p = \mu_p - \mu_{\mathrm{replacement}(c)}
 $$
 
-where \(\mu_{\operatorname{replacement}(c)}\) is the projected point total for the configured replacement rank at that position.
+where \(\mu_{\mathrm{replacement}(c)}\) is the projected point total for the configured replacement rank at that position.
 
 Value above starter is:
 
 $$
-\operatorname{VAS}_p = \mu_p - \mu_{\operatorname{starter}(c)}
+\mathrm{VAS}_p = \mu_p - \mu_{\mathrm{starter}(c)}
 $$
 
-where \(\mu_{\operatorname{starter}(c)}\) is the starter-threshold projection for the position.
+where \(\mu_{\mathrm{starter}(c)}\) is the starter-threshold projection for the position.
 
 Market value is represented by ADP delta:
 
 $$
-\Delta_{\text{ADP},p} = \pi_p - \operatorname{rank}_p
+\Delta_{\mathrm{ADP},p} = \pi_p - \mathrm{rank}_p
 $$
 
-A positive \(\Delta_{\text{ADP},p}\) means the model ranks the player earlier than the market price. A negative value means the player is expensive relative to the model.
+A positive \(\Delta_{\mathrm{ADP},p}\) means the model ranks the player earlier than the market price. A negative value means the player is expensive relative to the model.
 
 The baseline overall ranking is sorted by:
 
-1. \(\operatorname{VORP}_p\), descending.
+1. \(\mathrm{VORP}_p\), descending.
 2. \(\mu_p\), descending.
 3. Player name, ascending for deterministic ties.
 
@@ -163,7 +163,7 @@ The current baseline recommendation score is additive and explainable:
 
 $$
 s_p =
-\operatorname{VORP}_p
+\mathrm{VORP}_p
 + N(p, R_{m_u})
 + T(p)
 + V(p)
@@ -174,7 +174,7 @@ where:
 
 | Term | Meaning |
 | --- | --- |
-| \(\operatorname{VORP}_p\) | Player value over replacement |
+| \(\mathrm{VORP}_p\) | Player value over replacement |
 | \(N(p, R_{m_u})\) | Roster need boost |
 | \(T(p)\) | Tier-quality boost |
 | \(V(p)\) | Market value boost from ADP delta |
@@ -185,22 +185,22 @@ The need term rewards filling starter requirements:
 $$
 N(p, R_{m_u}) =
 \begin{cases}
-\lambda_c, & \operatorname{count}(R_{m_u}, c_p) < \operatorname{starterTarget}(c_p) \\
-0, & \text{otherwise}
+\lambda_c, & \mathrm{count}(R_{m_u}, c_p) < \mathrm{starterTarget}(c_p) \\
+0, & \mathrm{otherwise}
 \end{cases}
 $$
 
 The market term rewards players the model likes more than the market:
 
 $$
-V(p) = \lambda_{\text{adp}} \cdot \max(\Delta_{\text{ADP},p}, 0)
+V(p) = \lambda_{\mathrm{adp}} \cdot \max(\Delta_{\mathrm{ADP},p}, 0)
 $$
 
 The timing penalty currently discourages early kicker and defense selections and duplicate low-flexibility roster construction:
 
 $$
 C(p, R_{m_u}, t) =
-C_{\text{early-special}}(p,t) + C_{\text{duplicate-special}}(p, R_{m_u})
+C_{\mathrm{early}}(p,t) + C_{\mathrm{duplicate}}(p, R_{m_u})
 $$
 
 This structure is deliberately readable. Every recommendation can be decomposed into value, need, tier, market, and penalty components.
@@ -226,10 +226,10 @@ Each simulated path drafts players according to a heuristic utility:
 
 $$
 u_{m,p} =
-\alpha \cdot \operatorname{rankValue}_p
-+ \beta \cdot \operatorname{need}_{m,p}
-+ \gamma \cdot \operatorname{market}_{p}
-+ \delta \cdot \operatorname{opponentPreference}_{m,p}
+\alpha \cdot \mathrm{rankValue}_p
++ \beta \cdot \mathrm{need}_{m,p}
++ \gamma \cdot \mathrm{market}_{p}
++ \delta \cdot \mathrm{opponentPreference}_{m,p}
 + \epsilon_{s,p}
 $$
 
@@ -251,7 +251,7 @@ where \(n_{m,c}\) is the count of drafted players at position \(c\), and \(a_c\)
 The simulator can use \(\theta_{m,c}\) as part of the opponent preference term:
 
 $$
-\operatorname{opponentPreference}_{m,p} = \theta_{m,c_p}
+\mathrm{opponentPreference}_{m,p} = \theta_{m,c_p}
 $$
 
 Future versions should learn these profiles from historical draft behavior when user-provided history is available.
@@ -263,7 +263,7 @@ Candidate rollout asks: "If the user drafts player \(p\) now, what roster outcom
 For each candidate \(p \in A_t\), the engine creates a copied state:
 
 $$
-D_{t+1}^{p} = \operatorname{recordPick}(D_t, p)
+D_{t+1}^{p} = \mathrm{recordPick}(D_t, p)
 $$
 
 Then it simulates the remaining draft \(S\) times and evaluates the resulting user roster:
@@ -277,7 +277,7 @@ $$
 The current roster utility is based on projected points and roster VORP:
 
 $$
-U(R) = \sum_{p \in R} \mu_p + \eta \sum_{p \in R} \operatorname{VORP}_p
+U(R) = \sum_{p \in R} \mu_p + \eta \sum_{p \in R} \mathrm{VORP}_p
 $$
 
 The selected candidate is:
@@ -301,7 +301,7 @@ $$
 subject to roster slot constraints:
 
 $$
-\operatorname{eligible}(p, q) = 1
+\mathrm{eligible}(p, q) = 1
 $$
 
 for every player \(p\) assigned to slot \(q\).
@@ -309,7 +309,7 @@ for every player \(p\) assigned to slot \(q\).
 The current season simulator repeats this process across weeks using seeded player outcomes:
 
 $$
-\operatorname{SeasonPoints}(R) =
+\mathrm{SeasonPoints}(R) =
 \sum_{w=1}^{W}
 \max_{L_w \subseteq R}
 \sum_{p \in L_w} Y_{p,w}
@@ -319,9 +319,9 @@ This currently estimates roster scoring strength, not full league standings or p
 
 $$
 U(R) =
-E[\operatorname{Points}(R)]
-+ \kappa_1 P(\operatorname{Playoffs} \mid R)
-+ \kappa_2 P(\operatorname{Championship} \mid R)
+E[\mathrm{Points}(R)]
++ \kappa_1 P(\mathrm{Playoffs} \mid R)
++ \kappa_2 P(\mathrm{Championship} \mid R)
 $$
 
 ## Backtesting And Calibration
@@ -331,7 +331,7 @@ The engine should earn complexity through validation. Core metrics include:
 Projection error:
 
 $$
-\operatorname{MAE} =
+\mathrm{MAE} =
 \frac{1}{n}\sum_{i=1}^{n}
 \left|y_i - \hat{y}_i\right|
 $$
@@ -339,7 +339,7 @@ $$
 Availability probability quality:
 
 $$
-\operatorname{Brier} =
+\mathrm{Brier} =
 \frac{1}{n}\sum_{i=1}^{n}
 (\hat{p}_i - y_i)^2
 $$
@@ -347,7 +347,7 @@ $$
 Binary log loss:
 
 $$
-\operatorname{LogLoss} =
+\mathrm{LogLoss} =
 -\frac{1}{n}\sum_{i=1}^{n}
 \left[
 y_i \log(\hat{p}_i) + (1-y_i)\log(1-\hat{p}_i)
@@ -357,8 +357,8 @@ $$
 Draft regret for a pick can be measured as:
 
 $$
-\operatorname{Regret}_t =
-U(R_T^{\text{best available at }t}) - U(R_T^{\text{actual pick at }t})
+\mathrm{Regret}_t =
+U(R_T^{\mathrm{best\ available\ at}\ t}) - U(R_T^{\mathrm{actual\ pick\ at}\ t})
 $$
 
 Backtests must be time-aware. A model for a historical draft should only use information that existed before that draft.
