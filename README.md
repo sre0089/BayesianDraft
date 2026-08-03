@@ -4,13 +4,32 @@ BayesianDraft is a local-first probabilistic fantasy football draft assistant fo
 
 Most fantasy tools rank players. BayesianDraft ranks decisions. The target product recommends the available player who maximizes expected final roster strength, and eventually playoff and championship probability, given the live draft state.
 
-## Target Stack
+## What It Does
+
+- Tracks a snake draft with manual picks, rosters, availability, undo/redo, and save/restore.
+- Scores players with configuration-driven full-PPR league settings.
+- Builds baseline rankings from projections, replacement levels, ADP, tiers, and risk signals.
+- Explains recommendations with roster needs, player value, scarcity, and next-pick availability.
+- Runs seeded draft simulations and candidate rollouts for repeatable strategy comparison.
+- Keeps ESPN integration behind a dry-run boundary so local manual mode stays reliable.
+
+## Tech Stack
 
 - Backend: Python 3.12, FastAPI, Pydantic, Polars, DuckDB or SQLite
 - Frontend: React, TypeScript, Vite, Vitest, React Testing Library
 - Testing: pytest, Ruff, mypy where practical, Vitest
 - Modeling: scikit-learn first, CatBoost/LightGBM only when validated
 - Storage: local configuration, data snapshots, draft sessions, model artifacts, and audit logs
+
+## Repository Layout
+
+- `bayesiandraft/`: scoring, draft state, rankings, recommendations, simulation, data, modeling, and audit logic.
+- `apps/api/`: local FastAPI service for the draft room and supporting tooling.
+- `apps/web/`: browser-based draft room UI.
+- `configs/`: league settings and anonymized draft configuration.
+- `data/`: committed fixtures plus ignored raw, processed, and snapshot data directories.
+- `docs/`: public product, architecture, data, modeling, and API notes.
+- `scripts/`: local validation, export, preflight, and reporting commands.
 
 ## Local Setup
 
@@ -46,11 +65,15 @@ Run the web app:
 npm run dev
 ```
 
-## Development Principles
+## Data And Privacy
+
+BayesianDraft is designed to run locally. Committed examples use anonymized manager labels and synthetic fixture data. Do not commit real league credentials, cookies, ESPN tokens, private league data, local databases, or raw downloaded datasets.
+
+## Development
 
 - Keep league settings configuration-driven.
 - Keep scoring and draft state deterministic and heavily tested.
 - Prefer fixtures over live services in tests.
 - Preserve data provenance and avoid historical leakage.
 - Keep manual draft mode reliable before adding ESPN synchronization.
-- Build small, complete vertical slices and keep `main` runnable.
+- Keep `main` runnable with focused commits and clear validation.

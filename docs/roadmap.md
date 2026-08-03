@@ -1,61 +1,27 @@
 # Roadmap
 
-The reliable draft-day product comes first.
+The reliable draft-day product comes first. Advanced projections, personalized opponent models, and ESPN synchronization should improve the local manual workflow without making it brittle.
 
-## Minimum Viable Draft-Day Product
+## Current Capabilities
 
-1. Repository foundation
-2. Exact scoring
-3. Draft-state engine
-4. Data schemas
-5. Baseline player snapshot
-6. Baseline rankings
-7. FastAPI
-8. Manual draft UI
-9. Explainable recommendations
-10. Availability simulation
-11. Save, restore, and undo
-12. Draft rehearsal
+- Configuration-driven full-PPR scoring and draft settings.
+- Deterministic snake draft state with rosters, availability, undo/redo, edits, and save/load.
+- Synthetic baseline player snapshot with manifest validation and export tooling.
+- Baseline rankings, explainable recommendations, and seeded availability estimates.
+- Seeded draft simulations, candidate rollouts, roster balance reports, and rehearsal scenarios.
+- Local FastAPI service and browser-based draft room.
+- Dry-run ESPN integration boundary, preflight checks, privacy scan, docs index check, and local CI helper.
 
-Advanced projections, personalized opponent models, and ESPN synchronization must not jeopardize the reliable manual workflow.
+## Near-Term Work
 
-## Completed Foundation Milestones
+- Improve the draft room for live use: faster player entry, clearer recommendation states, and stronger keyboard flows.
+- Replace synthetic fixtures with reproducible public or user-provided projection snapshots.
+- Expand recommendation evaluation with historical draft and season backtests.
+- Add safer session persistence for draft-day recovery.
 
-- Milestone 0: repository foundation.
-- Milestone 1: configurable scoring engine.
-- Milestone 2: deterministic draft-state engine.
-- Milestone 3: core data schemas.
-- Milestone 4: synthetic baseline player snapshot.
-- Milestone 5: baseline ranking engine.
-- Milestone 6: local FastAPI backend.
-- Milestone 7: manual draft room UI.
-- Milestone 8: explainable baseline recommendations.
-- Milestone 9: seeded baseline availability model.
-- Milestone 10: seeded Monte Carlo draft simulator.
-- Milestone 11: ingestion manifest foundation.
-- Milestone 12: baseline projection distributions.
-- Milestone 13: injury-aware games-played baseline.
-- Milestone 14: weekly lineup and roster season simulator.
-- Milestone 15: candidate rollout optimizer.
-- Milestone 16: rankings and simulator UI slice.
-- Milestone 17: personalized opponent profile baseline.
-- Milestone 18: ESPN integration boundary.
-- Milestone 19: historical backtesting metrics.
-- Milestone 20: draft-day preflight hardening.
-- Milestone 21: post-draft decision audit.
-- Milestone 22: local model registry helpers.
-- Milestone 23: local data refresh hooks.
-- Milestone 24: API contract export and schema checks.
-- Milestone 25: release and build metadata.
-- Milestone 26: draft rehearsal scenarios.
-- Milestone 27: draft-day runbook and local validation aggregator.
-- Milestone 28: league configuration sanity report.
-- Milestone 29: snapshot health report.
-- Milestone 30: recommendation export.
-- Milestone 31: draft state summary export.
-- Milestone 32: roster balance report.
-- Milestone 33: simulator benchmark smoke check.
-- Milestone 34: privacy scan command.
-- Milestone 35: documentation index and link check.
-- Milestone 36: local CI helper command.
-- Milestone 37: project status report.
+## Later Work
+
+- Validate projection distributions against real historical outcomes.
+- Add personalized opponent models from user-provided draft history.
+- Add opt-in ESPN sync once the manual workflow is dependable.
+- Convert draft recommendations into season-level playoff and championship probability estimates.

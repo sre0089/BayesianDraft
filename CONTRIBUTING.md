@@ -1,12 +1,12 @@
 # Contributing
 
-BayesianDraft is built in milestone-sized vertical slices. Each change should keep the repository runnable and should avoid unrelated refactors.
+BayesianDraft is built in focused, runnable slices. Each change should keep the repository usable and avoid unrelated refactors.
 
 ## Before Starting Work
 
 1. Read the relevant docs in `docs/`.
 2. Summarize the current repository state.
-3. State the milestone objective.
+3. State the change objective.
 4. List files expected to change.
 5. Identify tests and acceptance criteria.
 6. Ask for approval when a change is large, destructive, or ambiguous.
@@ -31,7 +31,7 @@ npm test
 npm run lint
 ```
 
-Some commands may not exist until the related milestone is complete. Note skipped checks in the handoff.
+If a command is not relevant to the change, note that in the handoff.
 
 ## Git
 
