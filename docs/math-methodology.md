@@ -6,31 +6,33 @@ This document describes the current methodology and the intended direction of th
 
 ## Notation
 
+The notation table uses HTML subscripts and Unicode symbols so it renders cleanly in Markdown tables.
+
 | Symbol | Meaning |
 | --- | --- |
-| \(P\) | Set of all players in the current player pool |
-| \(A_t \subseteq P\) | Players available before pick \(t\) |
-| \(M\) | Set of draft managers |
-| \(m_u \in M\) | Configured user manager |
-| \(R_m(t)\) | Roster for manager \(m\) before pick \(t\) |
-| \(x_p\) | Feature vector for player \(p\) |
-| \(\mu_p\) | Projected mean season points for player \(p\) |
-| \(q_{p,\alpha}\) | Projection quantile for player \(p\) at quantile \(\alpha\) |
-| \(\pi_p\) | Market cost for player \(p\), represented by overall ADP |
-| \(s_p\) | Engine score for player \(p\) |
-| \(S\) | Number of simulation samples |
+| P | Set of all players in the current player pool |
+| A<sub>t</sub> ⊆ P | Players available before pick t |
+| M | Set of draft managers |
+| m<sub>u</sub> ∈ M | Configured user manager |
+| R<sub>m</sub>(t) | Roster for manager m before pick t |
+| x<sub>p</sub> | Feature vector for player p |
+| μ<sub>p</sub> | Projected mean season points for player p |
+| q<sub>p,α</sub> | Projection quantile for player p at quantile α |
+| π<sub>p</sub> | Market cost for player p, represented by overall ADP |
+| s<sub>p</sub> | Engine score for player p |
+| S | Number of simulation samples |
 
-The draft state at pick \(t\) is:
+The draft state at pick $t$ is:
 
 $$
 D_t = \left(A_t, \{R_m(t)\}_{m \in M}, t, \mathrm{slot}(t)\right)
 $$
 
-where \(\mathrm{slot}(t)\) maps an overall pick to round, round pick, and manager on clock.
+where $\mathrm{slot}(t)$ maps an overall pick to round, round pick, and manager on clock.
 
 ## Draft State And Snake Order
 
-For a league with \(N\) managers, the round for overall pick \(t\) is:
+For a league with $N$ managers, the round for overall pick $t$ is:
 
 $$
 r(t) = \left\lfloor \frac{t - 1}{N} \right\rfloor + 1
@@ -52,7 +54,7 @@ N - i(t) - 1, & r(t)\ \mathrm{is\ even}
 \end{cases}
 $$
 
-This makes draft transitions deterministic. Recording a pick removes the player from \(A_t\), appends the pick to history, and updates the selected manager's roster:
+This makes draft transitions deterministic. Recording a pick removes the player from $A_t$, appends the pick to history, and updates the selected manager's roster:
 
 $$
 A_{t+1} = A_t \setminus \{p\}
@@ -70,13 +72,13 @@ $$
 
 The current baseline starts from normalized player projection records. Each player has a mean projection, optional floor and ceiling values, and games-played assumptions.
 
-For a player \(p\), the baseline season projection is:
+For a player $p$, the baseline season projection is:
 
 $$
 \mu_p = E[Y_p]
 $$
 
-where \(Y_p\) is season fantasy points under the configured scoring rules.
+where $Y_p$ is season fantasy points under the configured scoring rules.
 
 Weekly sampling uses a simple distributional approximation derived from season-level projection intervals. If floor and ceiling are available, the weekly standard deviation is approximated from the spread:
 
@@ -84,7 +86,7 @@ $$
 \sigma_{p,w} \approx \frac{q_{p,0.85} - q_{p,0.15}}{2z_{0.85}\sqrt{G_p}}
 $$
 
-where \(G_p\) is expected games played and \(z_{0.85}\) is the standard normal quantile. Samples are floored at zero:
+where $G_p$ is expected games played and $z_{0.85}$ is the standard normal quantile. Samples are floored at zero:
 
 $$
 Y_{p,w}^{(s)} = \max \left(0, \mathcal{N}(\mu_{p,w}, \sigma_{p,w}^2)\right)
@@ -103,7 +105,7 @@ $$
 + \sum_{k \in K_{\mathrm{rec}}} w_k z_{p,k}
 $$
 
-where \(z_{p,k}\) is a stat value and \(w_k\) is the configured fantasy scoring weight.
+where $z_{p,k}$ is a stat value and $w_k$ is the configured fantasy scoring weight.
 
 Kicker and defense/special teams scoring use the same weighted-stat pattern plus bucketed rules. For bucketed scoring, the active bucket is selected by the observed value:
 
@@ -115,13 +117,13 @@ The implementation keeps scoring pure and configuration-driven so projections, s
 
 ## Replacement Value And Rankings
 
-The ranking baseline converts projected points into value over replacement. For player \(p\) at position \(c\):
+The ranking baseline converts projected points into value over replacement. For player $p$ at position $c$:
 
 $$
 \mathrm{VORP}_p = \mu_p - \mu_{\mathrm{replacement}(c)}
 $$
 
-where \(\mu_{\mathrm{replacement}(c)}\) is the projected point total for the configured replacement rank at that position.
+where $\mu_{\mathrm{replacement}(c)}$ is the projected point total for the configured replacement rank at that position.
 
 Value above starter is:
 
@@ -129,7 +131,7 @@ $$
 \mathrm{VAS}_p = \mu_p - \mu_{\mathrm{starter}(c)}
 $$
 
-where \(\mu_{\mathrm{starter}(c)}\) is the starter-threshold projection for the position.
+where $\mu_{\mathrm{starter}(c)}$ is the starter-threshold projection for the position.
 
 Market value is represented by ADP delta:
 
@@ -137,23 +139,23 @@ $$
 \Delta_{\mathrm{ADP},p} = \pi_p - \mathrm{rank}_p
 $$
 
-A positive \(\Delta_{\mathrm{ADP},p}\) means the model ranks the player earlier than the market price. A negative value means the player is expensive relative to the model.
+A positive $\Delta_{\mathrm{ADP},p}$ means the model ranks the player earlier than the market price. A negative value means the player is expensive relative to the model.
 
 The baseline overall ranking is sorted by:
 
-1. \(\mathrm{VORP}_p\), descending.
-2. \(\mu_p\), descending.
+1. $\mathrm{VORP}_p$, descending.
+2. $\mu_p$, descending.
 3. Player name, ascending for deterministic ties.
 
 ## Tiering
 
-Tiers are assigned within each position based on projection gaps. If players \(p_i\) and \(p_{i-1}\) are adjacent in positional rank, a new tier begins when:
+Tiers are assigned within each position based on projection gaps. If players $p_i$ and $p_{i-1}$ are adjacent in positional rank, a new tier begins when:
 
 $$
 \mu_{p_{i-1}} - \mu_{p_i} \ge \tau_c
 $$
 
-where \(\tau_c\) is the configured tier-gap threshold for position \(c\).
+where $\tau_c$ is the configured tier-gap threshold for position $c$.
 
 Tiers help the recommendation engine distinguish a replaceable rank difference from a real drop-off in the player pool.
 
@@ -174,11 +176,11 @@ where:
 
 | Term | Meaning |
 | --- | --- |
-| \(\mathrm{VORP}_p\) | Player value over replacement |
-| \(N(p, R_{m_u})\) | Roster need boost |
-| \(T(p)\) | Tier-quality boost |
-| \(V(p)\) | Market value boost from ADP delta |
-| \(C(p, R_{m_u}, t)\) | Draft timing and roster-construction penalty |
+| VORP<sub>p</sub> | Player value over replacement |
+| N(p, R<sub>mᵤ</sub>) | Roster need boost |
+| T(p) | Tier-quality boost |
+| V(p) | Market value boost from ADP delta |
+| C(p, R<sub>mᵤ</sub>, t) | Draft timing and roster-construction penalty |
 
 The need term rewards filling starter requirements:
 
@@ -209,7 +211,7 @@ This structure is deliberately readable. Every recommendation can be decomposed 
 
 Availability estimates answer: "What is the chance this player reaches a future target pick?"
 
-For player \(p\) and target pick \(k > t\), the desired probability is:
+For player $p$ and target pick $k > t$, the desired probability is:
 
 $$
 P(p \in A_k \mid D_t)
@@ -233,22 +235,22 @@ u_{m,p} =
 + \epsilon_{s,p}
 $$
 
-where \(\epsilon_{s,p}\) is seeded randomness. The same seed and state produce the same estimate.
+where $\epsilon_{s,p}$ is seeded randomness. The same seed and state produce the same estimate.
 
 The current model is not calibrated probability yet. It is a reproducible baseline for comparing decisions and detecting obvious availability tradeoffs.
 
 ## Opponent Profiles
 
-Opponent behavior is represented by lightweight profiles inferred from current draft behavior. For manager \(m\), the position preference for position \(c\) is smoothed:
+Opponent behavior is represented by lightweight profiles inferred from current draft behavior. For manager $m$, the position preference for position $c$ is smoothed:
 
 $$
 \theta_{m,c} =
 \frac{n_{m,c} + a_c}{\sum_{c'} n_{m,c'} + \sum_{c'} a_{c'}}
 $$
 
-where \(n_{m,c}\) is the count of drafted players at position \(c\), and \(a_c\) is a prior smoothing weight.
+where $n_{m,c}$ is the count of drafted players at position $c$, and $a_c$ is a prior smoothing weight.
 
-The simulator can use \(\theta_{m,c}\) as part of the opponent preference term:
+The simulator can use $\theta_{m,c}$ as part of the opponent preference term:
 
 $$
 \mathrm{opponentPreference}_{m,p} = \theta_{m,c_p}
@@ -258,15 +260,15 @@ Future versions should learn these profiles from historical draft behavior when 
 
 ## Candidate Rollout Optimization
 
-Candidate rollout asks: "If the user drafts player \(p\) now, what roster outcomes are expected after the rest of the draft?"
+Candidate rollout asks: "If the user drafts player $p$ now, what roster outcomes are expected after the rest of the draft?"
 
-For each candidate \(p \in A_t\), the engine creates a copied state:
+For each candidate $p \in A_t$, the engine creates a copied state:
 
 $$
 D_{t+1}^{p} = \mathrm{recordPick}(D_t, p)
 $$
 
-Then it simulates the remaining draft \(S\) times and evaluates the resulting user roster:
+Then it simulates the remaining draft $S$ times and evaluates the resulting user roster:
 
 $$
 Q(p) =
@@ -286,11 +288,11 @@ $$
 p^* = \arg\max_{p \in C_t} Q(p)
 $$
 
-where \(C_t\) is the configured candidate pool. Candidate rollouts are more expensive than the baseline recommendation score, but they better capture second-order effects such as positional scarcity and future pick timing.
+where $C_t$ is the configured candidate pool. Candidate rollouts are more expensive than the baseline recommendation score, but they better capture second-order effects such as positional scarcity and future pick timing.
 
 ## Lineup And Season Simulation
 
-For a weekly roster \(R\), lineup optimization selects eligible players into starting slots to maximize projected or sampled points:
+For a weekly roster $R$, lineup optimization selects eligible players into starting slots to maximize projected or sampled points:
 
 $$
 L^* =
@@ -304,7 +306,7 @@ $$
 \mathrm{eligible}(p, q) = 1
 $$
 
-for every player \(p\) assigned to slot \(q\).
+for every player $p$ assigned to slot $q$.
 
 The current season simulator repeats this process across weeks using seeded player outcomes:
 
