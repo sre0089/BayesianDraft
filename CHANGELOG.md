@@ -28,3 +28,4 @@ All notable project changes will be documented here.
 - Added first-pass opponent draft profiles and simulator pick bias by manager preference.
 - Added a safe dry-run ESPN integration boundary with environment-based configuration.
 - Added historical backtesting metric helpers for rank error, Brier score, and log loss.
+- Added draft-day preflight checks and CLI output for local readiness validation.
