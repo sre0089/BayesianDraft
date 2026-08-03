@@ -6,10 +6,7 @@ Start here when navigating the repository docs.
 
 - [Product Spec](product-spec.md)
 - [Architecture](architecture.md)
-- [Engineering Workflow](engineering-workflow.md)
 - [Roadmap](roadmap.md)
-- [Milestones](milestones.md)
-- [Runbook](runbook.md)
 
 ## Draft Day
 

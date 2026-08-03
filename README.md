@@ -1,17 +1,8 @@
 # BayesianDraft
 
-BayesianDraft is a local-first probabilistic fantasy football draft assistant for a private 14-team ESPN full-PPR redraft league.
+BayesianDraft is a local-first probabilistic fantasy football draft assistant for configurable fantasy football leagues.
 
 Most fantasy tools rank players. BayesianDraft ranks decisions. The target product recommends the available player who maximizes expected final roster strength, and eventually playoff and championship probability, given the live draft state.
-
-## Source of Truth
-
-The repository is governed by two master documents:
-
-- `BayesianDraft_Project_Specification_FULL.md`
-- `BayesianDraft_Engineering_Workflow_FULL.md`
-
-Working docs in `docs/` summarize and operationalize those documents. If there is a conflict, the two master documents win until an ADR updates the decision.
 
 ## Target Stack
 
@@ -20,12 +11,6 @@ Working docs in `docs/` summarize and operationalize those documents. If there i
 - Testing: pytest, Ruff, mypy where practical, Vitest
 - Modeling: scikit-learn first, CatBoost/LightGBM only when validated
 - Storage: local configuration, data snapshots, draft sessions, model artifacts, and audit logs
-
-## Current Status
-
-Milestone 0 is in progress: repository foundation, documentation, tooling, and runnable skeletons.
-
-No production recommendation logic exists yet.
 
 ## Local Setup
 

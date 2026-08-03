@@ -1,6 +1,6 @@
 # Product Spec
 
-BayesianDraft is a local-first fantasy football draft assistant for Primary User's private 14-team ESPN full-PPR redraft league.
+BayesianDraft is a local-first fantasy football draft assistant for configurable ESPN-style full-PPR redraft leagues.
 
 The product optimizes draft decisions rather than static player rankings. Recommendations should account for the live draft state, the user's roster, opponent rosters, player projections, positional scarcity, market cost, future pick positions, availability probability, and downstream roster outcomes.
 
@@ -20,5 +20,3 @@ The product optimizes draft decisions rather than static player rankings. Recomm
 - User draft slot: 8
 
 The public repository uses anonymized manager labels. Real manager names should stay out of committed config and docs.
-
-See `BayesianDraft_Project_Specification_FULL.md` for complete requirements.
