@@ -56,3 +56,4 @@ Advanced projections, personalized opponent models, and ESPN synchronization mus
 - Milestone 32: roster balance report.
 - Milestone 33: simulator benchmark smoke check.
 - Milestone 34: privacy scan command.
+- Milestone 35: documentation index and link check.

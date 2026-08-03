@@ -51,3 +51,13 @@ PYTHONPATH=. python scripts/privacy_scan.py
 ```
 
 This fails when real draft manager names appear as standalone words in committed text files.
+
+## Docs Index Check
+
+Milestone 35 adds:
+
+```bash
+PYTHONPATH=. python scripts/check_docs_index.py
+```
+
+This verifies that links in `docs/README.md` point to existing local Markdown files.

@@ -43,3 +43,4 @@ All notable project changes will be documented here.
 - Added a roster balance report for positional starter gaps and surplus.
 - Added a simulator benchmark smoke check for seeded draft rollouts.
 - Added a repo privacy scan command for public-safe manager-name checks.
+- Added a documentation index and local link check for docs navigation.
