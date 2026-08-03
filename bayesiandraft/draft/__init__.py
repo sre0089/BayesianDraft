@@ -6,6 +6,11 @@ from bayesiandraft.draft.rehearsal import (
     apply_rehearsal_scenario,
     load_rehearsal_scenario,
 )
+from bayesiandraft.draft.roster_report import (
+    PositionBalance,
+    RosterBalanceReport,
+    build_roster_balance_report,
+)
 from bayesiandraft.draft.state import (
     DraftPick,
     DraftState,
@@ -26,10 +31,13 @@ __all__ = [
     "DraftStateSummary",
     "PickSlot",
     "Player",
+    "PositionBalance",
     "RehearsalPick",
     "RehearsalScenario",
     "Roster",
+    "RosterBalanceReport",
     "apply_rehearsal_scenario",
+    "build_roster_balance_report",
     "build_rosters",
     "default_total_rounds",
     "load_rehearsal_scenario",
