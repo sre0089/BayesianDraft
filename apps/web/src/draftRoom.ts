@@ -27,6 +27,14 @@ export type DraftRoomState = {
   redoStack: Pick[][];
 };
 
+export type CandidateRollout = {
+  playerId: string;
+  optimizerScore: number;
+  averageProjectedPoints: number;
+  averageVorp: number;
+  explanation: string[];
+};
+
 const storageKey = "bayesiandraft.draftRoomState";
 
 export const managers = [
@@ -290,6 +298,52 @@ export function explainRecommendation(player: Player, completedPickCount: number
     notes.push("Early K/DST penalty applies.");
   }
   return notes;
+}
+
+export function candidateRollouts(state: DraftRoomState, limit = 4): CandidateRollout[] {
+  const slot = pickSlot(state.completedPicks.length + 1);
+  if (slot.managerId !== "Primary User") {
+    return [];
+  }
+
+  const draftedByUser = rosterForManager(state, "Primary User");
+  const rosterVorp = draftedByUser.reduce((total, player) => total + player.vorp, 0);
+  return availablePlayers(state)
+    .slice(0, Math.max(limit * 2, limit))
+    .map((player) => {
+      const needBoost = starterNeedBoost(player, draftedByUser);
+      const marketBoost = Math.max(player.adp - player.overallRank, 0) * 0.2;
+      const averageVorp = rosterVorp + player.vorp + needBoost;
+      const averageProjectedPoints =
+        draftedByUser.reduce((total, rosterPlayer) => total + rosterPlayer.projectedPoints, 0) +
+        player.projectedPoints;
+      return {
+        playerId: player.playerId,
+        optimizerScore: Number((averageVorp + marketBoost).toFixed(2)),
+        averageProjectedPoints: Number(averageProjectedPoints.toFixed(2)),
+        averageVorp: Number(averageVorp.toFixed(2)),
+        explanation: [
+          `${player.position}${player.positionRank} rollout candidate.`,
+          `${averageVorp.toFixed(1)} projected roster VORP after this pick.`,
+          `${marketBoost.toFixed(1)} market value boost versus ADP.`,
+        ],
+      };
+    })
+    .sort((left, right) => right.optimizerScore - left.optimizerScore || left.averageProjectedPoints - right.averageProjectedPoints)
+    .slice(0, limit);
+}
+
+function starterNeedBoost(player: Player, roster: Player[]) {
+  const starterTargets: Record<Position, number> = {
+    QB: 1,
+    RB: 2,
+    WR: 2,
+    TE: 1,
+    DST: 1,
+    K: 1,
+  };
+  const currentCount = roster.filter((item) => item.position === player.position).length;
+  return currentCount < starterTargets[player.position] ? 12 : 0;
 }
 
 export function nextUserPick(completedPickCount: number) {

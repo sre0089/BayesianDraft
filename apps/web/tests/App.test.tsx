@@ -40,4 +40,15 @@ describe("App", () => {
 
     expect(screen.getAllByText("Example RB One").length).toBeGreaterThan(0);
   });
+
+  it("shows candidate rollouts on the user pick", () => {
+    render(<App />);
+
+    for (let index = 0; index < 7; index += 1) {
+      fireEvent.click(screen.getAllByRole("button", { name: "Draft" })[0]);
+    }
+
+    expect(screen.getByRole("heading", { name: "Candidate rollouts" })).toBeInTheDocument();
+    expect(screen.getAllByText(/rollout candidate/).length).toBeGreaterThan(0);
+  });
 });

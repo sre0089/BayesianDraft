@@ -242,6 +242,62 @@ th {
   font-weight: 800;
 }
 
+.rollout-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.rollout-row {
+  border-top: 1px solid #e0e6e7;
+  padding-top: 12px;
+}
+
+.rollout-row strong,
+.rollout-row span {
+  display: block;
+}
+
+.rollout-row span {
+  margin-top: 3px;
+  color: #60717a;
+  font-size: 0.86rem;
+}
+
+.rollout-row dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.rollout-row dl div {
+  border: 1px solid #d8e0e1;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.rollout-row dt {
+  color: #60717a;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.rollout-row dd {
+  margin: 4px 0 0;
+  font-weight: 800;
+}
+
+.rollout-row ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: #4c5961;
+  font-size: 0.86rem;
+}
+
 .empty {
   color: #60717a;
 }

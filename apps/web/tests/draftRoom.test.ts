@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   availablePlayers,
+  candidateRollouts,
   explainRecommendation,
   initialDraftRoomState,
   pickSlot,
@@ -58,5 +59,22 @@ describe("draftRoom", () => {
 
     expect(notes.some((note) => note.includes("points over replacement"))).toBe(true);
     expect(notes.some((note) => note.includes("next user pick"))).toBe(true);
+  });
+
+  it("returns rollout candidates on the user pick", () => {
+    const state = [
+      "rb_001",
+      "wr_001",
+      "qb_001",
+      "rb_002",
+      "wr_002",
+      "te_001",
+      "wr_003",
+    ].reduce((currentState, playerId) => recordPick(currentState, playerId), initialDraftRoomState);
+
+    const rollouts = candidateRollouts(state, 2);
+
+    expect(rollouts).toHaveLength(2);
+    expect(rollouts[0].optimizerScore).toBeGreaterThan(0);
   });
 });

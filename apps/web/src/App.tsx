@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 
 import {
   availablePlayers,
+  candidateRollouts,
   explainRecommendation,
   initialDraftRoomState,
   loadDraftRoomState,
@@ -42,6 +43,8 @@ export function App() {
     ? explainRecommendation(primary, draftState.completedPicks.length)
     : [];
   const userRoster = rosterForManager(draftState, "Primary User");
+  const rolloutCandidates = candidateRollouts(draftState);
+  const playerById = new Map(players.map((player) => [player.playerId, player]));
 
   return (
     <main className="draft-room">
@@ -200,6 +203,45 @@ export function App() {
                 ))
               )}
             </div>
+          </section>
+
+          <section className="panel" aria-labelledby="simulator-title">
+            <p className="eyebrow">Simulator</p>
+            <h2 id="simulator-title">Candidate rollouts</h2>
+            {rolloutCandidates.length === 0 ? (
+              <p className="empty">Available on the Primary User pick</p>
+            ) : (
+              <div className="rollout-list">
+                {rolloutCandidates.map((candidate) => {
+                  const player = playerById.get(candidate.playerId);
+                  return (
+                    <article key={candidate.playerId} className="rollout-row">
+                      <div>
+                        <strong>{player?.fullName}</strong>
+                        <span>
+                          {player?.position} - Score {candidate.optimizerScore}
+                        </span>
+                      </div>
+                      <dl>
+                        <div>
+                          <dt>Proj</dt>
+                          <dd>{candidate.averageProjectedPoints}</dd>
+                        </div>
+                        <div>
+                          <dt>VORP</dt>
+                          <dd>{candidate.averageVorp}</dd>
+                        </div>
+                      </dl>
+                      <ul>
+                        {candidate.explanation.slice(0, 2).map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </section>
         </aside>
       </section>
