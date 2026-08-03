@@ -35,10 +35,12 @@ Request and response models must be typed, validation errors should be useful, a
 - `GET /drafts/{draft_id}/rosters`
 - `GET /drafts/{draft_id}/rosters/user`
 - `GET /drafts/{draft_id}/recommendations`
+- `GET /drafts/{draft_id}/candidate-rollouts`
 - `POST /drafts/{draft_id}/save`
 - `POST /drafts/load`
 
 The current service stores draft sessions in memory and uses the synthetic baseline player snapshot. Save/load can persist a draft JSON file locally.
+Candidate rollouts require the user manager to be on clock.
 
 ## Current Limitations
 

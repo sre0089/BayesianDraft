@@ -43,9 +43,22 @@ The engine returns:
 - estimated next-pick availability
 - explanation bullets
 
+## Candidate Rollout Optimizer
+
+Milestone 15 adds `optimize_candidates`.
+
+Current behavior:
+
+- Requires the primary user to be on clock.
+- Evaluates a configurable pool of available candidates.
+- Records each candidate as the user's pick in a copied draft state.
+- Runs seeded remaining-draft simulations.
+- Ranks candidates by rollout VORP with lightweight draft-value context.
+- Returns a primary optimized candidate, alternatives, rollout summaries, and explanations.
+
 ## Current Limitations
 
 - Availability is a heuristic, not a calibrated probability model.
-- No Monte Carlo rollout is included yet.
+- Candidate rollout uses the current heuristic draft simulator.
 - No opponent personalization is included yet.
 - Recommendation utility is not yet tied to season simulation or championship probability.
