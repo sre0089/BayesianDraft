@@ -21,3 +21,13 @@ PYTHONPATH=. python scripts/preflight.py --json
 ```
 
 The preflight checks validate league config, player snapshot, ingestion manifest checksum, save directory availability, and ESPN credential status.
+
+## Local Validation Aggregator
+
+Milestone 27 adds:
+
+```bash
+PYTHONPATH=.:apps/api/src python scripts/validate_local.py
+```
+
+This command runs the local preflight, data refresh verification, rehearsal preview, and version metadata checks.

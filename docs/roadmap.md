@@ -48,3 +48,4 @@ Advanced projections, personalized opponent models, and ESPN synchronization mus
 - Milestone 24: API contract export and schema checks.
 - Milestone 25: release and build metadata.
 - Milestone 26: draft rehearsal scenarios.
+- Milestone 27: draft-day runbook and local validation aggregator.
