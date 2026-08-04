@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -10,7 +11,11 @@ from bayesiandraft.recommendations import (
     recommend_players,
 )
 from bayesiandraft.release import BuildInfo, build_info_from_env
-from bayesiandraft_api.service import DraftSessionService, to_api_draft_state
+from bayesiandraft_api.service import (
+    DEFAULT_PLAYER_SNAPSHOT_PATH,
+    DraftSessionService,
+    to_api_draft_state,
+)
 
 
 class HealthResponse(BaseModel):
@@ -39,9 +44,11 @@ class LoadDraftRequest(BaseModel):
     path: str
 
 
-def create_app() -> FastAPI:
+def create_app(player_snapshot_path: str | Path | None = None) -> FastAPI:
     app = FastAPI(title="BayesianDraft API")
-    service = DraftSessionService()
+    service = DraftSessionService(
+        player_snapshot_path=_resolve_player_snapshot_path(player_snapshot_path)
+    )
 
     @app.get("/health", response_model=HealthResponse)
     def health() -> HealthResponse:
@@ -180,6 +187,15 @@ def create_app() -> FastAPI:
         return _replace_and_respond(service, state)
 
     return app
+
+
+def _resolve_player_snapshot_path(player_snapshot_path: str | Path | None) -> Path:
+    if player_snapshot_path is not None:
+        return Path(player_snapshot_path)
+    configured_path = os.getenv("BAYESIANDRAFT_PLAYER_SNAPSHOT_PATH")
+    if configured_path:
+        return Path(configured_path)
+    return DEFAULT_PLAYER_SNAPSHOT_PATH
 
 
 def _get_state_or_404(service: DraftSessionService, draft_id: str) -> DraftState:
