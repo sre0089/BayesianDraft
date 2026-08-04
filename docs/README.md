@@ -22,6 +22,7 @@ Start here when navigating the repository docs.
 ## Data And Models
 
 - [Data Sources](data-sources.md)
+- [Local Data Import](data-import.md)
 - [Data Schema](data-schema.md)
 - [Rankings](rankings.md)
 - [Modeling](modeling.md)

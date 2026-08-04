@@ -45,6 +45,22 @@ PYTHONPATH=. python scripts/verify_ingestion_manifest.py data/manifests/baseline
 
 Use the project environment's Python interpreter when local system Python does not include project dependencies.
 
+## Local Snapshot Import
+
+User-provided projection CSVs can be converted into validated `PlayerSnapshot` JSON files:
+
+```bash
+PYTHONPATH=. python scripts/import_snapshot.py \
+  --players path/to/projections.csv \
+  --out data/processed/my_snapshot.json \
+  --manifest-out data/manifests/my_snapshot.json \
+  --snapshot-id my_snapshot_2026_v1 \
+  --season 2026 \
+  --source "user-provided"
+```
+
+See [Local Data Import](data-import.md) for the CSV contract, validation rules, and privacy guidance.
+
 ## Data Refresh Hooks
 
 Local refresh hooks are available:

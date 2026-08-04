@@ -35,6 +35,16 @@ Most fantasy tools rank players. BayesianDraft ranks decisions. The target produ
 
 The engine methodology is documented in [docs/math-methodology.md](docs/math-methodology.md), including draft-state notation, VORP, tiering, recommendation scoring, availability simulation, candidate rollouts, lineup simulation, and validation metrics.
 
+## Local Data Import
+
+User-provided projection CSVs can be converted into validated snapshot JSON with:
+
+```bash
+PYTHONPATH=. python scripts/import_snapshot.py --players path/to/projections.csv --out data/processed/my_snapshot.json --season 2026 --source "user-provided"
+```
+
+The CSV contract and privacy guidance are documented in [docs/data-import.md](docs/data-import.md).
+
 ## Local Setup
 
 Backend checks:
