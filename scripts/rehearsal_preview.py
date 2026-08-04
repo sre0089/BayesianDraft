@@ -1,14 +1,10 @@
 from argparse import ArgumentParser
-from pathlib import Path
 
-from bayesiandraft.config import load_league_config
-from bayesiandraft.data import load_player_snapshot
 from bayesiandraft.draft import (
-    DraftState,
-    Player,
     apply_rehearsal_scenario,
     load_rehearsal_scenario,
 )
+from scripts.common import add_snapshot_argument, load_snapshot_and_draft_state
 
 
 def main() -> None:
@@ -18,19 +14,10 @@ def main() -> None:
         nargs="?",
         default="data/fixtures/rehearsal_user_pick_8.json",
     )
+    add_snapshot_argument(parser)
     args = parser.parse_args()
 
-    snapshot = load_player_snapshot(Path("data/fixtures/baseline_players_2026.json"))
-    players = [
-        Player(
-            player_id=player.player_id,
-            full_name=player.full_name,
-            position=player.position.value,
-            nfl_team_id=player.nfl_team_id,
-        )
-        for player in snapshot.players
-    ]
-    state = DraftState.create(load_league_config("configs/leagues/espn_2026.yaml"), players)
+    _snapshot, state = load_snapshot_and_draft_state(args.snapshot)
     scenario = load_rehearsal_scenario(args.scenario)
     rehearsed = apply_rehearsal_scenario(state, scenario)
     print(
