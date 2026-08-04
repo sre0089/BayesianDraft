@@ -40,8 +40,15 @@ Request and response models must be typed, validation errors should be useful, a
 - `POST /drafts/{draft_id}/save`
 - `POST /drafts/load`
 
-The current service stores draft sessions in memory and uses the synthetic baseline player snapshot. Save/load can persist a draft JSON file locally.
+The current service stores draft sessions in memory and defaults to the synthetic baseline player snapshot. Save/load can persist a draft JSON file locally.
 Candidate rollouts require the user manager to be on clock.
+
+Use `BAYESIANDRAFT_PLAYER_SNAPSHOT_PATH` to run the local API with an imported snapshot:
+
+```bash
+BAYESIANDRAFT_PLAYER_SNAPSHOT_PATH=data/processed/my_snapshot.json \
+  uvicorn bayesiandraft_api.main:app --app-dir apps/api/src --reload
+```
 
 ESPN sync is currently represented by a dry-run integration boundary in `bayesiandraft.integrations.espn`; no live ESPN endpoint is exposed yet.
 

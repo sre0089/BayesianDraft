@@ -61,6 +61,7 @@ Use:
 ```bash
 PYTHONPATH=. python scripts/export_baseline_rankings.py --out /tmp/rankings.json --format json
 PYTHONPATH=. python scripts/export_baseline_rankings.py --out /tmp/rankings.csv --format csv
+PYTHONPATH=. python scripts/export_baseline_rankings.py --snapshot data/processed/my_snapshot.json --out /tmp/rankings.json
 ```
 
 ## Current Limitations

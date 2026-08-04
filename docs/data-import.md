@@ -68,6 +68,30 @@ PYTHONPATH=. python scripts/import_snapshot.py \
 
 The JSON snapshot can be loaded with `bayesiandraft.data.load_player_snapshot`.
 
+## Using Imported Snapshots
+
+Most local commands accept `--snapshot`:
+
+```bash
+PYTHONPATH=. python scripts/export_baseline_rankings.py \
+  --snapshot data/processed/my_snapshot.json \
+  --out /tmp/rankings.json
+
+PYTHONPATH=. python scripts/export_recommendations.py \
+  --snapshot data/processed/my_snapshot.json \
+  --out /tmp/recommendations.json
+
+PYTHONPATH=. python scripts/sim_benchmark.py \
+  --snapshot data/processed/my_snapshot.json
+```
+
+The local API can use an imported snapshot through an environment variable:
+
+```bash
+BAYESIANDRAFT_PLAYER_SNAPSHOT_PATH=data/processed/my_snapshot.json \
+  uvicorn bayesiandraft_api.main:app --app-dir apps/api/src --reload
+```
+
 The manifest records:
 
 - snapshot ID

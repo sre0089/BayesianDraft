@@ -45,6 +45,8 @@ PYTHONPATH=. python scripts/import_snapshot.py --players path/to/projections.csv
 
 The CSV contract and privacy guidance are documented in [docs/data-import.md](docs/data-import.md).
 
+Imported snapshots can be passed to local commands with `--snapshot` or to the API with `BAYESIANDRAFT_PLAYER_SNAPSHOT_PATH`.
+
 ## Local Setup
 
 Backend checks:
