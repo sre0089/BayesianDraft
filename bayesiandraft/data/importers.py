@@ -146,7 +146,7 @@ def _build_player(row: dict[str, str], row_number: int) -> PlayerRecord:
             status=_optional_text(row, "status") or "active",
             bye_week=_optional_int(row, "bye_week", row_number),
         )
-    except ValidationError as exc:
+    except (ValidationError, ValueError) as exc:
         raise SnapshotImportError(f"row {row_number}: invalid player record") from exc
 
 
