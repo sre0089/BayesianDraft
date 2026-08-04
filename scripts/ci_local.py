@@ -36,6 +36,7 @@ CI_COMMANDS = [
             "scripts/privacy_scan.py",
             "scripts/check_docs_index.py",
             "scripts/ci_local.py",
+            "scripts/import_snapshot.py",
         ],
     ),
     CiCommand("web-tests", ["npm", "test"], cwd="apps/web"),
