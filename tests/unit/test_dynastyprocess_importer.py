@@ -23,6 +23,8 @@ def test_imports_dynastyprocess_rankings_snapshot(tmp_path: Path) -> None:
                 "Real WR One,2026-08-01,CIN",
                 "/rankings,redraft-overall,ro,Real QB One,1003,QB,BUF,3,0,3,3,7,"
                 "Real QB One,2026-08-01,BUF",
+                "/rankings,redraft-overall,ro,Real TE One,1005,TE,FA,4,0,4,4,NA,"
+                "Real TE One,2026-08-01,FA",
                 "/rankings,redraft-idp,ro,Ignored Defender,9999,LB,NYJ,1,0,1,1,9,"
                 "Ignored Defender,2026-08-01,NYJ",
                 "/rankings,redraft-overall,ro,Old RB,1004,RB,DAL,1,0,1,1,8,"
@@ -39,14 +41,15 @@ def test_imports_dynastyprocess_rankings_snapshot(tmp_path: Path) -> None:
         processed_path=tmp_path / "snapshot.json",
     )
 
-    assert snapshot.snapshot.row_count == 3
+    assert snapshot.snapshot.row_count == 4
     assert snapshot.players[0].full_name == "Real RB One"
     assert snapshot.players[0].player_id == "fp_1001"
     assert snapshot.players[0].source_player_ids == {"fantasypros": "1001"}
     assert snapshot.projections[0].mean == 300
     assert snapshot.adp[0].overall_adp == 1
     assert snapshot.adp[0].position_adp == 1
-    assert {player.position.value for player in snapshot.players} == {"QB", "RB", "WR"}
+    assert snapshot.players[3].bye_week is None
+    assert {player.position.value for player in snapshot.players} == {"QB", "RB", "TE", "WR"}
 
 
 def test_dynastyprocess_importer_rejects_missing_columns(tmp_path: Path) -> None:

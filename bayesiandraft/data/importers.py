@@ -358,6 +358,8 @@ def _optional_text(row: dict[str, str], column: str) -> str | None:
     if value is None:
         return None
     stripped = value.strip()
+    if stripped.upper() in {"NA", "N/A", "NULL", "NONE"}:
+        return None
     return stripped or None
 
 
