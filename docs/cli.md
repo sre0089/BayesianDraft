@@ -45,8 +45,9 @@ PYTHONPATH=. python scripts/draft_tui.py \
 ## Views
 
 - `Summary`: current pick, manager on clock, available player count, roster size, and next user pick.
-- `Rankings`: available players sorted by baseline ranking.
+- `Rankings`: split-pane available players and selected-player detail when the terminal is wide enough.
 - `Recommendations`: primary recommendation, alternatives, scores, confidence, availability, and explanations.
+- `Managers`: yazi-style manager browser with every competitor roster, pick count, and position counts.
 - `Roster`: configured user manager roster and positional starter needs.
 - `Health`: snapshot coverage and warnings.
 - `Simulation`: seeded remaining-draft benchmark metadata.
@@ -57,7 +58,7 @@ PYTHONPATH=. python scripts/draft_tui.py \
 | Key | Action |
 | --- | --- |
 | Left / Right | Move between views |
-| Up / Down | Move ranking selection |
+| Up / Down | Move ranking selection or manager selection |
 | Enter or `d` | Draft the selected player |
 | `/` | Search players by name, position, or ID |
 | `c` | Clear search |
@@ -75,5 +76,6 @@ PYTHONPATH=. python scripts/draft_tui.py --save-path /tmp/my-draft.json
 ## Notes
 
 - The CLI records picks for whichever manager is currently on clock.
+- Use the `Managers` view during the draft to audit every competitor roster as picks are entered.
 - Recommendations always evaluate the configured user manager's roster.
 - The UI uses the same ranking, recommendation, simulation, and roster-balance engine code as the export scripts.

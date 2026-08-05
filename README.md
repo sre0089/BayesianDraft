@@ -77,6 +77,7 @@ PYTHONPATH=. python scripts/draft_tui.py
 Use arrow keys to move, Enter or `d` to draft, `/` to search, `u`/`r` for undo/redo, `s` to save, and `q` to quit. See [docs/cli.md](docs/cli.md) for the full shortcut list and custom snapshot usage.
 
 The live draft workflow starts at pick 1. Enter each competitor pick as it happens, and BayesianDraft will update availability, rosters, rankings, and recommendations after every pick.
+The CLI includes split-pane rankings, selected-player details, and a manager roster browser for tracking every competitor during the draft.
 
 ## Local Setup
 
