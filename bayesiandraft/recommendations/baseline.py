@@ -131,14 +131,17 @@ def _score_candidate(draft_state: DraftState, ranking: RankingRow) -> Recommenda
 def _needed_positions(draft_state: DraftState) -> dict[str, int]:
     roster = draft_state.rosters[draft_state.league_config.league.user_manager_id]
     needs: dict[str, int] = {}
+    base_flex_needs = 0
 
     for position, target_count in STARTER_TARGETS.items():
         remaining = max(target_count - roster.positional_counts.get(position, 0), 0)
         if remaining > 0:
             needs[position] = remaining
+        if position in draft_state.league_config.roster.flex_eligibility.get("FLEX", []):
+            base_flex_needs += remaining
 
     flex_slots = draft_state.league_config.roster.starting_slots.get("FLEX", 0)
-    if flex_slots <= 0:
+    if flex_slots <= 0 or base_flex_needs > 0:
         return needs
 
     flex_positions = set(draft_state.league_config.roster.flex_eligibility.get("FLEX", []))

@@ -71,3 +71,21 @@ def test_position_groups_drop_filled_positions() -> None:
     groups = recommend_players_by_needed_position(state, build_baseline_rankings(snapshot))
 
     assert "QB" not in {group.position for group in groups}
+
+
+def test_flex_need_waits_for_base_flex_positions() -> None:
+    snapshot = load_player_snapshot(Path("data/fixtures/baseline_players_2026.json"))
+    state = _draft_state()
+    state.rosters["user_manager"].positional_counts = {"RB": 2}
+
+    groups = recommend_players_by_needed_position(state, build_baseline_rankings(snapshot))
+    positions = {group.position for group in groups}
+
+    assert "RB" not in positions
+    assert "WR" in positions
+    assert "TE" in positions
+
+    state.rosters["user_manager"].positional_counts = {"RB": 2, "WR": 2, "TE": 1}
+    flex_groups = recommend_players_by_needed_position(state, build_baseline_rankings(snapshot))
+
+    assert {"RB", "WR", "TE"} <= {group.position for group in flex_groups}
