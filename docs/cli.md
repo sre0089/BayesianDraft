@@ -9,6 +9,7 @@ PYTHONPATH=. python scripts/draft_tui.py
 ```
 
 The CLI starts at pick 1 by default. During a live draft, select the drafted player and press Enter or `d`; the pick is recorded for whichever manager is currently on clock. Rankings, recommendations, rosters, and availability update immediately after each pick.
+The Summary view opens with an ASCII product splash, version metadata, draft readiness checks, and a command prompt footer.
 
 Start directly at the pick-8 rehearsal scenario only when you want a quick local demo:
 
