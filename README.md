@@ -53,6 +53,13 @@ Pull public DynastyProcess/FantasyPros rankings into a local snapshot:
 PYTHONPATH=. python scripts/pull_dynastyprocess.py
 ```
 
+Pull FantasyPros projections with an API key:
+
+```bash
+export FANTASYPROS_API_KEY="..."
+PYTHONPATH=. python scripts/pull_fantasypros_projections.py
+```
+
 Then launch the CLI with real player names:
 
 ```bash

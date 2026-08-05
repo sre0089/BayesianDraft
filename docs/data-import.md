@@ -173,6 +173,32 @@ Source notes:
 - Ranking source: FantasyPros expert consensus rankings as distributed by DynastyProcess.
 - Projection fields in this snapshot are rank-derived proxies so the current engine can run. They are not independent statistical projections.
 
+## FantasyPros Projection Pull
+
+FantasyPros projection data is available through the FantasyPros public API with an API key. Set the key in your shell, then pull a local snapshot:
+
+```bash
+export FANTASYPROS_API_KEY="..."
+PYTHONPATH=. python scripts/pull_fantasypros_projections.py
+```
+
+This writes:
+
+- raw JSON: `data/raw/fantasypros_projections_2026.json`
+- normalized CSV: `data/processed/fantasypros_projections_2026.csv`
+- processed snapshot: `data/processed/fantasypros_projections_2026.json`
+- local manifest: `data/processed/fantasypros_projections_2026.manifest.json`
+
+By default the snapshot uses FantasyPros' projected fantasy points. Add `--score-stats` to recompute points from normalized stat columns with the configured BayesianDraft league scoring file:
+
+```bash
+PYTHONPATH=. python scripts/pull_fantasypros_projections.py \
+  --score-stats \
+  --league-config configs/leagues/espn_2026.yaml
+```
+
+Keep these outputs local unless your FantasyPros API license permits redistribution.
+
 ## Using Imported Snapshots
 
 Most local commands accept `--snapshot`:
