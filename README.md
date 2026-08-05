@@ -47,6 +47,18 @@ The CSV contract and privacy guidance are documented in [docs/data-import.md](do
 
 Imported snapshots can be passed to local commands with `--snapshot` or to the API with `BAYESIANDRAFT_PLAYER_SNAPSHOT_PATH`.
 
+Pull public DynastyProcess/FantasyPros rankings into a local snapshot:
+
+```bash
+PYTHONPATH=. python scripts/pull_dynastyprocess.py
+```
+
+Then launch the CLI with real player names:
+
+```bash
+PYTHONPATH=. python scripts/draft_tui.py --snapshot data/processed/dynastyprocess_rankings_2026.json --scenario data/fixtures/rehearsal_user_pick_8.json
+```
+
 ## Interactive CLI
 
 Run the keyboard-driven terminal draft room with:

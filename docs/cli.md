@@ -22,6 +22,15 @@ PYTHONPATH=. python scripts/draft_tui.py \
   --snapshot data/processed/my_snapshot.json
 ```
 
+Use the latest pulled public rankings snapshot:
+
+```bash
+PYTHONPATH=. python scripts/pull_dynastyprocess.py
+PYTHONPATH=. python scripts/draft_tui.py \
+  --snapshot data/processed/dynastyprocess_rankings_2026.json \
+  --scenario data/fixtures/rehearsal_user_pick_8.json
+```
+
 ## Views
 
 - `Summary`: current pick, manager on clock, available player count, roster size, and next user pick.

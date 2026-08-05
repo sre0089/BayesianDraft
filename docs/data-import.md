@@ -68,6 +68,34 @@ PYTHONPATH=. python scripts/import_snapshot.py \
 
 The JSON snapshot can be loaded with `bayesiandraft.data.load_player_snapshot`.
 
+## Public Rankings Pull
+
+BayesianDraft can pull the latest public DynastyProcess/FantasyPros expert consensus rankings:
+
+```bash
+PYTHONPATH=. python scripts/pull_dynastyprocess.py
+```
+
+This writes:
+
+- raw CSV: `data/raw/dynastyprocess_db_fpecr_latest.csv`
+- processed snapshot: `data/processed/dynastyprocess_rankings_2026.json`
+- local manifest: `data/processed/dynastyprocess_rankings_2026.manifest.json`
+
+Then run the terminal draft room with:
+
+```bash
+PYTHONPATH=. python scripts/draft_tui.py \
+  --snapshot data/processed/dynastyprocess_rankings_2026.json \
+  --scenario data/fixtures/rehearsal_user_pick_8.json
+```
+
+Source notes:
+
+- Data source: DynastyProcess open data repository.
+- Ranking source: FantasyPros expert consensus rankings as distributed by DynastyProcess.
+- Projection fields in this snapshot are rank-derived proxies so the current engine can run. They are not independent statistical projections.
+
 ## Using Imported Snapshots
 
 Most local commands accept `--snapshot`:

@@ -46,3 +46,4 @@ All notable project changes will be documented here.
 - Removed internal planning artifacts from the public repository.
 - Added local projection CSV import support for validated player snapshots.
 - Added an interactive terminal draft room for local engine testing.
+- Added a public DynastyProcess/FantasyPros rankings pull command.
