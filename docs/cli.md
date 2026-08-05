@@ -61,8 +61,13 @@ PYTHONPATH=. python scripts/draft_tui.py \
 | Left / Right | Move between views |
 | Up / Down | Move ranking selection or manager selection |
 | Enter or `d` | Draft the selected player |
-| `/` | Search players by name, position, or ID |
-| `c` | Clear search |
+| `/` | Start live search; typed characters filter immediately |
+| Enter or Esc | Finish live search |
+| Backspace | Remove the last live-search character |
+| `[` / `]` | Cycle positional ranking filters |
+| `0` | Show all positions |
+| `1` through `6` | Jump to QB, RB, WR, TE, DST, or K |
+| `c` | Clear search and positional filter |
 | `u` | Undo last pick |
 | `r` | Redo pick |
 | `s` | Save draft state |
