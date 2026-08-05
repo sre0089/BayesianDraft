@@ -39,6 +39,7 @@ CI_COMMANDS = [
             "scripts/import_snapshot.py",
             "scripts/common.py",
             "scripts/draft_tui.py",
+            "scripts/pull_dynastyprocess.py",
         ],
     ),
     CiCommand("web-tests", ["npm", "test"], cwd="apps/web"),
