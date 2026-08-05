@@ -468,22 +468,25 @@ def _draw(screen: curses.window, controller: CliDraftController) -> None:
 
 def _draw_header(screen: curses.window, controller: CliDraftController, width: int) -> None:
     summary = summarize_draft_state(controller.state)
-    brand = " BD // BayesianDraft "
+    brand = " bayesiandraft@draft-room % bayesiandraft "
     status = (
+        f"Version {__version__}  "
         f"Pick {summary.current_overall_pick}/{controller.state.total_picks}  "
-        f"Round {controller.state.current_round or '-'}  Clock {summary.manager_on_clock}  "
-        f"Next user {summary.next_user_pick or '-'}"
+        f"Round {controller.state.current_round or '-'}  Clock {summary.manager_on_clock}"
     )
-    _safe_addnstr(screen, 0, 0, brand.ljust(width), width, curses.color_pair(1) | curses.A_BOLD)
-    _safe_addnstr(screen, 1, 0, status.ljust(width), width, curses.A_BOLD)
+    _safe_addnstr(screen, 0, 0, brand.ljust(width), width, curses.color_pair(3) | curses.A_BOLD)
+    _safe_addnstr(screen, 1, 2, status.ljust(max(width - 2, 1)), max(width - 2, 1), curses.A_BOLD)
     progress = _progress_bar(summary.completed_pick_count, controller.state.total_picks, width - 24)
     _safe_addnstr(
         screen,
         2,
-        0,
-        f" Draft progress {progress} {summary.available_player_count} available".ljust(width),
-        width,
-        curses.color_pair(3),
+        2,
+        (
+            f"Draft progress {progress} {summary.available_player_count} available  "
+            f"Next user {summary.next_user_pick or '-'}"
+        ).ljust(max(width - 2, 1)),
+        max(width - 2, 1),
+        curses.color_pair(5),
     )
 
 
@@ -504,7 +507,7 @@ def _draw_body(
     width: int,
 ) -> None:
     top = 6
-    body_height = max(height - 9, 1)
+    body_height = max(height - 10, 1)
     if controller.current_view == "Rankings" and width >= 104:
         _draw_rankings_workspace(screen, controller, top, 0, body_height, width)
         return
@@ -513,14 +516,17 @@ def _draw_body(
         return
 
     _draw_box(screen, top, 0, body_height, width, controller.current_view)
-    _draw_lines(
-        screen,
-        controller.view_lines(),
-        top + 1,
-        2,
-        max(body_height - 2, 0),
-        max(width - 4, 1),
-    )
+    if controller.current_view == "Summary":
+        _draw_summary_lines(screen, controller.view_lines(), top + 1, 3, body_height - 2, width - 6)
+    else:
+        _draw_lines(
+            screen,
+            controller.view_lines(),
+            top + 1,
+            2,
+            max(body_height - 2, 0),
+            max(width - 4, 1),
+        )
 
 
 def _draw_footer(
@@ -529,15 +535,42 @@ def _draw_footer(
     height: int,
     width: int,
 ) -> None:
-    search = f"Filter: {controller.search_query or '-'}"
-    _safe_addnstr(screen, height - 2, 0, search.ljust(width), width, curses.color_pair(3))
-    _safe_addnstr(screen, height - 1, 0, controller.status_message.ljust(width), width)
+    prompt = _footer_prompt(controller)
+    top = height - 3
+    _safe_addnstr(screen, top, 0, "+" + "-" * max(width - 2, 0) + "+", width, curses.color_pair(4))
+    _safe_addnstr(screen, top + 1, 0, "|", 1, curses.color_pair(4))
+    _safe_addnstr(screen, top + 1, width - 1, "|", 1, curses.color_pair(4))
+    _safe_addnstr(
+        screen,
+        top + 2,
+        0,
+        "+" + "-" * max(width - 2, 0) + "+",
+        width,
+        curses.color_pair(4),
+    )
+    _safe_addnstr(screen, top + 1, 2, prompt, max(width - 4, 1), curses.color_pair(6))
+    _safe_addnstr(
+        screen,
+        height - 1,
+        2,
+        controller.status_message,
+        max(width - 4, 1),
+        curses.color_pair(5),
+    )
 
 
 def _progress_bar(completed: int, total: int, width: int) -> str:
     bar_width = max(min(width, 40), 8)
     filled = 0 if total == 0 else round((completed / total) * bar_width)
     return "[" + "#" * filled + "." * (bar_width - filled) + "]"
+
+
+def _footer_prompt(controller: CliDraftController) -> str:
+    search = controller.search_query or "none"
+    return (
+        f"~/BayesianDraft [/{controller.current_view.lower()}] "
+        f"filter={search}  enter/d draft  / search  ? docs  q quit"
+    )
 
 
 def _draw_box(
@@ -560,7 +593,34 @@ def _draw_box(
 
     label = f" {title} "
     if len(label) < width - 2:
-        _safe_addnstr(screen, y, x + 2, label, width - 4, curses.color_pair(1) | curses.A_BOLD)
+        _safe_addnstr(screen, y, x + 2, label, width - 4, curses.color_pair(4) | curses.A_BOLD)
+
+
+def _draw_summary_lines(
+    screen: curses.window,
+    lines: list[str],
+    y: int,
+    x: int,
+    max_lines: int,
+    width: int,
+) -> None:
+    for offset, line in enumerate(lines[:max_lines]):
+        attrs = _summary_line_attrs(line)
+        _safe_addnstr(screen, y + offset, x, line, width, attrs)
+
+
+def _summary_line_attrs(line: str) -> int:
+    if line.startswith("Welcome"):
+        return curses.color_pair(3) | curses.A_BOLD
+    if line in WORDMARK_LINES:
+        return curses.color_pair(1) | curses.A_BOLD
+    if line in MASCOT_LINES:
+        return curses.color_pair(4) | curses.A_BOLD
+    if line.startswith("CLI Version"):
+        return curses.color_pair(6) | curses.A_BOLD
+    if line.startswith("*"):
+        return curses.color_pair(5) | curses.A_BOLD
+    return 0
 
 
 def _draw_lines(
@@ -687,6 +747,9 @@ def _init_colors() -> None:
         curses.init_pair(1, curses.COLOR_CYAN, -1)
         curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_CYAN)
         curses.init_pair(3, curses.COLOR_YELLOW, -1)
+        curses.init_pair(4, curses.COLOR_MAGENTA, -1)
+        curses.init_pair(5, curses.COLOR_GREEN, -1)
+        curses.init_pair(6, curses.COLOR_BLUE, -1)
     except curses.error:
         return
 

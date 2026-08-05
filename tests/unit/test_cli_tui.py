@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from bayesiandraft.cli import CliDraftConfig, CliDraftController
+from bayesiandraft.cli.tui import _footer_prompt, _progress_bar
 from scripts.common import load_snapshot_and_draft_state
 
 
@@ -24,6 +25,20 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
     assert controller.view_lines()[0].startswith(">")
     assert any("Selected:" in line for line in controller.view_lines())
     assert any("Projection: mean=" in line for line in controller.view_lines())
+
+
+def test_cli_product_prompt_helpers(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(save_path=tmp_path / "draft.json"),
+    )
+    controller.set_search("rb")
+
+    assert _progress_bar(10, 20, 12) == "[######......]"
+    assert "~/BayesianDraft" in _footer_prompt(controller)
+    assert "filter=rb" in _footer_prompt(controller)
 
 
 def test_cli_controller_filters_and_drafts_selected_player(tmp_path: Path) -> None:
