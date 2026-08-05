@@ -4,9 +4,9 @@ BayesianDraft can import user-provided projection data into the same `PlayerSnap
 
 The importer is local-first. It reads files from your machine, writes processed JSON snapshots, and can write a manifest with checksum metadata. Do not commit proprietary projections, private league exports, credentials, cookies, or raw downloaded datasets.
 
-## Snapshot CSV Contract
+## Point Projection CSV Contract
 
-Use one CSV row per player. The importer accepts player metadata, season projection values, and optional ADP fields in a single file.
+Use this contract when your source already provides fantasy point totals. The importer accepts one CSV row per player with player metadata, season projection values, and optional ADP fields in a single file.
 
 Required columns:
 
@@ -44,7 +44,7 @@ Optional ADP columns:
 | `position_adp` | Positional ADP |
 | `adp_rank` | Overall market rank |
 
-## Example
+## Point Projection Example
 
 ```csv
 player_id,full_name,position,team,projected_points,median_points,floor_points,ceiling_points,games_played,overall_adp,position_adp,adp_rank,bye_week
@@ -53,10 +53,72 @@ wr_001,Example WR One,WR,FFF,270,268,210,325,16.0,8,1,8,9
 qb_001,Example QB One,QB,AAA,330,326,270,390,16.5,32,1,32,6
 ```
 
-## Import Command
+## Stat Projection CSV Contract
+
+Use this contract when your source provides football stat projections instead of fantasy point totals. The importer computes `projected_points` from the configured league scoring rules, then writes the same `PlayerSnapshot` JSON used everywhere else in the project.
+
+Required columns:
+
+| Column | Description |
+| --- | --- |
+| `player_id` | Stable ID for the player within this snapshot |
+| `full_name` | Display name |
+| `position` | One of `QB`, `RB`, `WR`, `TE`, `K`, `DST` |
+
+Optional player and ADP columns are the same as the point projection contract. Any missing stat column is treated as zero.
+
+Supported offensive stat columns:
+
+| Column | Description |
+| --- | --- |
+| `passing_yards` | Passing yards |
+| `passing_touchdowns` | Passing touchdowns |
+| `interceptions_thrown` | Interceptions thrown |
+| `passing_two_point_conversions` | Passing two-point conversions |
+| `rushing_yards` | Rushing yards |
+| `rushing_touchdowns` | Rushing touchdowns |
+| `rushing_two_point_conversions` | Rushing two-point conversions |
+| `receiving_yards` | Receiving yards |
+| `receptions` | Receptions |
+| `receiving_touchdowns` | Receiving touchdowns |
+| `receiving_two_point_conversions` | Receiving two-point conversions |
+
+Supported kicker stat columns:
+
+| Column | Description |
+| --- | --- |
+| `pat_made` | Made extra points |
+| `field_goal_missed` | Missed field goals |
+| `fg_made_0_39` | Made field goals from 0 to 39 yards |
+| `fg_made_40_49` | Made field goals from 40 to 49 yards |
+| `fg_made_50_59` | Made field goals from 50 to 59 yards |
+| `fg_made_60_plus` | Made field goals from 60 or more yards |
+
+Supported defense/special teams stat columns:
+
+| Column | Description |
+| --- | --- |
+| `dst_touchdowns` | Defense/special teams touchdowns |
+| `dst_sacks` | Sacks |
+| `dst_interceptions` | Defensive interceptions |
+| `dst_fumble_recoveries` | Fumble recoveries |
+| `dst_safeties` | Safeties |
+| `dst_blocked_kicks` | Blocked kicks |
+
+## Stat Projection Example
+
+```csv
+player_id,full_name,position,team,passing_yards,passing_touchdowns,interceptions_thrown,rushing_yards,rushing_touchdowns,overall_adp,bye_week
+qb_001,Example QB One,QB,AAA,4000,30,10,250,3,42,6
+```
+
+## Import Commands
+
+Point projection CSV:
 
 ```bash
 PYTHONPATH=. python scripts/import_snapshot.py \
+  --mode points \
   --players path/to/projections.csv \
   --out data/processed/my_snapshot.json \
   --manifest-out data/manifests/my_snapshot.json \
@@ -64,6 +126,21 @@ PYTHONPATH=. python scripts/import_snapshot.py \
   --season 2026 \
   --source "user-provided" \
   --license-notes "Local user-provided projection file; do not redistribute."
+```
+
+Stat projection CSV:
+
+```bash
+PYTHONPATH=. python scripts/import_snapshot.py \
+  --mode stats \
+  --league-config configs/leagues/espn_2026.yaml \
+  --players path/to/stat_projections.csv \
+  --out data/processed/my_stat_snapshot.json \
+  --manifest-out data/manifests/my_stat_snapshot.json \
+  --snapshot-id my_stat_snapshot_2026_v1 \
+  --season 2026 \
+  --source "user-provided" \
+  --license-notes "Local user-provided stat projection file; do not redistribute."
 ```
 
 The JSON snapshot can be loaded with `bayesiandraft.data.load_player_snapshot`.
@@ -139,6 +216,7 @@ The manifest records:
 - Required columns must exist and contain values.
 - Positions must match the supported position enum.
 - Numeric projection and ADP fields must parse as numbers.
+- Stat projection rows must score to a non-zero fantasy-point total.
 - `floor_points` must be less than or equal to `ceiling_points`.
 - `bye_week`, when present, must be between 1 and 18.
 - ADP records are only emitted for rows with `overall_adp`.

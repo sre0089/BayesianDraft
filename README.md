@@ -40,10 +40,10 @@ The engine methodology is documented in [docs/math-methodology.md](docs/math-met
 User-provided projection CSVs can be converted into validated snapshot JSON with:
 
 ```bash
-PYTHONPATH=. python scripts/import_snapshot.py --players path/to/projections.csv --out data/processed/my_snapshot.json --season 2026 --source "user-provided"
+PYTHONPATH=. python scripts/import_snapshot.py --mode points --players path/to/projections.csv --out data/processed/my_snapshot.json --season 2026 --source "user-provided"
 ```
 
-The CSV contract and privacy guidance are documented in [docs/data-import.md](docs/data-import.md).
+Use `--mode stats` for stat-line projection CSVs that need to be scored with the league config. The CSV contracts and privacy guidance are documented in [docs/data-import.md](docs/data-import.md).
 
 Imported snapshots can be passed to local commands with `--snapshot` or to the API with `BAYESIANDRAFT_PLAYER_SNAPSHOT_PATH`.
 
