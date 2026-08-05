@@ -14,6 +14,7 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
 
     assert controller.current_view == "Summary"
     assert any("Current pick: 1" in line for line in controller.view_lines())
+    assert any("Live entry:" in line for line in controller.view_lines())
 
     controller.move_view(1)
 

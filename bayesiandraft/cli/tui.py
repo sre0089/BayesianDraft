@@ -175,6 +175,7 @@ class CliDraftController:
             f"Your roster size: {summary.user_roster_size}",
             f"Your next pick: {next_pick}",
             "",
+            "Live entry: draft the selected player for whoever is currently on clock.",
             "Shortcuts: left/right views, up/down select, enter/d draft, / search.",
             "More: c clear, u undo, r redo, s save, q quit.",
         ]
