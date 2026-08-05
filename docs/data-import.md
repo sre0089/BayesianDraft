@@ -163,8 +163,7 @@ Then run the terminal draft room with:
 
 ```bash
 PYTHONPATH=. python scripts/draft_tui.py \
-  --snapshot data/processed/dynastyprocess_rankings_2026.json \
-  --auto-pick-to-user
+  --snapshot data/processed/dynastyprocess_rankings_2026.json
 ```
 
 Source notes:

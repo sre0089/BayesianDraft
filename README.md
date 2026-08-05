@@ -63,7 +63,7 @@ PYTHONPATH=. python scripts/pull_fantasypros_projections.py
 Then launch the CLI with real player names:
 
 ```bash
-PYTHONPATH=. python scripts/draft_tui.py --snapshot data/processed/dynastyprocess_rankings_2026.json --auto-pick-to-user
+PYTHONPATH=. python scripts/draft_tui.py --snapshot data/processed/dynastyprocess_rankings_2026.json
 ```
 
 ## Interactive CLI
@@ -75,6 +75,8 @@ PYTHONPATH=. python scripts/draft_tui.py
 ```
 
 Use arrow keys to move, Enter or `d` to draft, `/` to search, `u`/`r` for undo/redo, `s` to save, and `q` to quit. See [docs/cli.md](docs/cli.md) for the full shortcut list and custom snapshot usage.
+
+The live draft workflow starts at pick 1. Enter each competitor pick as it happens, and BayesianDraft will update availability, rosters, rankings, and recommendations after every pick.
 
 ## Local Setup
 

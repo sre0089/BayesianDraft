@@ -8,7 +8,9 @@ Launch with the built-in fixture:
 PYTHONPATH=. python scripts/draft_tui.py
 ```
 
-Start directly at the pick-8 rehearsal scenario:
+The CLI starts at pick 1 by default. During a live draft, select the drafted player and press Enter or `d`; the pick is recorded for whichever manager is currently on clock. Rankings, recommendations, rosters, and availability update immediately after each pick.
+
+Start directly at the pick-8 rehearsal scenario only when you want a quick local demo:
 
 ```bash
 PYTHONPATH=. python scripts/draft_tui.py \
@@ -27,11 +29,18 @@ Use the latest pulled public rankings snapshot:
 ```bash
 PYTHONPATH=. python scripts/pull_dynastyprocess.py
 PYTHONPATH=. python scripts/draft_tui.py \
+  --snapshot data/processed/dynastyprocess_rankings_2026.json
+```
+
+Use `--scenario` only with snapshots that contain the player IDs referenced by that scenario. The built-in pick-8 scenario is designed for the built-in synthetic fixture.
+
+For rehearsal runs where you want BayesianDraft to simulate the early picks and jump directly to your configured draft slot, add:
+
+```bash
+PYTHONPATH=. python scripts/draft_tui.py \
   --snapshot data/processed/dynastyprocess_rankings_2026.json \
   --auto-pick-to-user
 ```
-
-Use `--scenario` only with snapshots that contain the player IDs referenced by that scenario. The built-in pick-8 scenario is designed for the built-in synthetic fixture. For pulled real rankings, use `--auto-pick-to-user`.
 
 ## Views
 
