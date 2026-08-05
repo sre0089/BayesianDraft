@@ -8,6 +8,7 @@ from bayesiandraft.data.importers import (
     default_snapshot_id,
     import_dynastyprocess_rankings_csv,
     import_player_snapshot_csv,
+    import_stat_projection_csv,
     write_player_snapshot,
 )
 from bayesiandraft.data.ingestion import (
@@ -48,6 +49,7 @@ __all__ = [
     "default_snapshot_id",
     "import_dynastyprocess_rankings_csv",
     "import_player_snapshot_csv",
+    "import_stat_projection_csv",
     "load_ingestion_manifest",
     "load_player_snapshot",
     "run_refresh_plan",

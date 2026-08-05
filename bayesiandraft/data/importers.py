@@ -6,6 +6,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
+from bayesiandraft.config import LeagueConfig
 from bayesiandraft.data.ingestion import sha256_file
 from bayesiandraft.data.snapshots import PlayerSnapshot
 from bayesiandraft.domain import (
@@ -19,6 +20,7 @@ from bayesiandraft.domain import (
 REQUIRED_PLAYER_COLUMNS = frozenset(
     {"player_id", "full_name", "position", "projected_points"}
 )
+REQUIRED_STAT_PROJECTION_COLUMNS = frozenset({"player_id", "full_name", "position"})
 SUPPORTED_FANTASY_POSITIONS = frozenset({"QB", "RB", "WR", "TE", "K", "DST"})
 
 POSITION_PROJECTION_TOPS = {
@@ -126,6 +128,35 @@ def import_player_snapshot_csv(
         raise SnapshotImportError(str(exc)) from exc
 
 
+def import_stat_projection_csv(
+    csv_path: str | Path,
+    *,
+    options: SnapshotImportOptions,
+    processed_path: str | Path,
+    league_config: LeagueConfig,
+) -> PlayerSnapshot:
+    input_path = Path(csv_path)
+    rows = _read_csv_rows(input_path)
+    _validate_columns(set(rows[0].keys()), REQUIRED_STAT_PROJECTION_COLUMNS, input_path)
+
+    enriched_rows: list[dict[str, str]] = []
+    for row_number, row in enumerate(rows, start=2):
+        projected_points = _score_projected_stat_row(row, row_number, league_config)
+        enriched = dict(row)
+        enriched["projected_points"] = str(round(projected_points, 4))
+        enriched.setdefault("median_points", enriched["projected_points"])
+        enriched.setdefault("floor_points", str(round(projected_points * 0.8, 4)))
+        enriched.setdefault("ceiling_points", str(round(projected_points * 1.2, 4)))
+        enriched_rows.append(enriched)
+
+    return _build_snapshot_from_projection_rows(
+        enriched_rows,
+        options=options,
+        input_path=input_path,
+        processed_path=processed_path,
+    )
+
+
 def import_dynastyprocess_rankings_csv(
     csv_path: str | Path,
     *,
@@ -228,6 +259,61 @@ def import_dynastyprocess_rankings_csv(
         raise SnapshotImportError(str(exc)) from exc
 
 
+def _build_snapshot_from_projection_rows(
+    rows: list[dict[str, str]],
+    *,
+    options: SnapshotImportOptions,
+    input_path: Path,
+    processed_path: str | Path,
+) -> PlayerSnapshot:
+    players: list[PlayerRecord] = []
+    projections: list[ProjectionRecord] = []
+    adp_records: list[ADPRecord] = []
+
+    seen_player_ids: set[str] = set()
+    for row_number, row in enumerate(rows, start=2):
+        player_id = _required_text(row, "player_id", row_number)
+        if player_id in seen_player_ids:
+            raise SnapshotImportError(f"row {row_number}: duplicate player_id '{player_id}'")
+        seen_player_ids.add(player_id)
+
+        players.append(_build_player(row, row_number))
+        projections.append(_build_projection(row, row_number, player_id, options))
+
+        adp_record = _build_adp(row, row_number, player_id, options)
+        if adp_record is not None:
+            adp_records.append(adp_record)
+
+    snapshot = DataSnapshotRecord(
+        snapshot_id=options.snapshot_id,
+        dataset_name=options.dataset_name,
+        source=options.source,
+        retrieval_timestamp=options.retrieval_timestamp,
+        season=options.season,
+        checksum=sha256_file(input_path),
+        raw_path=str(input_path),
+        processed_path=str(processed_path),
+        schema_version=options.schema_version,
+        preprocessing_version=options.preprocessing_version,
+        license_notes=options.license_notes,
+        source_url=options.source_url,
+        row_count=len(players),
+    )
+
+    try:
+        return PlayerSnapshot(
+            snapshot=snapshot,
+            players=players,
+            projections=projections,
+            adp=adp_records,
+            injuries=[],
+        )
+    except ValidationError as exc:
+        raise SnapshotImportError("imported snapshot failed validation") from exc
+    except ValueError as exc:
+        raise SnapshotImportError(str(exc)) from exc
+
+
 def write_player_snapshot(snapshot: PlayerSnapshot, path: str | Path) -> None:
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -286,6 +372,80 @@ def _build_player(row: dict[str, str], row_number: int) -> PlayerRecord:
         )
     except (ValidationError, ValueError) as exc:
         raise SnapshotImportError(f"row {row_number}: invalid player record") from exc
+
+
+def _score_projected_stat_row(
+    row: dict[str, str],
+    row_number: int,
+    league_config: LeagueConfig,
+) -> float:
+    scoring = league_config.scoring
+    passing = (
+        _optional_float(row, "passing_yards", row_number) or 0
+    ) * scoring.passing.yards
+    passing += (_optional_float(row, "passing_touchdowns", row_number) or 0) * (
+        scoring.passing.touchdown
+    )
+    passing += (_optional_float(row, "interceptions_thrown", row_number) or 0) * (
+        scoring.passing.interception
+    )
+    passing += (_optional_float(row, "passing_two_point_conversions", row_number) or 0) * (
+        scoring.passing.two_point_conversion
+    )
+
+    rushing = (_optional_float(row, "rushing_yards", row_number) or 0) * scoring.rushing.yards
+    rushing += (_optional_float(row, "rushing_touchdowns", row_number) or 0) * (
+        scoring.rushing.touchdown
+    )
+    rushing += (_optional_float(row, "rushing_two_point_conversions", row_number) or 0) * (
+        scoring.rushing.two_point_conversion
+    )
+
+    receiving = (_optional_float(row, "receiving_yards", row_number) or 0) * (
+        scoring.receiving.yards
+    )
+    receiving += (_optional_float(row, "receptions", row_number) or 0) * (
+        scoring.receiving.reception
+    )
+    receiving += (_optional_float(row, "receiving_touchdowns", row_number) or 0) * (
+        scoring.receiving.touchdown
+    )
+    receiving += (_optional_float(row, "receiving_two_point_conversions", row_number) or 0) * (
+        scoring.receiving.two_point_conversion
+    )
+
+    kicking = (_optional_float(row, "pat_made", row_number) or 0) * scoring.kicking.pat_made
+    kicking += (_optional_float(row, "field_goal_missed", row_number) or 0) * (
+        scoring.kicking.field_goal_missed
+    )
+    kicking += (_optional_float(row, "fg_made_0_39", row_number) or 0) * 3
+    kicking += (_optional_float(row, "fg_made_40_49", row_number) or 0) * 4
+    kicking += (_optional_float(row, "fg_made_50_59", row_number) or 0) * 5
+    kicking += (_optional_float(row, "fg_made_60_plus", row_number) or 0) * 6
+
+    dst = (_optional_float(row, "dst_touchdowns", row_number) or 0) * 6
+    dst += (_optional_float(row, "dst_sacks", row_number) or 0) * (
+        scoring.defense_special_teams.events["sack"]
+    )
+    dst += (_optional_float(row, "dst_interceptions", row_number) or 0) * (
+        scoring.defense_special_teams.events["interception"]
+    )
+    dst += (_optional_float(row, "dst_fumble_recoveries", row_number) or 0) * (
+        scoring.defense_special_teams.events["fumble_recovery"]
+    )
+    dst += (_optional_float(row, "dst_safeties", row_number) or 0) * (
+        scoring.defense_special_teams.events["safety"]
+    )
+    dst += (_optional_float(row, "dst_blocked_kicks", row_number) or 0) * (
+        scoring.defense_special_teams.events["blocked_punt_pat_or_field_goal"]
+    )
+
+    total = passing + rushing + receiving + kicking + dst
+    if total == 0:
+        raise SnapshotImportError(
+            f"row {row_number}: stat projection row produced zero projected points"
+        )
+    return total
 
 
 def _build_projection(
