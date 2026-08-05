@@ -22,7 +22,8 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
     controller.move_view(1)
 
     assert controller.current_view == "Rankings"
-    assert controller.view_lines()[0].startswith(">")
+    assert controller.view_lines()[0].startswith("Filters:")
+    assert any(line.startswith(">") for line in controller.view_lines())
     assert any("Selected:" in line for line in controller.view_lines())
     assert any("Projection: mean=" in line for line in controller.view_lines())
 
@@ -40,6 +41,7 @@ def test_cli_product_prompt_helpers(tmp_path: Path) -> None:
     assert "~/BayesianDraft" in _footer_prompt(controller)
     assert "view=summary" in _footer_prompt(controller)
     assert "filter=rb" in _footer_prompt(controller)
+    assert "pos=ALL" in _footer_prompt(controller)
 
 
 def test_cli_controller_filters_and_drafts_selected_player(tmp_path: Path) -> None:
@@ -57,6 +59,27 @@ def test_cli_controller_filters_and_drafts_selected_player(tmp_path: Path) -> No
     assert controller.state.current_overall_pick == 2
     assert controller.state.completed_picks[0].player_id == "rb_001"
     assert "Drafted Example RB One" in controller.status_message
+
+
+def test_cli_controller_filters_rankings_by_position(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(save_path=tmp_path / "draft.json"),
+    )
+
+    assert {ranking.position.value for ranking in controller.selectable_rankings()} > {"RB"}
+
+    controller.set_position_filter("WR")
+
+    assert controller.position_filter == "WR"
+    assert {ranking.position.value for ranking in controller.selectable_rankings()} == {"WR"}
+    assert any("position=WR" in line for line in controller._ranking_lines())
+
+    controller.cycle_position_filter(1)
+
+    assert controller.position_filter == "TE"
 
 
 def test_cli_controller_supports_undo_redo_and_save(tmp_path: Path) -> None:

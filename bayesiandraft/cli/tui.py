@@ -63,6 +63,7 @@ class CliDraftController:
         self.selection_index = 0
         self.manager_selection_index = self._default_manager_selection_index()
         self.search_query = ""
+        self.position_filter = "ALL"
         self.status_message = "Ready."
         self._rankings = build_baseline_rankings(snapshot)
         self._players_by_id = {player.player_id: player for player in snapshot.players}
@@ -108,9 +109,26 @@ class CliDraftController:
             "Search cleared." if not self.search_query else f"Search: {self.search_query}"
         )
 
+    def cycle_position_filter(self, delta: int) -> None:
+        options = ("ALL", *POSITIONS)
+        current_index = options.index(self.position_filter)
+        self.position_filter = options[(current_index + delta) % len(options)]
+        self.selection_index = 0
+        self.status_message = f"Position filter: {self.position_filter}"
+
+    def set_position_filter(self, position: str) -> None:
+        normalized = position.upper()
+        if normalized not in ("ALL", *POSITIONS):
+            return
+        self.position_filter = normalized
+        self.selection_index = 0
+        self.status_message = f"Position filter: {self.position_filter}"
+
     def selectable_rankings(self) -> list[RankingRow]:
         available_ids = set(self.state.available_player_ids)
         rows = [ranking for ranking in self._rankings if ranking.player_id in available_ids]
+        if self.position_filter != "ALL":
+            rows = [ranking for ranking in rows if ranking.position.value == self.position_filter]
         if not self.search_query:
             return rows
 
@@ -224,17 +242,18 @@ class CliDraftController:
                 "Shortcuts: left/right views, up/down select players/managers, "
                 "enter/d draft, / search."
             ),
-            "More: c clear, u undo, r redo, s save, q quit.",
+            "More: [/] cycle positions, 0 all, 1-6 positions, c clear, u undo, r redo, s save.",
         ]
 
     def _ranking_lines(self) -> list[str]:
         rows = self.selectable_rankings()
         if not rows:
             return ["No available players match the current filter."]
-        lines = [
+        lines = [self._filter_status_line(), ""]
+        lines.extend(
             _ranking_line(row, selected=index == self.selection_index)
             for index, row in enumerate(rows[:30])
-        ]
+        )
         selected = rows[self.selection_index]
         lines.extend(["", *self._selected_player_detail_lines(selected)])
         return lines
@@ -436,6 +455,12 @@ class CliDraftController:
             ),
         ]
 
+    def _filter_status_line(self) -> str:
+        return (
+            f"Filters: position={self.position_filter} search={self.search_query or '-'} "
+            "| [ ] cycle positions, c clear"
+        )
+
 
 def run_tui(controller: CliDraftController) -> None:
     curses.wrapper(_curses_main, controller)
@@ -469,6 +494,15 @@ def _curses_main(screen: curses.window, controller: CliDraftController) -> None:
             controller.save()
         elif key == ord("c"):
             controller.set_search("")
+            controller.set_position_filter("ALL")
+        elif key == ord("["):
+            controller.cycle_position_filter(-1)
+        elif key == ord("]"):
+            controller.cycle_position_filter(1)
+        elif key in {ord("1"), ord("2"), ord("3"), ord("4"), ord("5"), ord("6")}:
+            controller.set_position_filter(POSITIONS[int(chr(key)) - 1])
+        elif key == ord("0"):
+            controller.set_position_filter("ALL")
         elif key == ord("/"):
             controller.set_search(_prompt(screen, "Search players: "))
 
@@ -589,7 +623,7 @@ def _footer_prompt(controller: CliDraftController) -> str:
     search = controller.search_query or "none"
     return (
         f"~/BayesianDraft  view={controller.current_view.lower()}  filter={search}  "
-        "enter/d draft  / search  arrows move  s save  q quit"
+        f"pos={controller.position_filter}  enter/d draft  / search  [ ] position  q quit"
     )
 
 
