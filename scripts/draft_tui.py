@@ -1,0 +1,32 @@
+from argparse import ArgumentParser
+from pathlib import Path
+
+from bayesiandraft.cli import CliDraftConfig, CliDraftController, run_tui
+from scripts.common import add_snapshot_argument, load_snapshot_and_draft_state
+
+
+def main() -> None:
+    parser = ArgumentParser(description="Run the interactive BayesianDraft terminal UI.")
+    add_snapshot_argument(parser)
+    parser.add_argument("--scenario", help="Optional rehearsal scenario to load at startup.")
+    parser.add_argument(
+        "--save-path",
+        default="data/processed/cli_draft_state.json",
+        help="Where the terminal UI saves draft state when pressing s.",
+    )
+    args = parser.parse_args()
+
+    snapshot, state = load_snapshot_and_draft_state(args.snapshot)
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(
+            save_path=Path(args.save_path),
+            scenario_path=None if args.scenario is None else Path(args.scenario),
+        ),
+    )
+    run_tui(controller)
+
+
+if __name__ == "__main__":
+    main()
