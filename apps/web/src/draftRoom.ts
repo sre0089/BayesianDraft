@@ -13,6 +13,19 @@ export type Player = {
   vorp: number;
 };
 
+export type TeamBadge = {
+  abbreviation: string;
+  className: string;
+};
+
+export type ManagerRosterSummary = {
+  managerId: string;
+  roster: Player[];
+  counts: Record<Position, number>;
+  projectedPoints: number;
+  vorp: number;
+};
+
 export type Pick = {
   overallPick: number;
   round: number;
@@ -204,6 +217,21 @@ export const players: Player[] = [
   },
 ];
 
+const teamBadgeClassByTeam: Record<string, string> = {
+  AAA: "team-badge--red",
+  BBB: "team-badge--navy",
+  CCC: "team-badge--green",
+  DDD: "team-badge--gold",
+  EEE: "team-badge--blue",
+  FFF: "team-badge--orange",
+  GGG: "team-badge--teal",
+  HHH: "team-badge--black",
+  III: "team-badge--violet",
+  JJJ: "team-badge--maroon",
+  KKK: "team-badge--steel",
+  LLL: "team-badge--lime",
+};
+
 export const initialDraftRoomState: DraftRoomState = {
   completedPicks: [],
   undoStack: [],
@@ -278,6 +306,50 @@ export function rosterForManager(state: DraftRoomState, managerId: string) {
     .filter((pick) => pick.managerId === managerId)
     .map((pick) => playerById.get(pick.playerId))
     .filter((player): player is Player => player !== undefined);
+}
+
+export function teamBadgeForPlayer(player: Player): TeamBadge {
+  return {
+    abbreviation: player.team,
+    className: teamBadgeClassByTeam[player.team] ?? "team-badge--default",
+  };
+}
+
+export function rosterSummaryForManager(
+  state: DraftRoomState,
+  managerId: string,
+): ManagerRosterSummary {
+  const roster = rosterForManager(state, managerId);
+  return {
+    managerId,
+    roster,
+    counts: positionCounts(roster),
+    projectedPoints: Number(
+      roster.reduce((total, player) => total + player.projectedPoints, 0).toFixed(1),
+    ),
+    vorp: Number(roster.reduce((total, player) => total + player.vorp, 0).toFixed(1)),
+  };
+}
+
+export function rosterSummaries(state: DraftRoomState): ManagerRosterSummary[] {
+  return managers.map((managerId) => rosterSummaryForManager(state, managerId));
+}
+
+function positionCounts(roster: Player[]): Record<Position, number> {
+  return roster.reduce<Record<Position, number>>(
+    (counts, player) => ({
+      ...counts,
+      [player.position]: counts[player.position] + 1,
+    }),
+    {
+      QB: 0,
+      RB: 0,
+      WR: 0,
+      TE: 0,
+      DST: 0,
+      K: 0,
+    },
+  );
 }
 
 export function explainRecommendation(player: Player, completedPickCount: number) {

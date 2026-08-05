@@ -9,7 +9,9 @@ import {
   recordPick,
   redo,
   loadDraftRoomState,
+  rosterSummaries,
   saveDraftRoomState,
+  teamBadgeForPlayer,
   undo,
 } from "../src/draftRoom";
 
@@ -76,5 +78,19 @@ describe("draftRoom", () => {
 
     expect(rollouts).toHaveLength(2);
     expect(rollouts[0].optimizerScore).toBeGreaterThan(0);
+  });
+
+  it("summarizes manager rosters and team badges", () => {
+    const state = recordPick(initialDraftRoomState, "rb_001");
+    const summaries = rosterSummaries(state);
+    const firstManager = summaries[0];
+    const badge = teamBadgeForPlayer(availablePlayers(initialDraftRoomState)[0]);
+
+    expect(firstManager.managerId).toBe("Manager 01");
+    expect(firstManager.roster).toHaveLength(1);
+    expect(firstManager.counts.RB).toBe(1);
+    expect(firstManager.projectedPoints).toBe(285);
+    expect(badge.abbreviation).toBe("CCC");
+    expect(badge.className).toMatch(/team-badge--/);
   });
 });
