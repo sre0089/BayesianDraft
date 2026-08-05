@@ -429,7 +429,7 @@ def _curses_main(screen: curses.window, controller: CliDraftController) -> None:
 def _draw(screen: curses.window, controller: CliDraftController) -> None:
     screen.erase()
     height, width = screen.getmaxyx()
-    if height < 8 or width < 40:
+    if height < 10 or width < 44:
         _safe_addnstr(screen, 0, 0, "Terminal is too small for BayesianDraft CLI.", width)
         screen.refresh()
         return
@@ -441,14 +441,24 @@ def _draw(screen: curses.window, controller: CliDraftController) -> None:
 
 
 def _draw_header(screen: curses.window, controller: CliDraftController, width: int) -> None:
-    title = " BayesianDraft CLI "
     summary = summarize_draft_state(controller.state)
+    brand = " BD // BayesianDraft "
     status = (
-        f"Pick {summary.current_overall_pick} | On clock {summary.manager_on_clock} | "
-        f"Available {summary.available_player_count}"
+        f"Pick {summary.current_overall_pick}/{controller.state.total_picks}  "
+        f"Round {controller.state.current_round or '-'}  Clock {summary.manager_on_clock}  "
+        f"Next user {summary.next_user_pick or '-'}"
     )
-    _safe_addnstr(screen, 0, 0, title.ljust(width), width, curses.color_pair(1) | curses.A_BOLD)
-    _safe_addnstr(screen, 1, 0, status.ljust(width), width)
+    _safe_addnstr(screen, 0, 0, brand.ljust(width), width, curses.color_pair(1) | curses.A_BOLD)
+    _safe_addnstr(screen, 1, 0, status.ljust(width), width, curses.A_BOLD)
+    progress = _progress_bar(summary.completed_pick_count, controller.state.total_picks, width - 24)
+    _safe_addnstr(
+        screen,
+        2,
+        0,
+        f" Draft progress {progress} {summary.available_player_count} available".ljust(width),
+        width,
+        curses.color_pair(3),
+    )
 
 
 def _draw_tabs(screen: curses.window, controller: CliDraftController, width: int) -> None:
@@ -457,7 +467,7 @@ def _draw_tabs(screen: curses.window, controller: CliDraftController, width: int
         label = f" {view} "
         attrs = curses.color_pair(2) | curses.A_BOLD if index == controller.view_index else 0
         if x + len(label) < width:
-            _safe_addnstr(screen, 3, x, label, width - x, attrs)
+            _safe_addnstr(screen, 4, x, label, width - x, attrs)
         x += len(label) + 1
 
 
@@ -467,11 +477,24 @@ def _draw_body(
     height: int,
     width: int,
 ) -> None:
-    top = 5
-    max_lines = max(height - 8, 1)
-    for offset, line in enumerate(controller.view_lines()[:max_lines]):
-        attrs = curses.A_REVERSE if line.startswith(">") else 0
-        _safe_addnstr(screen, top + offset, 0, line, width, attrs)
+    top = 6
+    body_height = max(height - 9, 1)
+    if controller.current_view == "Rankings" and width >= 104:
+        _draw_rankings_workspace(screen, controller, top, 0, body_height, width)
+        return
+    if controller.current_view == "Managers" and width >= 96:
+        _draw_manager_workspace(screen, controller, top, 0, body_height, width)
+        return
+
+    _draw_box(screen, top, 0, body_height, width, controller.current_view)
+    _draw_lines(
+        screen,
+        controller.view_lines(),
+        top + 1,
+        2,
+        max(body_height - 2, 0),
+        max(width - 4, 1),
+    )
 
 
 def _draw_footer(
@@ -483,6 +506,139 @@ def _draw_footer(
     search = f"Filter: {controller.search_query or '-'}"
     _safe_addnstr(screen, height - 2, 0, search.ljust(width), width, curses.color_pair(3))
     _safe_addnstr(screen, height - 1, 0, controller.status_message.ljust(width), width)
+
+
+def _progress_bar(completed: int, total: int, width: int) -> str:
+    bar_width = max(min(width, 40), 8)
+    filled = 0 if total == 0 else round((completed / total) * bar_width)
+    return "[" + "#" * filled + "." * (bar_width - filled) + "]"
+
+
+def _draw_box(
+    screen: curses.window,
+    y: int,
+    x: int,
+    height: int,
+    width: int,
+    title: str,
+) -> None:
+    if height < 3 or width < 8:
+        return
+
+    horizontal = "-" * max(width - 2, 0)
+    _safe_addnstr(screen, y, x, "+" + horizontal + "+", width)
+    for row in range(y + 1, y + height - 1):
+        _safe_addnstr(screen, row, x, "|", 1)
+        _safe_addnstr(screen, row, x + width - 1, "|", 1)
+    _safe_addnstr(screen, y + height - 1, x, "+" + horizontal + "+", width)
+
+    label = f" {title} "
+    if len(label) < width - 2:
+        _safe_addnstr(screen, y, x + 2, label, width - 4, curses.color_pair(1) | curses.A_BOLD)
+
+
+def _draw_lines(
+    screen: curses.window,
+    lines: list[str],
+    y: int,
+    x: int,
+    max_lines: int,
+    width: int,
+) -> None:
+    for offset, line in enumerate(lines[:max_lines]):
+        attrs = curses.A_REVERSE if line.startswith(">") else 0
+        _safe_addnstr(screen, y + offset, x, line, width, attrs)
+
+
+def _draw_rankings_workspace(
+    screen: curses.window,
+    controller: CliDraftController,
+    y: int,
+    x: int,
+    height: int,
+    width: int,
+) -> None:
+    left_width = min(max(70, int(width * 0.64)), width - 34)
+    right_width = width - left_width - 1
+    rows = controller.selectable_rankings()
+    selected = rows[controller.selection_index] if rows else None
+
+    _draw_box(screen, y, x, height, left_width, "Available Players")
+    ranking_lines = [
+        _ranking_line(row, selected=index == controller.selection_index)
+        for index, row in enumerate(rows[: max(height - 2, 0)])
+    ]
+    if not ranking_lines:
+        ranking_lines = ["No available players match the current filter."]
+    _draw_lines(screen, ranking_lines, y + 1, x + 2, height - 2, left_width - 4)
+
+    _draw_box(screen, y, x + left_width + 1, height, right_width, "Player Detail")
+    detail_lines = (
+        ["No player selected."]
+        if selected is None
+        else [
+            f"{controller._team_badge(selected.nfl_team_id)} {selected.full_name}",
+            "",
+            *controller._selected_player_detail_lines(selected),
+            "",
+            "Enter/d records this player for the manager on clock.",
+        ]
+    )
+    _draw_lines(screen, detail_lines, y + 1, x + left_width + 3, height - 2, right_width - 4)
+
+
+def _draw_manager_workspace(
+    screen: curses.window,
+    controller: CliDraftController,
+    y: int,
+    x: int,
+    height: int,
+    width: int,
+) -> None:
+    left_width = min(58, width // 2)
+    right_width = width - left_width - 1
+    selected_manager_id = controller._selected_manager_id()
+    selected_roster = controller.state.rosters[selected_manager_id]
+
+    _draw_box(screen, y, x, height, left_width, "Managers")
+    manager_lines = []
+    for index, manager in enumerate(controller.state.league_config.draft_order):
+        roster = controller.state.rosters[manager.id]
+        marker = ">" if index == controller.manager_selection_index else " "
+        clock = "*" if manager.id == controller.state.manager_on_clock else " "
+        user = (
+            "YOU"
+            if manager.id == controller.state.league_config.league.user_manager_id
+            else "   "
+        )
+        manager_lines.append(
+            f"{marker}{clock} {controller._manager_label(manager.id):<12} "
+            f"{user} {len(roster.player_ids):>2} picks"
+        )
+    _draw_lines(screen, manager_lines, y + 1, x + 2, height - 2, left_width - 4)
+
+    _draw_box(
+        screen,
+        y,
+        x + left_width + 1,
+        height,
+        right_width,
+        f"Roster: {controller._manager_label(selected_manager_id)}",
+    )
+    roster_lines = [
+        controller._position_count_text(selected_roster.positional_counts),
+        "",
+    ]
+    if not selected_roster.player_ids:
+        roster_lines.append("No picks yet.")
+    else:
+        for player_id in selected_roster.player_ids:
+            player = controller.state.players[player_id]
+            roster_lines.append(
+                f"{controller._team_badge(player.nfl_team_id)} {player.position:<3} "
+                f"{player.full_name}"
+            )
+    _draw_lines(screen, roster_lines, y + 1, x + left_width + 3, height - 2, right_width - 4)
 
 
 def _prompt(screen: curses.window, prompt: str) -> str:
@@ -528,7 +684,7 @@ def _safe_addnstr(
     if y < 0 or y >= height or x < 0 or x >= screen_width:
         return
 
-    max_width = max(min(width, screen_width - x) - 1, 0)
+    max_width = max(min(width, screen_width - x), 0)
     if max_width == 0:
         return
 
