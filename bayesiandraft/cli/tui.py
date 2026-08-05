@@ -245,6 +245,11 @@ class CliDraftController:
             return ["No recommendations are available."]
         rows = [recommendation.primary, *recommendation.alternatives]
         lines = [
+            "Top 5 by positions you still need",
+            "These groups come from your current roster vacancies and update after every pick.",
+            "",
+            *self._positional_recommendation_lines(),
+            "",
             "Best overall recommendation",
             "Scores combine VORP, starter need, tier, ADP value, availability, and penalties.",
             "",
@@ -258,15 +263,10 @@ class CliDraftController:
             )
             lines.extend(f"     - {item}" for item in row.explanation)
             lines.append("")
-        lines.extend(self._positional_recommendation_lines())
         return lines
 
     def _positional_recommendation_lines(self) -> list[str]:
-        lines = [
-            "",
-            "Top 5 by positions you still need",
-            "",
-        ]
+        lines: list[str] = []
         for group in self.positional_recommendations():
             lines.append(f"{group.position} need={group.remaining_need}")
             if not group.candidates:
@@ -280,9 +280,11 @@ class CliDraftController:
                 projected = "-" if ranking is None else f"{ranking.projected_points:.1f}"
                 lines.append(
                     f"  {index}. {name:<26} score={score.total_score:>6.1f} "
-                    f"proj={projected:>6} tier={tier:<2} avail={score.next_pick_availability:.0%}"
+                    f"proj={projected:>6} tier={tier:<2}"
                 )
             lines.append("")
+        if not lines:
+            lines.append("No open starter or flex needs remain.")
         return lines
 
     def _roster_lines(self) -> list[str]:

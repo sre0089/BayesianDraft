@@ -124,9 +124,10 @@ def test_cli_controller_renders_recommendations_roster_health_and_picks(
 
     controller.view_index = 2
     recommendation_lines = controller.view_lines()
+    assert recommendation_lines[0] == "Top 5 by positions you still need"
     assert any("Best overall recommendation" in line for line in recommendation_lines)
-    assert any("Top 5 by positions you still need" in line for line in recommendation_lines)
     assert any("RB need=" in line for line in recommendation_lines)
+    assert any("WR need=" in line for line in recommendation_lines)
     assert not any("conf=" in line for line in recommendation_lines)
 
     controller.view_index = 3
