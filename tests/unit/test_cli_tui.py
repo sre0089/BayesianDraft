@@ -14,8 +14,8 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
     )
 
     assert controller.current_view == "Summary"
-    assert any("CLI Version" in line for line in controller.view_lines())
-    assert any("* Draft ready: pick 1" in line for line in controller.view_lines())
+    assert any("Version" in line for line in controller.view_lines())
+    assert any("Pick 1/" in line for line in controller.view_lines())
     assert any("Live entry:" in line for line in controller.view_lines())
     assert any("| __ )" in line for line in controller.view_lines())
 
@@ -38,6 +38,7 @@ def test_cli_product_prompt_helpers(tmp_path: Path) -> None:
 
     assert _progress_bar(10, 20, 12) == "[######......]"
     assert "~/BayesianDraft" in _footer_prompt(controller)
+    assert "view=summary" in _footer_prompt(controller)
     assert "filter=rb" in _footer_prompt(controller)
 
 

@@ -27,27 +27,12 @@ VIEWS = (
     "Picks",
 )
 POSITIONS = ("QB", "RB", "WR", "TE", "DST", "K")
-WORDMARK_LINES = (
-    r"  ____     ___     __   __  _____   ____   ___     _     _   _ ",
-    r" | __ )   / \ \   / /  |  \/  | \ | |  _ \ / _ \   / \   | \ | |",
-    r" |  _ \  / _ \ \ / /   | |\/| |  \| | | | | | | | / _ \  |  \| |",
-    r" | |_) |/ ___ \ V /    | |  | | |\  | |_| | |_| |/ ___ \ | |\  |",
-    r" |____//_/   \_\_/     |_|  |_|_| \_|____/ \___//_/   \_\|_| \_|",
-    r"        ____    ____      _     _____ _____                         ",
-    r"       |  _ \  |  _ \    / \   |  ___|_   _|                        ",
-    r"       | | | | | |_) |  / _ \  | |_    | |                          ",
-    r"       | |_| | |  _ <  / ___ \ |  _|   | |                          ",
-    r"       |____/  |_| \_\/_/   \_\|_|     |_|                          ",
-)
-MASCOT_LINES = (
-    r"        ___________       ",
-    r"     .-'  _     _  '-.    ",
-    r"    /    (_)   (_)    \   ",
-    r"   |  .-.   ___   .-.  |  ",
-    r"   |  | |  / _ \  | |  |  ",
-    r"    \  '-' \___/ '-'  /   ",
-    r"     '-.___________.-'    ",
-    r"          |  BD  |        ",
+COMPACT_LOGO_LINES = (
+    r"  ____  ____  ",
+    r" | __ )|  _ \ ",
+    r" |  _ \| | | |",
+    r" | |_) | |_| |",
+    r" |____/|____/ ",
 )
 
 
@@ -211,23 +196,20 @@ class CliDraftController:
         summary = summarize_draft_state(self.state)
         next_pick = "-" if summary.next_user_pick is None else str(summary.next_user_pick)
         return [
-            "Welcome to BayesianDraft",
-            *WORDMARK_LINES,
+            "BayesianDraft",
+            *COMPACT_LOGO_LINES,
             "",
-            *MASCOT_LINES,
-            "",
-            f"CLI Version {__version__} - Snapshot {self.snapshot.snapshot.snapshot_id}",
-            "",
+            f"Version {__version__} - Snapshot {self.snapshot.snapshot.snapshot_id}",
             (
-                "BayesianDraft ranks live draft decisions from projections, scarcity, "
-                "market cost, roster need, and next-pick availability."
+                "Live draft dashboard for projections, scarcity, roster need, "
+                "market cost, and next-pick availability."
             ),
             "",
-            f"* Draft ready: pick {summary.current_overall_pick} of {self.state.total_picks}",
-            f"* On clock: {summary.manager_on_clock}",
-            f"* Available players: {summary.available_player_count}",
-            f"* Your roster size: {summary.user_roster_size}",
-            f"* Your next pick: {next_pick}",
+            f"Pick {summary.current_overall_pick}/{self.state.total_picks}",
+            f"On clock {summary.manager_on_clock}",
+            f"Available {summary.available_player_count}",
+            f"Your roster {summary.user_roster_size}",
+            f"Next user pick {next_pick}",
             "",
             "Live entry: draft the selected player for whoever is currently on clock.",
             (
@@ -508,6 +490,9 @@ def _draw_body(
 ) -> None:
     top = 6
     body_height = max(height - 10, 1)
+    if controller.current_view == "Summary" and width >= 108:
+        _draw_summary_workspace(screen, controller, top, 0, body_height, width)
+        return
     if controller.current_view == "Rankings" and width >= 104:
         _draw_rankings_workspace(screen, controller, top, 0, body_height, width)
         return
@@ -517,7 +502,14 @@ def _draw_body(
 
     _draw_box(screen, top, 0, body_height, width, controller.current_view)
     if controller.current_view == "Summary":
-        _draw_summary_lines(screen, controller.view_lines(), top + 1, 3, body_height - 2, width - 6)
+        _draw_summary_lines(
+            screen,
+            controller.view_lines(),
+            top + 1,
+            3,
+            body_height - 2,
+            width - 6,
+        )
     else:
         _draw_lines(
             screen,
@@ -536,25 +528,14 @@ def _draw_footer(
     width: int,
 ) -> None:
     prompt = _footer_prompt(controller)
-    top = height - 3
-    _safe_addnstr(screen, top, 0, "+" + "-" * max(width - 2, 0) + "+", width, curses.color_pair(4))
-    _safe_addnstr(screen, top + 1, 0, "|", 1, curses.color_pair(4))
-    _safe_addnstr(screen, top + 1, width - 1, "|", 1, curses.color_pair(4))
-    _safe_addnstr(
-        screen,
-        top + 2,
-        0,
-        "+" + "-" * max(width - 2, 0) + "+",
-        width,
-        curses.color_pair(4),
-    )
-    _safe_addnstr(screen, top + 1, 2, prompt, max(width - 4, 1), curses.color_pair(6))
+    _safe_addnstr(screen, height - 3, 0, (" " + prompt).ljust(width), width, curses.color_pair(6))
+    _safe_addnstr(screen, height - 2, 0, (" " + "-" * max(width - 2, 0)).ljust(width), width)
     _safe_addnstr(
         screen,
         height - 1,
-        2,
+        1,
         controller.status_message,
-        max(width - 4, 1),
+        max(width - 2, 1),
         curses.color_pair(5),
     )
 
@@ -568,9 +549,93 @@ def _progress_bar(completed: int, total: int, width: int) -> str:
 def _footer_prompt(controller: CliDraftController) -> str:
     search = controller.search_query or "none"
     return (
-        f"~/BayesianDraft [/{controller.current_view.lower()}] "
-        f"filter={search}  enter/d draft  / search  ? docs  q quit"
+        f"~/BayesianDraft  view={controller.current_view.lower()}  filter={search}  "
+        "enter/d draft  / search  arrows move  s save  q quit"
     )
+
+
+def _draw_summary_workspace(
+    screen: curses.window,
+    controller: CliDraftController,
+    y: int,
+    x: int,
+    height: int,
+    width: int,
+) -> None:
+    left_width = 34
+    right_width = 38
+    center_width = width - left_width - right_width - 2
+    summary = summarize_draft_state(controller.state)
+    recommendation = controller.recommendation()
+    user_manager_id = controller.state.league_config.league.user_manager_id
+    user_roster = controller.state.rosters[user_manager_id]
+
+    _draw_box(screen, y, x, height, left_width, "Status")
+    status_lines = [
+        "BayesianDraft",
+        *COMPACT_LOGO_LINES,
+        "",
+        f"v{__version__}",
+        f"Snapshot: {controller.snapshot.snapshot.snapshot_id}",
+        "",
+        f"Pick: {summary.current_overall_pick}/{controller.state.total_picks}",
+        f"Round: {controller.state.current_round or '-'}",
+        f"Clock: {summary.manager_on_clock}",
+        f"Next user: {summary.next_user_pick or '-'}",
+        f"Available: {summary.available_player_count}",
+    ]
+    _draw_summary_lines(screen, status_lines, y + 1, x + 2, height - 2, left_width - 4)
+
+    center_x = x + left_width + 1
+    _draw_box(screen, y, center_x, height, center_width, "Decision")
+    decision_lines = [
+        "Live board",
+        "Enter every pick as it happens. Recommendations update after each pick.",
+        "",
+    ]
+    if recommendation is None:
+        decision_lines.append("No recommendation available.")
+    else:
+        primary = recommendation.primary
+        ranking = controller._ranking_by_id(primary.player_id)
+        name = ranking.full_name if ranking else primary.player_id
+        decision_lines.extend(
+            [
+                f"Primary: {name}",
+                f"Score: {primary.total_score:.1f}",
+                f"Confidence: {primary.confidence:.0%}",
+                f"Next-pick availability: {primary.next_pick_availability:.0%}",
+                "",
+                "Why:",
+                *[f"- {item}" for item in primary.explanation[:5]],
+            ]
+        )
+    _draw_lines(screen, decision_lines, y + 1, center_x + 2, height - 2, center_width - 4)
+
+    right_x = center_x + center_width + 1
+    top_height = max(height // 2, 7)
+    bottom_height = height - top_height - 1
+    _draw_box(screen, y, right_x, top_height, right_width, "Your Roster")
+    roster_lines = [f"Picks: {len(user_roster.player_ids)}"]
+    roster_lines.append(controller._position_count_text(user_roster.positional_counts))
+    roster_lines.append("")
+    if user_roster.player_ids:
+        for player_id in user_roster.player_ids[-8:]:
+            player = controller.state.players[player_id]
+            roster_lines.append(f"{player.position:<3} {player.full_name}")
+    else:
+        roster_lines.append("No picks yet.")
+    _draw_lines(screen, roster_lines, y + 1, right_x + 2, top_height - 2, right_width - 4)
+
+    recent_y = y + top_height + 1
+    _draw_box(screen, recent_y, right_x, bottom_height, right_width, "Recent Picks")
+    pick_lines = []
+    for pick in controller.state.completed_picks[-8:]:
+        player = controller.state.players[pick.player_id]
+        pick_lines.append(f"{pick.overall_pick:>3} {pick.manager_id:<10} {player.full_name}")
+    if not pick_lines:
+        pick_lines.append("No picks recorded.")
+    _draw_lines(screen, pick_lines, recent_y + 1, right_x + 2, bottom_height - 2, right_width - 4)
 
 
 def _draw_box(
@@ -610,15 +675,13 @@ def _draw_summary_lines(
 
 
 def _summary_line_attrs(line: str) -> int:
-    if line.startswith("Welcome"):
+    if line.startswith("BayesianDraft"):
         return curses.color_pair(3) | curses.A_BOLD
-    if line in WORDMARK_LINES:
+    if line in COMPACT_LOGO_LINES:
         return curses.color_pair(1) | curses.A_BOLD
-    if line in MASCOT_LINES:
-        return curses.color_pair(4) | curses.A_BOLD
-    if line.startswith("CLI Version"):
+    if line.startswith("Version") or line.startswith("v"):
         return curses.color_pair(6) | curses.A_BOLD
-    if line.startswith("*"):
+    if line.startswith("Pick") or line.startswith("Clock") or line.startswith("Next"):
         return curses.color_pair(5) | curses.A_BOLD
     return 0
 
@@ -747,9 +810,9 @@ def _init_colors() -> None:
         curses.init_pair(1, curses.COLOR_CYAN, -1)
         curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_CYAN)
         curses.init_pair(3, curses.COLOR_YELLOW, -1)
-        curses.init_pair(4, curses.COLOR_MAGENTA, -1)
+        curses.init_pair(4, curses.COLOR_BLUE, -1)
         curses.init_pair(5, curses.COLOR_GREEN, -1)
-        curses.init_pair(6, curses.COLOR_BLUE, -1)
+        curses.init_pair(6, curses.COLOR_WHITE, -1)
     except curses.error:
         return
 
