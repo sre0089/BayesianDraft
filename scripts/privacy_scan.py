@@ -5,8 +5,13 @@ SKIP_DIRS = {
     ".git",
     ".mypy_cache",
     ".pytest_cache",
+    ".ruff_cache",
     "__pycache__",
+    "data/processed",
+    "data/raw",
+    "data/snapshots",
     "dist",
+    "models/artifacts",
     "node_modules",
 }
 
@@ -46,7 +51,11 @@ def scan_repo(root: str | Path = ".") -> list[str]:
 
 
 def _skipped(path: Path) -> bool:
-    return any(part in SKIP_DIRS for part in path.parts)
+    path_text = path.as_posix()
+    return any(
+        part in path.parts or f"/{part}/" in path_text or path_text.startswith(f"{part}/")
+        for part in SKIP_DIRS
+    )
 
 
 def main() -> None:
