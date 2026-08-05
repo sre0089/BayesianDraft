@@ -15,6 +15,7 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
     assert controller.current_view == "Summary"
     assert any("Current pick: 1" in line for line in controller.view_lines())
     assert any("Live entry:" in line for line in controller.view_lines())
+    assert any("____" in line for line in controller.view_lines())
 
     controller.move_view(1)
 
@@ -108,10 +109,17 @@ def test_cli_controller_renders_recommendations_roster_health_and_picks(
     assert any("Primary recommendation" in line for line in controller.view_lines())
 
     controller.view_index = 3
-    assert any("Roster balance" in line for line in controller.view_lines())
+    assert any("Managers" in line for line in controller.view_lines())
+    assert any("Your Team" in line for line in controller.view_lines())
+
+    controller.move_selection(-1)
+    assert controller.manager_selection_index == 6
 
     controller.view_index = 4
+    assert any("Roster balance" in line for line in controller.view_lines())
+
+    controller.view_index = 5
     assert any("Snapshot:" in line for line in controller.view_lines())
 
-    controller.view_index = 6
+    controller.view_index = 7
     assert any("manager_01" in line for line in controller.view_lines())

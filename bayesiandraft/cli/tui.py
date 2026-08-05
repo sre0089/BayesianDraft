@@ -15,7 +15,17 @@ from bayesiandraft.rankings import RankingRow, build_baseline_rankings
 from bayesiandraft.recommendations import RecommendationResult, recommend_players
 from bayesiandraft.simulation import benchmark_remaining_draft
 
-VIEWS = ("Summary", "Rankings", "Recommendations", "Roster", "Health", "Simulation", "Picks")
+VIEWS = (
+    "Summary",
+    "Rankings",
+    "Recommendations",
+    "Managers",
+    "Roster",
+    "Health",
+    "Simulation",
+    "Picks",
+)
+POSITIONS = ("QB", "RB", "WR", "TE", "DST", "K")
 
 
 @dataclass(frozen=True)
@@ -38,6 +48,7 @@ class CliDraftController:
         self.config = config
         self.view_index = 0
         self.selection_index = 0
+        self.manager_selection_index = self._default_manager_selection_index()
         self.search_query = ""
         self.status_message = "Ready."
         self._rankings = build_baseline_rankings(snapshot)
@@ -66,6 +77,14 @@ class CliDraftController:
         self.selection_index = 0
 
     def move_selection(self, delta: int) -> None:
+        if self.current_view == "Managers":
+            manager_count = len(self.state.league_config.draft_order)
+            self.manager_selection_index = max(
+                0,
+                min(self.manager_selection_index + delta, manager_count - 1),
+            )
+            return
+
         item_count = max(len(self.selectable_rankings()), 1)
         self.selection_index = max(0, min(self.selection_index + delta, item_count - 1))
 
@@ -155,6 +174,8 @@ class CliDraftController:
             return self._ranking_lines()
         if view == "Recommendations":
             return self._recommendation_lines()
+        if view == "Managers":
+            return self._manager_lines()
         if view == "Roster":
             return self._roster_lines()
         if view == "Health":
@@ -167,6 +188,13 @@ class CliDraftController:
         summary = summarize_draft_state(self.state)
         next_pick = "-" if summary.next_user_pick is None else str(summary.next_user_pick)
         return [
+            r"  ____                          _             ____             __ _   ",
+            r" | __ )  __ _ _   _  ___  ___ (_) __ _ _ __ |  _ \ _ __ __ _ / _| |_ ",
+            r" |  _ \ / _` | | | |/ _ \/ __|| |/ _` | '_ \| | | | '__/ _` | |_| __|",
+            r" | |_) | (_| | |_| |  __/\__ \| | (_| | | | | |_| | | | (_| |  _| |_ ",
+            r" |____/ \__,_|\__, |\___||___// |\__,_|_| |_|____/|_|  \__,_|_|  \__|",
+            r"              |___/         |__/                                      ",
+            "",
             f"Draft ID: {summary.draft_id}",
             f"Current pick: {summary.current_overall_pick}",
             f"On clock: {summary.manager_on_clock}",
@@ -176,7 +204,10 @@ class CliDraftController:
             f"Your next pick: {next_pick}",
             "",
             "Live entry: draft the selected player for whoever is currently on clock.",
-            "Shortcuts: left/right views, up/down select, enter/d draft, / search.",
+            (
+                "Shortcuts: left/right views, up/down select players/managers, "
+                "enter/d draft, / search."
+            ),
             "More: c clear, u undo, r redo, s save, q quit.",
         ]
 
@@ -228,6 +259,36 @@ class CliDraftController:
                 lines.append(f"{player.position:<3} {player.full_name}")
         return lines
 
+    def _manager_lines(self) -> list[str]:
+        selected_manager_id = self._selected_manager_id()
+        selected_roster = self.state.rosters[selected_manager_id]
+        lines = [
+            "Managers",
+            "Use up/down to inspect every roster as picks come in.",
+            "",
+        ]
+        for index, manager in enumerate(self.state.league_config.draft_order):
+            roster = self.state.rosters[manager.id]
+            marker = ">" if index == self.manager_selection_index else " "
+            on_clock = "*" if manager.id == self.state.manager_on_clock else " "
+            user = "YOU" if manager.id == self.state.league_config.league.user_manager_id else "   "
+            lines.append(
+                f"{marker}{on_clock} {self._manager_label(manager.id):<12} "
+                f"{user} picks={len(roster.player_ids):<2} "
+                f"{self._position_count_text(roster.positional_counts)}"
+            )
+        lines.extend(["", f"Roster: {self._manager_label(selected_manager_id)}"])
+        if not selected_roster.player_ids:
+            lines.append("No picks yet.")
+        else:
+            for player_id in selected_roster.player_ids:
+                player = self.state.players[player_id]
+                lines.append(
+                    f"{self._team_badge(player.nfl_team_id)} {player.position:<3} "
+                    f"{player.full_name}"
+                )
+        return lines
+
     def _health_lines(self) -> list[str]:
         health = build_snapshot_health_report(self.snapshot)
         lines = [
@@ -273,6 +334,27 @@ class CliDraftController:
             if ranking.player_id == player_id:
                 return ranking
         return None
+
+    def _default_manager_selection_index(self) -> int:
+        user_manager_id = self.state.league_config.league.user_manager_id
+        for index, manager in enumerate(self.state.league_config.draft_order):
+            if manager.id == user_manager_id:
+                return index
+        return 0
+
+    def _selected_manager_id(self) -> str:
+        return self.state.league_config.draft_order[self.manager_selection_index].id
+
+    def _manager_label(self, manager_id: str) -> str:
+        if manager_id == self.state.league_config.league.user_manager_id:
+            return "Your Team"
+        return manager_id.replace("manager_", "Team ")
+
+    def _position_count_text(self, counts: dict[str, int]) -> str:
+        return " ".join(f"{position}:{counts.get(position, 0)}" for position in POSITIONS)
+
+    def _team_badge(self, team: str | None) -> str:
+        return f"[{team or 'FA':^3}]"
 
     def _selected_player_detail_lines(self, ranking: RankingRow) -> list[str]:
         player = self._players_by_id.get(ranking.player_id)
