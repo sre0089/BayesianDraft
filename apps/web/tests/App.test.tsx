@@ -27,7 +27,7 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Undo pick" }));
 
-    expect(screen.getByText("No picks yet")).toBeInTheDocument();
+    expect(screen.getAllByText("No picks yet").length).toBeGreaterThan(0);
   });
 
   it("saves and restores a draft", () => {
@@ -50,5 +50,16 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: "Candidate rollouts" })).toBeInTheDocument();
     expect(screen.getAllByText(/rollout candidate/).length).toBeGreaterThan(0);
+  });
+
+  it("shows competitor roster tabs with team badges", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Draft" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: /01/i }));
+
+    expect(screen.getByRole("heading", { name: "Rosters" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Manager 01" })).toBeInTheDocument();
+    expect(screen.getAllByText("CCC").length).toBeGreaterThan(0);
   });
 });

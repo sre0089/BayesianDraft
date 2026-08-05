@@ -10,9 +10,14 @@ import {
   players,
   recordPick,
   redo,
+  rosterSummaries,
   rosterForManager,
   saveDraftRoomState,
+  teamBadgeForPlayer,
   nextUserPick,
+  managers,
+  type ManagerRosterSummary,
+  type Player,
   type Position,
   undo,
   userManagerName,
@@ -24,6 +29,7 @@ export function App() {
   const [draftState, setDraftState] = useState(() => loadDraftRoomState() ?? initialDraftRoomState);
   const [query, setQuery] = useState("");
   const [position, setPosition] = useState<Position | "ALL">("ALL");
+  const [selectedManager, setSelectedManager] = useState(userManagerName);
   const currentSlot = pickSlot(draftState.completedPicks.length + 1);
   const remainingPlayers = availablePlayers(draftState);
   const filteredPlayers = useMemo(
@@ -46,6 +52,12 @@ export function App() {
   const userRoster = rosterForManager(draftState, userManagerName);
   const rolloutCandidates = candidateRollouts(draftState);
   const playerById = new Map(players.map((player) => [player.playerId, player]));
+  const managerSummaries = rosterSummaries(draftState);
+  const selectedManagerSummary =
+    managerSummaries.find((summary) => summary.managerId === selectedManager) ??
+    managerSummaries[0];
+  const completedPickCount = draftState.completedPicks.length;
+  const progress = Math.round((completedPickCount / 224) * 100);
 
   return (
     <main className="draft-room">
@@ -66,14 +78,21 @@ export function App() {
       </header>
 
       <section className="recommendation-band" aria-labelledby="recommendation-title">
-        <div>
+        <div className="recommendation-copy">
           <p className="eyebrow">Baseline recommendation</p>
-          <h2 id="recommendation-title">{primary?.fullName ?? "Draft complete"}</h2>
-          <p>
-            {primary
-              ? `${primary.position} - ${primary.team} - Rank ${primary.overallRank} - Tier ${primary.tier}`
-              : "No available players remain in the fixture."}
-          </p>
+          <h2 id="recommendation-title">
+            {primary ? <PlayerName player={primary} size="large" /> : "Draft complete"}
+          </h2>
+          {primary ? (
+            <div className="recommendation-metrics" aria-label="Recommendation metrics">
+              <Metric label="Rank" value={String(primary.overallRank)} compact />
+              <Metric label="Tier" value={String(primary.tier)} compact />
+              <Metric label="Proj" value={String(primary.projectedPoints)} compact />
+              <Metric label="VORP" value={String(primary.vorp)} compact />
+            </div>
+          ) : (
+            <p>No available players remain in the fixture.</p>
+          )}
           <ul className="explanation-list">
             {explanation.map((item) => (
               <li key={item}>{item}</li>
@@ -133,6 +152,14 @@ export function App() {
             </div>
           </div>
 
+          <div className="draft-progress" aria-label="Draft progress">
+            <span>{completedPickCount} picks complete</span>
+            <div>
+              <i style={{ width: `${progress}%` }} />
+            </div>
+            <span>{remainingPlayers.length} available</span>
+          </div>
+
           <div className="table-wrap">
             <table>
               <thead>
@@ -151,7 +178,9 @@ export function App() {
                 {filteredPlayers.map((player) => (
                   <tr key={player.playerId}>
                     <td>{player.overallRank}</td>
-                    <td>{player.fullName}</td>
+                    <td>
+                      <PlayerName player={player} />
+                    </td>
                     <td>{player.position}</td>
                     <td>{player.team}</td>
                     <td>{player.projectedPoints}</td>
@@ -172,6 +201,29 @@ export function App() {
         </section>
 
         <aside className="side-stack">
+          <section className="panel competitor-panel" aria-labelledby="competitor-title">
+            <div className="panel-header">
+              <div>
+                <p className="eyebrow">Managers</p>
+                <h2 id="competitor-title">Rosters</h2>
+              </div>
+              <span className="on-clock-pill">On clock: {currentSlot.managerId}</span>
+            </div>
+            <div className="manager-tabs" aria-label="Manager roster tabs">
+              {managerSummaries.map((summary) => (
+                <button
+                  key={summary.managerId}
+                  aria-pressed={summary.managerId === selectedManagerSummary.managerId}
+                  onClick={() => setSelectedManager(summary.managerId)}
+                >
+                  <span>{managerLabel(summary.managerId)}</span>
+                  <small>{summary.roster.length}</small>
+                </button>
+              ))}
+            </div>
+            <ManagerRoster summary={selectedManagerSummary} />
+          </section>
+
           <section className="panel" aria-labelledby="board-title">
             <p className="eyebrow">Draft board</p>
             <h2 id="board-title">Recent picks</h2>
@@ -181,7 +233,7 @@ export function App() {
                 return (
                   <li key={pick.overallPick}>
                     <span>{pick.overallPick}</span>
-                    <strong>{player?.fullName}</strong>
+                    {player ? <PlayerName player={player} /> : <strong>Unknown player</strong>}
                     <small>{pick.managerId}</small>
                   </li>
                 );
@@ -199,7 +251,7 @@ export function App() {
                 userRoster.map((player) => (
                   <div key={player.playerId} className="roster-row">
                     <span>{player.position}</span>
-                    <strong>{player.fullName}</strong>
+                    <PlayerName player={player} />
                   </div>
                 ))
               )}
@@ -218,7 +270,7 @@ export function App() {
                   return (
                     <article key={candidate.playerId} className="rollout-row">
                       <div>
-                        <strong>{player?.fullName}</strong>
+                        {player ? <PlayerName player={player} /> : <strong>Unknown player</strong>}
                         <span>
                           {player?.position} - Score {candidate.optimizerScore}
                         </span>
@@ -250,11 +302,85 @@ export function App() {
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({
+  label,
+  value,
+  compact = false,
+}: {
+  label: string;
+  value: string;
+  compact?: boolean;
+}) {
   return (
-    <div className="metric">
+    <div className={compact ? "metric metric--compact" : "metric"}>
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
   );
+}
+
+function PlayerName({ player, size = "default" }: { player: Player; size?: "default" | "large" }) {
+  const badge = teamBadgeForPlayer(player);
+  return (
+    <span className={size === "large" ? "player-name player-name--large" : "player-name"}>
+      <span className={`team-badge ${badge.className}`} aria-hidden="true">
+        {badge.abbreviation}
+      </span>
+      <span>{player.fullName}</span>
+    </span>
+  );
+}
+
+function ManagerRoster({ summary }: { summary: ManagerRosterSummary }) {
+  return (
+    <div className="manager-roster">
+      <div className="manager-roster__header">
+        <div>
+          <h3>{summary.managerId}</h3>
+          <span>{summary.roster.length} picks</span>
+        </div>
+        <dl>
+          <div>
+            <dt>Proj</dt>
+            <dd>{summary.projectedPoints}</dd>
+          </div>
+          <div>
+            <dt>VORP</dt>
+            <dd>{summary.vorp}</dd>
+          </div>
+        </dl>
+      </div>
+      <div className="position-counts" aria-label={`${summary.managerId} position counts`}>
+        {positions
+          .filter((position): position is Position => position !== "ALL")
+          .map((position) => (
+            <span key={position}>
+              {position} {summary.counts[position]}
+            </span>
+          ))}
+      </div>
+      <div className="manager-roster__list">
+        {summary.roster.length === 0 ? (
+          <p className="empty">No picks yet</p>
+        ) : (
+          summary.roster.map((player) => (
+            <div key={player.playerId} className="competitor-player">
+              <PlayerName player={player} />
+              <small>
+                {player.position} - Rank {player.overallRank}
+              </small>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function managerLabel(managerId: string) {
+  if (managerId === userManagerName) {
+    return "You";
+  }
+  const index = managers.indexOf(managerId) + 1;
+  return index > 0 ? String(index).padStart(2, "0") : managerId;
 }
