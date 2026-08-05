@@ -19,6 +19,8 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
 
     assert controller.current_view == "Rankings"
     assert controller.view_lines()[0].startswith(">")
+    assert any("Selected:" in line for line in controller.view_lines())
+    assert any("Projection: mean=" in line for line in controller.view_lines())
 
 
 def test_cli_controller_filters_and_drafts_selected_player(tmp_path: Path) -> None:

@@ -41,6 +41,11 @@ class CliDraftController:
         self.search_query = ""
         self.status_message = "Ready."
         self._rankings = build_baseline_rankings(snapshot)
+        self._players_by_id = {player.player_id: player for player in snapshot.players}
+        self._projections_by_player_id = {
+            projection.player_id: projection for projection in snapshot.projections
+        }
+        self._adp_by_player_id = {adp.player_id: adp for adp in snapshot.adp}
 
         if config.scenario_path is not None:
             self.state = apply_rehearsal_scenario(
@@ -178,10 +183,13 @@ class CliDraftController:
         rows = self.selectable_rankings()
         if not rows:
             return ["No available players match the current filter."]
-        return [
+        lines = [
             _ranking_line(row, selected=index == self.selection_index)
-            for index, row in enumerate(rows[:40])
+            for index, row in enumerate(rows[:30])
         ]
+        selected = rows[self.selection_index]
+        lines.extend(["", *self._selected_player_detail_lines(selected)])
+        return lines
 
     def _recommendation_lines(self) -> list[str]:
         recommendation = self.recommendation()
@@ -264,6 +272,39 @@ class CliDraftController:
             if ranking.player_id == player_id:
                 return ranking
         return None
+
+    def _selected_player_detail_lines(self, ranking: RankingRow) -> list[str]:
+        player = self._players_by_id.get(ranking.player_id)
+        projection = self._projections_by_player_id.get(ranking.player_id)
+        adp = self._adp_by_player_id.get(ranking.player_id)
+        team = player.nfl_team_id if player and player.nfl_team_id else "-"
+        bye = str(player.bye_week) if player and player.bye_week is not None else "-"
+        games = (
+            "-"
+            if projection is None or projection.games_played_mean is None
+            else f"{projection.games_played_mean:.1f}"
+        )
+        adp_text = "-" if adp is None else f"{adp.overall_adp:.1f}"
+        position_adp = "-" if adp is None or adp.position_adp is None else f"{adp.position_adp:.1f}"
+        market_rank = "-" if adp is None or adp.rank is None else str(adp.rank)
+        adp_delta = "-" if ranking.adp_delta is None else f"{ranking.adp_delta:+.1f}"
+        return [
+            f"Selected: {ranking.full_name} ({ranking.position.value}) team={team} bye={bye}",
+            (
+                f"Projection: mean={ranking.projected_points:.1f} "
+                f"median={ranking.median:.1f} floor={ranking.floor:.1f} "
+                f"ceiling={ranking.ceiling:.1f} games={games}"
+            ),
+            (
+                f"Value: vorp={ranking.vorp:.1f} starter={ranking.value_above_starter:.1f} "
+                f"tier={ranking.tier} pos_rank={ranking.position_rank}"
+            ),
+            (
+                f"Market: adp={adp_text} pos_adp={position_adp} rank={market_rank} "
+                f"delta={adp_delta} sleeper={ranking.sleeper_score:.2f} "
+                f"fade={ranking.fade_score:.2f}"
+            ),
+        ]
 
 
 def run_tui(controller: CliDraftController) -> None:
