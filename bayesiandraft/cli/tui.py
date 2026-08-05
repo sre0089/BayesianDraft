@@ -255,13 +255,9 @@ def run_tui(controller: CliDraftController) -> None:
 
 
 def _curses_main(screen: curses.window, controller: CliDraftController) -> None:
-    curses.curs_set(0)
+    _set_cursor_visibility(0)
     screen.keypad(True)
-    curses.start_color()
-    curses.use_default_colors()
-    curses.init_pair(1, curses.COLOR_CYAN, -1)
-    curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_CYAN)
-    curses.init_pair(3, curses.COLOR_YELLOW, -1)
+    _init_colors()
 
     while True:
         _draw(screen, controller)
@@ -293,6 +289,10 @@ def _curses_main(screen: curses.window, controller: CliDraftController) -> None:
 def _draw(screen: curses.window, controller: CliDraftController) -> None:
     screen.erase()
     height, width = screen.getmaxyx()
+    if height < 8 or width < 40:
+        _safe_addnstr(screen, 0, 0, "Terminal is too small for BayesianDraft CLI.", width)
+        screen.refresh()
+        return
     _draw_header(screen, controller, width)
     _draw_tabs(screen, controller, width)
     _draw_body(screen, controller, height, width)
@@ -307,8 +307,8 @@ def _draw_header(screen: curses.window, controller: CliDraftController, width: i
         f"Pick {summary.current_overall_pick} | On clock {summary.manager_on_clock} | "
         f"Available {summary.available_player_count}"
     )
-    screen.addnstr(0, 0, title.ljust(width), width, curses.color_pair(1) | curses.A_BOLD)
-    screen.addnstr(1, 0, status.ljust(width), width)
+    _safe_addnstr(screen, 0, 0, title.ljust(width), width, curses.color_pair(1) | curses.A_BOLD)
+    _safe_addnstr(screen, 1, 0, status.ljust(width), width)
 
 
 def _draw_tabs(screen: curses.window, controller: CliDraftController, width: int) -> None:
@@ -317,7 +317,7 @@ def _draw_tabs(screen: curses.window, controller: CliDraftController, width: int
         label = f" {view} "
         attrs = curses.color_pair(2) | curses.A_BOLD if index == controller.view_index else 0
         if x + len(label) < width:
-            screen.addstr(3, x, label, attrs)
+            _safe_addnstr(screen, 3, x, label, width - x, attrs)
         x += len(label) + 1
 
 
@@ -331,7 +331,7 @@ def _draw_body(
     max_lines = max(height - 8, 1)
     for offset, line in enumerate(controller.view_lines()[:max_lines]):
         attrs = curses.A_REVERSE if line.startswith(">") else 0
-        screen.addnstr(top + offset, 0, line[: width - 1], width - 1, attrs)
+        _safe_addnstr(screen, top + offset, 0, line, width, attrs)
 
 
 def _draw_footer(
@@ -341,21 +341,61 @@ def _draw_footer(
     width: int,
 ) -> None:
     search = f"Filter: {controller.search_query or '-'}"
-    screen.addnstr(height - 2, 0, search.ljust(width), width, curses.color_pair(3))
-    screen.addnstr(height - 1, 0, controller.status_message.ljust(width), width)
+    _safe_addnstr(screen, height - 2, 0, search.ljust(width), width, curses.color_pair(3))
+    _safe_addnstr(screen, height - 1, 0, controller.status_message.ljust(width), width)
 
 
 def _prompt(screen: curses.window, prompt: str) -> str:
     height, width = screen.getmaxyx()
     curses.echo()
-    curses.curs_set(1)
-    screen.addnstr(height - 1, 0, " " * width, width)
-    screen.addnstr(height - 1, 0, prompt, width - 1)
+    _set_cursor_visibility(1)
+    _safe_addnstr(screen, height - 1, 0, " " * width, width)
+    _safe_addnstr(screen, height - 1, 0, prompt, width)
     screen.refresh()
     value = screen.getstr(height - 1, len(prompt), max(width - len(prompt) - 1, 1))
     curses.noecho()
-    curses.curs_set(0)
+    _set_cursor_visibility(0)
     return value.decode("utf-8").strip()
+
+
+def _init_colors() -> None:
+    try:
+        curses.start_color()
+        curses.use_default_colors()
+        curses.init_pair(1, curses.COLOR_CYAN, -1)
+        curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_CYAN)
+        curses.init_pair(3, curses.COLOR_YELLOW, -1)
+    except curses.error:
+        return
+
+
+def _set_cursor_visibility(visibility: int) -> None:
+    try:
+        curses.curs_set(visibility)
+    except curses.error:
+        return
+
+
+def _safe_addnstr(
+    screen: curses.window,
+    y: int,
+    x: int,
+    text: str,
+    width: int,
+    attrs: int = 0,
+) -> None:
+    height, screen_width = screen.getmaxyx()
+    if y < 0 or y >= height or x < 0 or x >= screen_width:
+        return
+
+    max_width = max(min(width, screen_width - x) - 1, 0)
+    if max_width == 0:
+        return
+
+    try:
+        screen.addnstr(y, x, text, max_width, attrs)
+    except curses.error:
+        return
 
 
 def _ranking_line(row: RankingRow, *, selected: bool) -> str:
