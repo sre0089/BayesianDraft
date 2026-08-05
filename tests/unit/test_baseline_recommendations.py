@@ -4,7 +4,7 @@ from bayesiandraft.config import load_league_config
 from bayesiandraft.data import load_player_snapshot
 from bayesiandraft.draft import DraftState, Player
 from bayesiandraft.rankings import build_baseline_rankings
-from bayesiandraft.recommendations import recommend_players
+from bayesiandraft.recommendations import recommend_players, recommend_players_by_needed_position
 
 
 def _draft_state() -> DraftState:
@@ -49,3 +49,25 @@ def test_recommendation_penalizes_early_kicker() -> None:
 
     assert kicker.penalty == 45
     assert any("K/DST" in item for item in kicker.explanation)
+
+
+def test_groups_recommendations_by_needed_position() -> None:
+    snapshot = load_player_snapshot(Path("data/fixtures/baseline_players_2026.json"))
+    groups = recommend_players_by_needed_position(_draft_state(), build_baseline_rankings(snapshot))
+
+    assert {group.position for group in groups} >= {"QB", "RB", "WR", "TE", "DST", "K"}
+    rb_group = next(group for group in groups if group.position == "RB")
+    assert rb_group.remaining_need == 2
+    assert rb_group.candidates[0].player_id == "rb_001"
+    assert len(rb_group.candidates) <= 5
+
+
+def test_position_groups_drop_filled_positions() -> None:
+    snapshot = load_player_snapshot(Path("data/fixtures/baseline_players_2026.json"))
+    state = _draft_state()
+    for player_id in ["rb_001", "wr_001", "rb_002", "wr_002", "te_001", "wr_003", "rb_003"]:
+        state = state.record_pick(player_id)
+    state = state.record_pick("qb_001")
+    groups = recommend_players_by_needed_position(state, build_baseline_rankings(snapshot))
+
+    assert "QB" not in {group.position for group in groups}

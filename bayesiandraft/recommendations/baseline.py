@@ -23,6 +23,12 @@ class RecommendationResult(BaseModel):
     alternatives: list[RecommendationScore]
 
 
+class PositionalRecommendationGroup(BaseModel):
+    position: str
+    remaining_need: int
+    candidates: list[RecommendationScore]
+
+
 STARTER_TARGETS = {
     "QB": 1,
     "RB": 2,
@@ -54,6 +60,37 @@ def recommend_players(
     primary = scored[0]
     alternatives = scored[1:limit]
     return RecommendationResult(primary=primary, alternatives=alternatives)
+
+
+def recommend_players_by_needed_position(
+    draft_state: DraftState,
+    rankings: list[RankingRow],
+    *,
+    per_position_limit: int = 5,
+) -> list[PositionalRecommendationGroup]:
+    available_ids = set(draft_state.available_player_ids)
+    ranking_by_id = {ranking.player_id: ranking for ranking in rankings}
+    needed_positions = _needed_positions(draft_state)
+    groups: list[PositionalRecommendationGroup] = []
+
+    for position, remaining_need in needed_positions.items():
+        scored = [
+            _score_candidate(draft_state, ranking)
+            for ranking in rankings
+            if ranking.player_id in available_ids and ranking.position.value == position
+        ]
+        scored.sort(
+            key=lambda score: (-score.total_score, ranking_by_id[score.player_id].overall_rank)
+        )
+        groups.append(
+            PositionalRecommendationGroup(
+                position=position,
+                remaining_need=remaining_need,
+                candidates=scored[:per_position_limit],
+            )
+        )
+
+    return groups
 
 
 def _score_candidate(draft_state: DraftState, ranking: RankingRow) -> RecommendationScore:
@@ -89,6 +126,31 @@ def _score_candidate(draft_state: DraftState, ranking: RankingRow) -> Recommenda
             availability=next_pick_availability,
         ),
     )
+
+
+def _needed_positions(draft_state: DraftState) -> dict[str, int]:
+    roster = draft_state.rosters[draft_state.league_config.league.user_manager_id]
+    needs: dict[str, int] = {}
+
+    for position, target_count in STARTER_TARGETS.items():
+        remaining = max(target_count - roster.positional_counts.get(position, 0), 0)
+        if remaining > 0:
+            needs[position] = remaining
+
+    flex_slots = draft_state.league_config.roster.starting_slots.get("FLEX", 0)
+    if flex_slots <= 0:
+        return needs
+
+    flex_positions = set(draft_state.league_config.roster.flex_eligibility.get("FLEX", []))
+    flex_roster_count = sum(
+        roster.positional_counts.get(position, 0) for position in flex_positions
+    )
+    base_flex_target = sum(STARTER_TARGETS.get(position, 0) for position in flex_positions)
+    if flex_roster_count < base_flex_target + flex_slots:
+        for position in flex_positions:
+            needs[position] = max(needs.get(position, 0), 1)
+
+    return needs
 
 
 def _late_position_penalty(
