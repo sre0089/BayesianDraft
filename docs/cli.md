@@ -47,7 +47,7 @@ PYTHONPATH=. python scripts/draft_tui.py \
 
 - `Summary`: current pick, manager on clock, available player count, roster size, and next user pick.
 - `Rankings`: split-pane available players and selected-player detail when the terminal is wide enough.
-- `Recommendations`: primary recommendation, alternatives, scores, confidence, availability, and explanations.
+- `Recommendations`: best overall recommendation plus top five available players for each position your roster still needs.
 - `Managers`: yazi-style manager browser with every competitor roster, pick count, and position counts.
 - `Roster`: configured user manager roster and positional starter needs.
 - `Health`: snapshot coverage and warnings.

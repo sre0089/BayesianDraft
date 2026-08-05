@@ -29,7 +29,7 @@ Current components:
 - `penalty`: early K/DST and duplicate K/DST penalty.
 - `next_pick_availability`: simple ADP and pick-distance heuristic.
 - Availability model support exists in `bayesiandraft.simulation`, but the baseline recommendation engine still uses a lightweight inline heuristic until recommendation orchestration is wired to the simulator.
-- `confidence`: deterministic heuristic derived from score shape.
+- `confidence`: deterministic heuristic derived from score shape. This is retained in the model output for now, but it is not calibrated and should not be treated as a probability.
 
 ## Output
 
@@ -42,6 +42,8 @@ The engine returns:
 - confidence
 - estimated next-pick availability
 - explanation bullets
+
+The CLI also groups recommendations by positions the configured user roster still needs. Each group shows up to five available players ranked by the same recommendation score for that position.
 
 ## Candidate Rollout Optimizer
 
