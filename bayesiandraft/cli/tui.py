@@ -64,6 +64,7 @@ class CliDraftController:
         self.manager_selection_index = self._default_manager_selection_index()
         self.search_query = ""
         self.position_filter = "ALL"
+        self.search_active = False
         self.status_message = "Ready."
         self._rankings = build_baseline_rankings(snapshot)
         self._players_by_id = {player.player_id: player for player in snapshot.players}
@@ -104,6 +105,30 @@ class CliDraftController:
 
     def set_search(self, query: str) -> None:
         self.search_query = query.strip()
+        self.selection_index = 0
+        self.status_message = (
+            "Search cleared." if not self.search_query else f"Search: {self.search_query}"
+        )
+
+    def start_search(self) -> None:
+        self.search_active = True
+        self.status_message = "Live search: type to filter, Enter/Esc to finish."
+
+    def finish_search(self) -> None:
+        self.search_active = False
+        self.status_message = (
+            "Search cleared." if not self.search_query else f"Search: {self.search_query}"
+        )
+
+    def append_search_character(self, character: str) -> None:
+        if not character.isprintable():
+            return
+        self.search_query += character
+        self.selection_index = 0
+        self.status_message = f"Search: {self.search_query}"
+
+    def backspace_search(self) -> None:
+        self.search_query = self.search_query[:-1]
         self.selection_index = 0
         self.status_message = (
             "Search cleared." if not self.search_query else f"Search: {self.search_query}"
@@ -475,7 +500,13 @@ def _curses_main(screen: curses.window, controller: CliDraftController) -> None:
         _draw(screen, controller)
         key = screen.getch()
         if key in {ord("q"), 27}:
+            if controller.search_active:
+                controller.finish_search()
+                continue
             return
+        if controller.search_active:
+            _handle_live_search_key(controller, key)
+            continue
         if key in {curses.KEY_RIGHT, ord("\t")}:
             controller.move_view(1)
         elif key == curses.KEY_LEFT:
@@ -495,6 +526,7 @@ def _curses_main(screen: curses.window, controller: CliDraftController) -> None:
         elif key == ord("c"):
             controller.set_search("")
             controller.set_position_filter("ALL")
+            controller.search_active = False
         elif key == ord("["):
             controller.cycle_position_filter(-1)
         elif key == ord("]"):
@@ -504,7 +536,7 @@ def _curses_main(screen: curses.window, controller: CliDraftController) -> None:
         elif key == ord("0"):
             controller.set_position_filter("ALL")
         elif key == ord("/"):
-            controller.set_search(_prompt(screen, "Search players: "))
+            controller.start_search()
 
 
 def _draw(screen: curses.window, controller: CliDraftController) -> None:
@@ -519,6 +551,17 @@ def _draw(screen: curses.window, controller: CliDraftController) -> None:
     _draw_body(screen, controller, height, width)
     _draw_footer(screen, controller, height, width)
     screen.refresh()
+
+
+def _handle_live_search_key(controller: CliDraftController, key: int) -> None:
+    if key in {ord("\n"), ord("\r"), 27}:
+        controller.finish_search()
+        return
+    if key in {curses.KEY_BACKSPACE, 127, 8}:
+        controller.backspace_search()
+        return
+    if 0 <= key <= 255:
+        controller.append_search_character(chr(key))
 
 
 def _draw_header(screen: curses.window, controller: CliDraftController, width: int) -> None:
@@ -621,8 +664,9 @@ def _progress_bar(completed: int, total: int, width: int) -> str:
 
 def _footer_prompt(controller: CliDraftController) -> str:
     search = controller.search_query or "none"
+    mode = "SEARCH" if controller.search_active else controller.current_view.lower()
     return (
-        f"~/BayesianDraft  view={controller.current_view.lower()}  filter={search}  "
+        f"~/BayesianDraft  mode={mode}  filter={search}  "
         f"pos={controller.position_filter}  enter/d draft  / search  [ ] position  q quit"
     )
 
