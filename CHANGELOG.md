@@ -45,3 +45,4 @@ All notable project changes will be documented here.
 - Added a local CI helper that gathers Python, API, and web checks.
 - Removed internal planning artifacts from the public repository.
 - Added local projection CSV import support for validated player snapshots.
+- Added an interactive terminal draft room for local engine testing.

@@ -12,6 +12,7 @@ Start here when navigating the repository docs.
 ## Draft Day
 
 - [Draft Engine](draft-engine.md)
+- [Interactive CLI](cli.md)
 - [Recommendations](recommendations.md)
 - [Simulation](simulation.md)
 - [UI](ui.md)

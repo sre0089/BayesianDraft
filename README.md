@@ -47,6 +47,16 @@ The CSV contract and privacy guidance are documented in [docs/data-import.md](do
 
 Imported snapshots can be passed to local commands with `--snapshot` or to the API with `BAYESIANDRAFT_PLAYER_SNAPSHOT_PATH`.
 
+## Interactive CLI
+
+Run the keyboard-driven terminal draft room with:
+
+```bash
+PYTHONPATH=. python scripts/draft_tui.py
+```
+
+Use arrow keys to move, Enter or `d` to draft, `/` to search, `u`/`r` for undo/redo, `s` to save, and `q` to quit. See [docs/cli.md](docs/cli.md) for the full shortcut list and custom snapshot usage.
+
 ## Local Setup
 
 Backend checks:
