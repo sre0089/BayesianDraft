@@ -6,6 +6,7 @@ from bayesiandraft.data.importers import (
     SnapshotImportError,
     SnapshotImportOptions,
     default_snapshot_id,
+    import_dynastyprocess_rankings_csv,
     import_player_snapshot_csv,
     write_player_snapshot,
 )
@@ -45,6 +46,7 @@ __all__ = [
     "build_snapshot_health_report",
     "default_refresh_plan",
     "default_snapshot_id",
+    "import_dynastyprocess_rankings_csv",
     "import_player_snapshot_csv",
     "load_ingestion_manifest",
     "load_player_snapshot",
