@@ -73,6 +73,23 @@ def test_cli_controller_loads_scenario(tmp_path: Path) -> None:
     assert "Loaded scenario" in controller.status_message
 
 
+def test_cli_controller_auto_picks_to_user(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(
+            save_path=tmp_path / "draft.json",
+            auto_pick_to_user=True,
+        ),
+    )
+
+    assert controller.state.current_overall_pick == 8
+    assert controller.state.manager_on_clock == "user_manager"
+    assert len(controller.state.completed_picks) == 7
+    assert "Auto-drafted 7 picks" in controller.status_message
+
+
 def test_cli_controller_renders_recommendations_roster_health_and_picks(
     tmp_path: Path,
 ) -> None:

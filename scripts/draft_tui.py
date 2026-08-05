@@ -10,6 +10,11 @@ def main() -> None:
     add_snapshot_argument(parser)
     parser.add_argument("--scenario", help="Optional rehearsal scenario to load at startup.")
     parser.add_argument(
+        "--auto-pick-to-user",
+        action="store_true",
+        help="Auto-draft highest-ranked players until the configured user manager is on clock.",
+    )
+    parser.add_argument(
         "--save-path",
         default="data/processed/cli_draft_state.json",
         help="Where the terminal UI saves draft state when pressing s.",
@@ -23,6 +28,7 @@ def main() -> None:
         config=CliDraftConfig(
             save_path=Path(args.save_path),
             scenario_path=None if args.scenario is None else Path(args.scenario),
+            auto_pick_to_user=args.auto_pick_to_user,
         ),
     )
     run_tui(controller)

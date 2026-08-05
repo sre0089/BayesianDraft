@@ -28,8 +28,10 @@ Use the latest pulled public rankings snapshot:
 PYTHONPATH=. python scripts/pull_dynastyprocess.py
 PYTHONPATH=. python scripts/draft_tui.py \
   --snapshot data/processed/dynastyprocess_rankings_2026.json \
-  --scenario data/fixtures/rehearsal_user_pick_8.json
+  --auto-pick-to-user
 ```
+
+Use `--scenario` only with snapshots that contain the player IDs referenced by that scenario. The built-in pick-8 scenario is designed for the built-in synthetic fixture. For pulled real rankings, use `--auto-pick-to-user`.
 
 ## Views
 

@@ -22,6 +22,7 @@ VIEWS = ("Summary", "Rankings", "Recommendations", "Roster", "Health", "Simulati
 class CliDraftConfig:
     save_path: Path
     scenario_path: Path | None = None
+    auto_pick_to_user: bool = False
 
 
 class CliDraftController:
@@ -47,6 +48,9 @@ class CliDraftController:
                 load_rehearsal_scenario(config.scenario_path),
             )
             self.status_message = f"Loaded scenario: {config.scenario_path}"
+        elif config.auto_pick_to_user:
+            auto_pick_count = self.auto_pick_to_user()
+            self.status_message = f"Auto-drafted {auto_pick_count} picks to user pick."
 
     @property
     def current_view(self) -> str:
@@ -125,6 +129,18 @@ class CliDraftController:
         self.config.save_path.parent.mkdir(parents=True, exist_ok=True)
         self.state.save(self.config.save_path)
         self.status_message = f"Saved draft to {self.config.save_path}"
+
+    def auto_pick_to_user(self) -> int:
+        user_manager_id = self.state.league_config.league.user_manager_id
+        count = 0
+        while self.state.manager_on_clock != user_manager_id and not self.state.is_complete:
+            rows = self.selectable_rankings()
+            if not rows:
+                break
+            self.state = self.state.record_pick(rows[0].player_id)
+            count += 1
+        self.selection_index = 0
+        return count
 
     def view_lines(self) -> list[str]:
         view = self.current_view

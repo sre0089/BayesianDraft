@@ -56,7 +56,7 @@ PYTHONPATH=. python scripts/pull_dynastyprocess.py
 Then launch the CLI with real player names:
 
 ```bash
-PYTHONPATH=. python scripts/draft_tui.py --snapshot data/processed/dynastyprocess_rankings_2026.json --scenario data/fixtures/rehearsal_user_pick_8.json
+PYTHONPATH=. python scripts/draft_tui.py --snapshot data/processed/dynastyprocess_rankings_2026.json --auto-pick-to-user
 ```
 
 ## Interactive CLI

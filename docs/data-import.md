@@ -87,7 +87,7 @@ Then run the terminal draft room with:
 ```bash
 PYTHONPATH=. python scripts/draft_tui.py \
   --snapshot data/processed/dynastyprocess_rankings_2026.json \
-  --scenario data/fixtures/rehearsal_user_pick_8.json
+  --auto-pick-to-user
 ```
 
 Source notes:
