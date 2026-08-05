@@ -13,7 +13,12 @@ from bayesiandraft.draft import (
     summarize_draft_state,
 )
 from bayesiandraft.rankings import RankingRow, build_baseline_rankings
-from bayesiandraft.recommendations import RecommendationResult, recommend_players
+from bayesiandraft.recommendations import (
+    PositionalRecommendationGroup,
+    RecommendationResult,
+    recommend_players,
+    recommend_players_by_needed_position,
+)
 from bayesiandraft.simulation import benchmark_remaining_draft
 
 VIEWS = (
@@ -123,6 +128,9 @@ class CliDraftController:
             return recommend_players(self.state, self._rankings)
         except ValueError:
             return None
+
+    def positional_recommendations(self) -> list[PositionalRecommendationGroup]:
+        return recommend_players_by_needed_position(self.state, self._rankings)
 
     def draft_selected_player(self) -> None:
         rows = self.selectable_rankings()
@@ -236,15 +244,44 @@ class CliDraftController:
         if recommendation is None:
             return ["No recommendations are available."]
         rows = [recommendation.primary, *recommendation.alternatives]
-        lines = ["Primary recommendation and alternatives:", ""]
+        lines = [
+            "Best overall recommendation",
+            "Scores combine VORP, starter need, tier, ADP value, availability, and penalties.",
+            "",
+        ]
         for row in rows:
             ranking = self._ranking_by_id(row.player_id)
             name = ranking.full_name if ranking else row.player_id
             lines.append(
                 f"{row.rank:>3}. {name:<28} score={row.total_score:>7.1f} "
-                f"conf={row.confidence:.0%} avail={row.next_pick_availability:.0%}"
+                f"need={row.need_score:>5.1f} avail={row.next_pick_availability:.0%}"
             )
             lines.extend(f"     - {item}" for item in row.explanation)
+            lines.append("")
+        lines.extend(self._positional_recommendation_lines())
+        return lines
+
+    def _positional_recommendation_lines(self) -> list[str]:
+        lines = [
+            "",
+            "Top 5 by positions you still need",
+            "",
+        ]
+        for group in self.positional_recommendations():
+            lines.append(f"{group.position} need={group.remaining_need}")
+            if not group.candidates:
+                lines.append("     No available candidates.")
+                lines.append("")
+                continue
+            for index, score in enumerate(group.candidates, start=1):
+                ranking = self._ranking_by_id(score.player_id)
+                name = ranking.full_name if ranking else score.player_id
+                tier = "-" if ranking is None else str(ranking.tier)
+                projected = "-" if ranking is None else f"{ranking.projected_points:.1f}"
+                lines.append(
+                    f"  {index}. {name:<26} score={score.total_score:>6.1f} "
+                    f"proj={projected:>6} tier={tier:<2} avail={score.next_pick_availability:.0%}"
+                )
             lines.append("")
         return lines
 
