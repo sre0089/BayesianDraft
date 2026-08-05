@@ -2,6 +2,7 @@ import curses
 from dataclasses import dataclass
 from pathlib import Path
 
+from bayesiandraft import __version__
 from bayesiandraft.data import PlayerSnapshot, build_snapshot_health_report
 from bayesiandraft.draft import (
     DraftState,
@@ -26,6 +27,28 @@ VIEWS = (
     "Picks",
 )
 POSITIONS = ("QB", "RB", "WR", "TE", "DST", "K")
+WORDMARK_LINES = (
+    r"  ____     ___     __   __  _____   ____   ___     _     _   _ ",
+    r" | __ )   / \ \   / /  |  \/  | \ | |  _ \ / _ \   / \   | \ | |",
+    r" |  _ \  / _ \ \ / /   | |\/| |  \| | | | | | | | / _ \  |  \| |",
+    r" | |_) |/ ___ \ V /    | |  | | |\  | |_| | |_| |/ ___ \ | |\  |",
+    r" |____//_/   \_\_/     |_|  |_|_| \_|____/ \___//_/   \_\|_| \_|",
+    r"        ____    ____      _     _____ _____                         ",
+    r"       |  _ \  |  _ \    / \   |  ___|_   _|                        ",
+    r"       | | | | | |_) |  / _ \  | |_    | |                          ",
+    r"       | |_| | |  _ <  / ___ \ |  _|   | |                          ",
+    r"       |____/  |_| \_\/_/   \_\|_|     |_|                          ",
+)
+MASCOT_LINES = (
+    r"        ___________       ",
+    r"     .-'  _     _  '-.    ",
+    r"    /    (_)   (_)    \   ",
+    r"   |  .-.   ___   .-.  |  ",
+    r"   |  | |  / _ \  | |  |  ",
+    r"    \  '-' \___/ '-'  /   ",
+    r"     '-.___________.-'    ",
+    r"          |  BD  |        ",
+)
 
 
 @dataclass(frozen=True)
@@ -188,20 +211,23 @@ class CliDraftController:
         summary = summarize_draft_state(self.state)
         next_pick = "-" if summary.next_user_pick is None else str(summary.next_user_pick)
         return [
-            r"  ____                          _             ____             __ _   ",
-            r" | __ )  __ _ _   _  ___  ___ (_) __ _ _ __ |  _ \ _ __ __ _ / _| |_ ",
-            r" |  _ \ / _` | | | |/ _ \/ __|| |/ _` | '_ \| | | | '__/ _` | |_| __|",
-            r" | |_) | (_| | |_| |  __/\__ \| | (_| | | | | |_| | | | (_| |  _| |_ ",
-            r" |____/ \__,_|\__, |\___||___// |\__,_|_| |_|____/|_|  \__,_|_|  \__|",
-            r"              |___/         |__/                                      ",
+            "Welcome to BayesianDraft",
+            *WORDMARK_LINES,
             "",
-            f"Draft ID: {summary.draft_id}",
-            f"Current pick: {summary.current_overall_pick}",
-            f"On clock: {summary.manager_on_clock}",
-            f"Completed picks: {summary.completed_pick_count}",
-            f"Available players: {summary.available_player_count}",
-            f"Your roster size: {summary.user_roster_size}",
-            f"Your next pick: {next_pick}",
+            *MASCOT_LINES,
+            "",
+            f"CLI Version {__version__} - Snapshot {self.snapshot.snapshot.snapshot_id}",
+            "",
+            (
+                "BayesianDraft ranks live draft decisions from projections, scarcity, "
+                "market cost, roster need, and next-pick availability."
+            ),
+            "",
+            f"* Draft ready: pick {summary.current_overall_pick} of {self.state.total_picks}",
+            f"* On clock: {summary.manager_on_clock}",
+            f"* Available players: {summary.available_player_count}",
+            f"* Your roster size: {summary.user_roster_size}",
+            f"* Your next pick: {next_pick}",
             "",
             "Live entry: draft the selected player for whoever is currently on clock.",
             (
