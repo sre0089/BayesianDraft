@@ -50,3 +50,46 @@ def test_import_snapshot_script_writes_snapshot_and_manifest(tmp_path: Path) -> 
     manifest = load_ingestion_manifest(manifest_path)
     assert manifest.snapshot_id == "local_2026_v1"
     assert manifest.row_count == 1
+
+
+def test_import_snapshot_script_scores_stat_projection_csv(tmp_path: Path) -> None:
+    csv_path = tmp_path / "stat_players.csv"
+    csv_path.write_text(
+        "player_id,full_name,position,passing_yards,passing_touchdowns,"
+        "interceptions_thrown,rushing_yards,rushing_touchdowns,overall_adp\n"
+        "qb_001,Example QB,QB,4000,30,10,250,3,42\n",
+        encoding="utf-8",
+    )
+    output_path = tmp_path / "snapshot.json"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/import_snapshot.py",
+            "--mode",
+            "stats",
+            "--league-config",
+            "configs/leagues/espn_2026.yaml",
+            "--players",
+            str(csv_path),
+            "--out",
+            str(output_path),
+            "--snapshot-id",
+            "stat_2026_v1",
+            "--season",
+            "2026",
+            "--source",
+            "local-stat-test",
+            "--retrieved-at",
+            "2026-08-04T00:00:00Z",
+        ],
+        check=False,
+        capture_output=True,
+        env={**os.environ, "PYTHONPATH": "."},
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    snapshot = load_player_snapshot(output_path)
+    assert snapshot.snapshot.snapshot_id == "stat_2026_v1"
+    assert snapshot.projections[0].mean == 303

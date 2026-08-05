@@ -2,12 +2,14 @@ import argparse
 from datetime import UTC, datetime
 from pathlib import Path
 
+from bayesiandraft.config import load_league_config
 from bayesiandraft.data import (
     SnapshotImportError,
     SnapshotImportOptions,
     build_ingestion_manifest_entry,
     default_snapshot_id,
     import_player_snapshot_csv,
+    import_stat_projection_csv,
     write_ingestion_manifest,
     write_player_snapshot,
 )
@@ -20,6 +22,20 @@ def main() -> None:
     parser.add_argument("--players", required=True, help="Path to the local projection CSV.")
     parser.add_argument("--out", required=True, help="Path for the processed snapshot JSON.")
     parser.add_argument("--manifest-out", help="Optional path for the ingestion manifest JSON.")
+    parser.add_argument(
+        "--mode",
+        choices=("points", "stats"),
+        default="points",
+        help=(
+            "Import mode. 'points' expects projected_points; 'stats' scores stat-line columns "
+            "with the configured league rules."
+        ),
+    )
+    parser.add_argument(
+        "--league-config",
+        default="configs/leagues/espn_2026.yaml",
+        help="League scoring config used by --mode stats.",
+    )
     parser.add_argument("--snapshot-id", help="Snapshot ID. Defaults to a source/season timestamp.")
     parser.add_argument("--season", required=True, type=int, help="NFL season for the snapshot.")
     parser.add_argument("--source", required=True, help="Human-readable source name.")
@@ -54,11 +70,19 @@ def main() -> None:
     )
 
     try:
-        snapshot = import_player_snapshot_csv(
-            args.players,
-            options=options,
-            processed_path=output_path,
-        )
+        if args.mode == "stats":
+            snapshot = import_stat_projection_csv(
+                args.players,
+                options=options,
+                processed_path=output_path,
+                league_config=load_league_config(args.league_config),
+            )
+        else:
+            snapshot = import_player_snapshot_csv(
+                args.players,
+                options=options,
+                processed_path=output_path,
+            )
         write_player_snapshot(snapshot, output_path)
 
         if args.manifest_out:
