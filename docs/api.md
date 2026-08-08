@@ -43,7 +43,7 @@ Request and response models must be typed, validation errors should be useful, a
 - `POST /drafts/load`
 
 The current service stores draft sessions in memory and defaults to the synthetic baseline player snapshot. Save/load can persist a draft JSON file locally.
-Candidate rollouts require the user manager to be on clock.
+Candidate rollouts require the user manager to be on clock. `GET /drafts/{draft_id}/candidate-rollouts` accepts `limit`, `simulation_count`, and `per_needed_position` query parameters. The position parameter seeds the rollout candidate pool with top players from positions the configured user roster still needs before filling the rest by overall rank.
 
 Use `BAYESIANDRAFT_PLAYER_SNAPSHOT_PATH` to run the local API with an imported snapshot:
 

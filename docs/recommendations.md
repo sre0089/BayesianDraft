@@ -58,11 +58,13 @@ The CLI also groups recommendations by positions the configured user roster stil
 Current behavior:
 
 - Requires the configured user manager to be on clock.
-- Evaluates a configurable pool of available candidates.
+- Seeds the candidate pool with top options from positions the configured user roster still needs, then fills remaining slots by overall rank.
 - Records each candidate as the user's pick in a copied draft state.
 - Runs seeded remaining-draft simulations.
 - Ranks candidates by rollout VORP with lightweight draft-value context.
 - Returns a primary optimized candidate, alternatives, rollout summaries, and explanations.
+
+In the CLI, this appears as a best-path comparison. The best-now recommendation is the immediate additive score; the best-path rollout is the simulated roster path after taking a candidate and letting the rest of the draft play out.
 
 ## Export
 
