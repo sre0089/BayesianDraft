@@ -19,6 +19,8 @@ from bayesiandraft.simulation.draft import (
 )
 from bayesiandraft.simulation.league_paths import (
     LeaguePathAnalysisResult,
+    LeaguePathProgress,
+    LeaguePathProgressCallback,
     LeaguePathSimulationConfig,
     ManagerPathSummary,
     UserRiskSummary,
@@ -37,6 +39,8 @@ __all__ = [
     "CandidateRolloutResult",
     "DraftSimulationConfig",
     "LeaguePathAnalysisResult",
+    "LeaguePathProgress",
+    "LeaguePathProgressCallback",
     "LeaguePathSimulationConfig",
     "ManagerPathSummary",
     "SimulatedDraft",

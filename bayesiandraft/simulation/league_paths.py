@@ -1,4 +1,5 @@
 from collections import defaultdict
+from collections.abc import Callable
 from statistics import median, pstdev
 
 from pydantic import BaseModel, Field, PositiveInt
@@ -45,11 +46,24 @@ class LeaguePathAnalysisResult(BaseModel):
     stopped_reasons: dict[str, int] = Field(default_factory=dict)
 
 
+class LeaguePathProgress(BaseModel):
+    completed_paths: int
+    total_paths: int
+    seed: int
+    stopped_reason: str
+    current_leader_id: str
+    current_leader_vorp: float
+
+
+LeaguePathProgressCallback = Callable[[LeaguePathProgress], None]
+
+
 def analyze_league_paths(
     draft_state: DraftState,
     rankings: list[RankingRow],
     *,
     config: LeaguePathSimulationConfig | None = None,
+    progress_callback: LeaguePathProgressCallback | None = None,
 ) -> LeaguePathAnalysisResult:
     analysis_config = config or LeaguePathSimulationConfig()
     ranking_by_id = {ranking.player_id: ranking for ranking in rankings}
@@ -74,6 +88,18 @@ def analyze_league_paths(
             ranking_by_id=ranking_by_id,
         )
         finishes = _finish_ranks(path_scores)
+        if progress_callback is not None:
+            leader_id = min(finishes, key=lambda manager_id: finishes[manager_id])
+            progress_callback(
+                LeaguePathProgress(
+                    completed_paths=offset + 1,
+                    total_paths=analysis_config.simulation_count,
+                    seed=seed,
+                    stopped_reason=simulated.stopped_reason,
+                    current_leader_id=leader_id,
+                    current_leader_vorp=round(path_scores[leader_id].vorp, 4),
+                )
+            )
         for manager_id in manager_ids:
             score = path_scores[manager_id]
             projected_points_by_manager[manager_id].append(score.projected_points)
