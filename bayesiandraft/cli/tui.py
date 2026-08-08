@@ -1203,17 +1203,18 @@ def _safe_addnstr(
 
 def _ranking_line(row: RankingRow, *, selected: bool) -> str:
     marker = ">" if selected else " "
+    adp_delta = "-" if row.adp_delta is None else f"{row.adp_delta:+.1f}"
     return (
         f"{marker} {row.overall_rank:>4}  {row.full_name:<28} {row.position.value:<3} "
         f"{row.tier:>4} {row.projected_points:>7.1f} {row.vorp:>7.1f} "
-        f"{row.adp or 0:>7.1f}"
+        f"{row.adp or 0:>7.1f} {adp_delta:>7}"
     )
 
 
 def _ranking_header_line() -> str:
     return (
         f"  {'Rank':>4}  {'Player':<28} {'Pos':<3} {'Tier':>4} "
-        f"{'Proj':>7} {'VORP':>7} {'ADP':>7}"
+        f"{'Proj':>7} {'VORP':>7} {'ADP':>7} {'ADPΔ':>7}"
     )
 
 

@@ -30,9 +30,10 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
     assert controller.current_view == "Rankings"
     assert controller.view_lines()[0].startswith("Filters:")
     assert any(
-        "Rank" in line and "Player" in line and "VORP" in line
+        "Rank" in line and "Player" in line and "VORP" in line and "ADPΔ" in line
         for line in controller.view_lines()
     )
+    assert any("Example RB One" in line and "+4.0" in line for line in controller.view_lines())
     assert any(line.startswith(">") for line in controller.view_lines())
     assert not any(line.startswith(">") and "proj=" in line for line in controller.view_lines())
     assert any("Confirm pick 1:" in line for line in controller.view_lines())
