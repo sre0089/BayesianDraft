@@ -366,6 +366,7 @@ class CliDraftController:
         ]
         for row in rows:
             lines.append(self._recommendation_score_line(row, include_rank=True))
+            lines.append(f"     {self._recommendation_breakdown_line(row)}")
             lines.extend(f"     - {item}" for item in row.explanation)
             lines.append("")
         return lines
@@ -414,6 +415,7 @@ class CliDraftController:
         lines.extend(
             [
                 self._recommendation_score_line(primary, include_rank=False),
+                self._recommendation_breakdown_line(primary),
                 f"Availability before next pick: {primary.next_pick_availability:.0%}",
                 "Why:",
                 *[f"- {item}" for item in primary.explanation[:4]],
@@ -435,6 +437,15 @@ class CliDraftController:
             f"{prefix}{name} ({position}) score={recommendation.total_score:.1f} "
             f"need={recommendation.need_score:.1f} value={recommendation.value_score:.1f} "
             f"tier={recommendation.tier_score:.1f} market={recommendation.market_score:.1f}"
+        )
+
+    def _recommendation_breakdown_line(self, recommendation: RecommendationScore) -> str:
+        return (
+            f"Breakdown: need {recommendation.need_score:+.1f} | "
+            f"value {recommendation.value_score:+.1f} | "
+            f"tier {recommendation.tier_score:+.1f} | "
+            f"market {recommendation.market_score:+.1f} | "
+            f"penalty {-recommendation.penalty:+.1f}"
         )
 
     def _roster_lines(self) -> list[str]:
