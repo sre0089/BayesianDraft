@@ -257,7 +257,8 @@ class CliDraftController:
                 "market cost, and next-pick availability."
             ),
             "",
-            f"Pick {summary.current_overall_pick}/{self.state.total_picks}",
+            "CURRENT PICK",
+            f">>> {summary.current_overall_pick}/{self.state.total_picks} <<<",
             f"On clock {summary.manager_on_clock}",
             f"Available {summary.available_player_count}",
             f"Your roster {summary.user_roster_size}",
@@ -738,7 +739,8 @@ def _draw_summary_workspace(
         f"v{__version__}",
         f"Snapshot: {controller.snapshot.snapshot.snapshot_id}",
         "",
-        f"Pick: {summary.current_overall_pick}/{controller.state.total_picks}",
+        "CURRENT PICK",
+        f">>> {summary.current_overall_pick}/{controller.state.total_picks} <<<",
         f"Round: {controller.state.current_round or '-'}",
         f"Clock: {summary.manager_on_clock}",
         f"Next user: {summary.next_user_pick or '-'}",
@@ -824,6 +826,10 @@ def _summary_line_attrs(line: str) -> int:
         return curses.color_pair(1) | curses.A_BOLD
     if line.startswith("Version") or line.startswith("v"):
         return curses.color_pair(6) | curses.A_BOLD
+    if line == "CURRENT PICK":
+        return curses.color_pair(4) | curses.A_BOLD
+    if line.startswith(">>>"):
+        return curses.color_pair(5) | curses.A_BOLD | curses.A_REVERSE
     if line.startswith("Pick") or line.startswith("Clock") or line.startswith("Next"):
         return curses.color_pair(5) | curses.A_BOLD
     return 0
