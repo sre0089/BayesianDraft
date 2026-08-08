@@ -64,8 +64,13 @@ def test_cli_wide_summary_decision_panel_shows_quick_direction(tmp_path: Path) -
 
     lines = controller.summary_decision_lines()
 
-    assert "Draft Assistant" in lines
-    assert any("Quick direction:" in line for line in lines)
+    assert "Pick Now" in lines
+    assert "Position Lean" in lines
+    assert "Path Bank" in lines
+    assert "Score Breakdown" in lines
+    assert "Deep Simulation" in lines
+    assert any("Draft:" in line for line in lines)
+    assert any("Lean:" in line for line in lines)
     assert any("Deep sim: run Simulation" in line for line in lines)
 
 
@@ -107,6 +112,9 @@ def test_cli_uses_path_bank_for_fast_opportunity_context(tmp_path: Path) -> None
     assert any("Opportunity:" in line for line in lines)
     assert any("Expected later:" in line for line in lines)
     assert any("opp" in line for line in lines if line.startswith("Breakdown:"))
+    decision_lines = controller.summary_decision_lines()
+    assert any("Opportunity cost:" in line for line in decision_lines)
+    assert any("higher means waiting" in line for line in decision_lines)
 
 
 def test_cli_summary_recommendation_updates_after_pick(tmp_path: Path) -> None:

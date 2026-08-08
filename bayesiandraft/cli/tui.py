@@ -512,14 +512,63 @@ class CliDraftController:
         ]
 
     def summary_decision_lines(self) -> list[str]:
-        return [
-            *self._draft_assistant_lines(),
-            self.recommendation_change_message,
+        recommendation = self.recommendation()
+        if recommendation is None:
+            return ["Pick Now", "No recommendation is available yet."]
+
+        primary = recommendation.primary
+        primary_ranking = self._ranking_by_id(primary.player_id)
+        primary_name = primary_ranking.full_name if primary_ranking else primary.player_id
+        primary_position = "-" if primary_ranking is None else primary_ranking.position.value
+        quick_direction = self.quick_direction()
+        lines = [
+            "Pick Now",
+            (
+                f"Draft: {primary_name} ({primary_position}) "
+                f"score={primary.total_score:.1f}"
+            ),
+            "Meaning: best single pick from the live board for your roster.",
             "",
-            *self._best_overall_recommendation_lines(include_header=True),
-            "",
-            "Enter every pick as it happens; this updates after each pick.",
+            "Position Lean",
         ]
+        if quick_direction is None:
+            lines.append("Lean: no live direction available.")
+        else:
+            lines.extend(
+                [
+                    (
+                        f"Lean: {quick_direction.position} via {quick_direction.player_name} "
+                        f"(score {quick_direction.score:.1f})"
+                    ),
+                    (
+                        "Meaning: position path favored after need, scarcity, "
+                        "and path-bank opportunity."
+                    ),
+                    f"Why: {quick_direction.reason}.",
+                ]
+            )
+        lines.extend(["", *self._path_bank_decision_lines(), ""])
+        lines.extend(
+            [
+                "Score Breakdown",
+                self._recommendation_breakdown_line(primary),
+                (
+                    "Meaning: need roster/Flex | value VORP | tier/drop scarcity | "
+                    "opp cost of waiting | risk won't return | market ADP | penalty timing."
+                ),
+                f"Chance available next pick: {primary.next_pick_availability:.0%}",
+                "",
+                "Deep Simulation",
+                *self._deep_strategy_assistant_lines(quick_direction),
+                "Meaning: optional slower path check; path bank updates live after picks.",
+                "",
+                "Recent Change",
+                self.recommendation_change_message,
+                "",
+                "Enter every pick as it happens; this updates after each pick.",
+            ]
+        )
+        return lines
 
     def _ranking_lines(self) -> list[str]:
         rows = self.selectable_rankings()
@@ -579,6 +628,52 @@ class CliDraftController:
                 f"{context.similar_path_count} similar paths, next user {context.next_user_pick}."
             ),
             *self._opportunity_summary_lines(context),
+        ]
+
+    def _path_bank_decision_lines(self) -> list[str]:
+        context = self.path_bank_context()
+        if context is None:
+            return [
+                "Path Bank",
+                "Status: not loaded.",
+                "Meaning: opp score is off; use --path-bank for saved-draft context.",
+            ]
+        if context.next_user_pick is None:
+            return [
+                "Path Bank",
+                "Status: loaded, but no future user pick remains.",
+                "Meaning: no later-pick replacement value is available to price.",
+            ]
+        return [
+            "Path Bank",
+            (
+                f"Status: {context.sample_quality} sample | "
+                f"similar paths {context.similar_path_count} | "
+                f"next user pick {context.next_user_pick}"
+            ),
+            "Meaning: saved simulated drafts estimate what you can still get later.",
+            *self._opportunity_decision_lines(context),
+        ]
+
+    def _opportunity_decision_lines(self, context: PathBankContext) -> list[str]:
+        estimates = sorted(
+            context.opportunity_by_position.values(),
+            key=lambda estimate: (-estimate.opportunity_cost, estimate.position),
+        )
+        if not estimates:
+            return ["Opportunity cost: no future replacement values available."]
+        opportunity_parts = [
+            f"{estimate.position} +{estimate.opportunity_cost:.1f}"
+            for estimate in estimates[:4]
+        ]
+        later_parts = [
+            f"{estimate.position}: {estimate.expected_later_player_name or '-'}"
+            for estimate in estimates[:3]
+        ]
+        return [
+            "Opportunity cost: " + " | ".join(opportunity_parts),
+            "Meaning: higher means waiting at that position is more expensive.",
+            "Expected later: " + " | ".join(later_parts),
         ]
 
     def _deep_strategy_assistant_lines(
@@ -1622,11 +1717,24 @@ def _draw_decision_lines(
 
 
 def _decision_line_attrs(line: str) -> int:
+    if line in {
+        "Pick Now",
+        "Position Lean",
+        "Path Bank",
+        "Score Breakdown",
+        "Deep Simulation",
+        "Recent Change",
+    }:
+        return curses.color_pair(4) | curses.A_BOLD
     if line == "Draft Assistant":
         return curses.color_pair(4) | curses.A_BOLD
-    if line.startswith("Quick direction:"):
+    if line.startswith("Draft:") or line.startswith("Lean:") or line.startswith("Quick direction:"):
         return curses.color_pair(5) | curses.A_BOLD | curses.A_REVERSE
-    if line.startswith("Deep sim:"):
+    if (
+        line.startswith("Status:")
+        or line.startswith("Deep sim:")
+        or line.startswith("Best next-pick direction:")
+    ):
         return curses.color_pair(6) | curses.A_BOLD
     if line == "Best overall recommendation":
         return curses.color_pair(4) | curses.A_BOLD
