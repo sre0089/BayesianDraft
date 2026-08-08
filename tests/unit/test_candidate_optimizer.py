@@ -56,6 +56,27 @@ def test_candidate_optimizer_returns_alternatives() -> None:
     assert result.simulation_count == 4
 
 
+def test_candidate_optimizer_samples_needed_positions() -> None:
+    _state, rankings = _state_and_rankings()
+    state = _state_with_user_on_clock()
+
+    result = optimize_candidates(
+        state,
+        rankings,
+        config=CandidateOptimizerConfig(
+            limit=4,
+            candidate_pool_size=4,
+            per_needed_position=1,
+            simulation_count=3,
+        ),
+    )
+
+    candidate_ids = [result.primary.player_id, *[item.player_id for item in result.alternatives]]
+    positions = {state.players[player_id].position for player_id in candidate_ids}
+
+    assert len(positions) > 1
+
+
 def test_candidate_optimizer_requires_user_on_clock() -> None:
     state, rankings = _state_and_rankings()
 

@@ -8,6 +8,7 @@ from bayesiandraft.simulation import DraftSimulationConfig, simulate_candidate_r
 class CandidateOptimizerConfig(BaseModel):
     limit: PositiveInt = 4
     candidate_pool_size: PositiveInt = 8
+    per_needed_position: PositiveInt = 1
     simulation_count: PositiveInt = 25
     seed: int = 1
 
@@ -41,11 +42,13 @@ def optimize_candidates(
         raise ValueError("candidate optimization requires the user manager to be on clock")
 
     available_ids = set(draft_state.available_player_ids)
-    candidate_rankings = [
-        ranking
-        for ranking in rankings
-        if ranking.player_id in available_ids
-    ][: optimizer_config.candidate_pool_size]
+    candidate_rankings = _candidate_rankings(
+        draft_state,
+        rankings,
+        available_ids=available_ids,
+        candidate_pool_size=optimizer_config.candidate_pool_size,
+        per_needed_position=optimizer_config.per_needed_position,
+    )
     if not candidate_rankings:
         raise ValueError("no available players to optimize")
 
@@ -67,6 +70,50 @@ def optimize_candidates(
         simulation_count=optimizer_config.simulation_count,
         seed=optimizer_config.seed,
     )
+
+
+def _candidate_rankings(
+    draft_state: DraftState,
+    rankings: list[RankingRow],
+    *,
+    available_ids: set[str],
+    candidate_pool_size: int,
+    per_needed_position: int,
+) -> list[RankingRow]:
+    selected: list[RankingRow] = []
+    selected_ids: set[str] = set()
+    needed_positions = _needed_positions(draft_state)
+
+    for position in needed_positions:
+        position_candidates = [
+            ranking
+            for ranking in rankings
+            if ranking.player_id in available_ids and ranking.position.value == position
+        ][:per_needed_position]
+        for ranking in position_candidates:
+            if ranking.player_id not in selected_ids:
+                selected.append(ranking)
+                selected_ids.add(ranking.player_id)
+
+    for ranking in rankings:
+        if len(selected) >= candidate_pool_size:
+            break
+        if ranking.player_id in available_ids and ranking.player_id not in selected_ids:
+            selected.append(ranking)
+            selected_ids.add(ranking.player_id)
+
+    return selected[:candidate_pool_size]
+
+
+def _needed_positions(draft_state: DraftState) -> list[str]:
+    roster = draft_state.rosters[draft_state.league_config.league.user_manager_id]
+    positions: list[str] = []
+    for position, slot_count in draft_state.league_config.roster.starting_slots.items():
+        if position == "FLEX":
+            continue
+        if roster.positional_counts.get(position, 0) < slot_count:
+            positions.append(position)
+    return positions
 
 
 def _optimize_candidate(
