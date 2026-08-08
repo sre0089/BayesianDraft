@@ -161,7 +161,14 @@ Tiers help the recommendation engine distinguish a replaceable rank difference f
 The current baseline recommendation score is additive and explainable:
 
 $$
-s_p = \mathrm{VORP}_p + N(p, R_{m_u}) + T(p) + V(p) - C(p, R_{m_u}, t)
+s_p =
+\mathrm{VORP}_p
++ N_\phi(p, R_{m_u})
++ T(p)
++ D(p, A_t)
++ V(p)
++ Q(p, t)
+- C(p, R_{m_u}, t)
 $$
 
 where:
@@ -169,25 +176,42 @@ where:
 | Term | Meaning |
 | --- | --- |
 | VORP<sub>p</sub> | Player value over replacement |
-| N(p, R<sub>mᵤ</sub>) | Roster need boost |
+| N<sub>φ</sub>(p, R<sub>mᵤ</sub>) | Draft-phase-weighted roster need boost |
 | T(p) | Tier-quality boost |
+| D(p, A<sub>t</sub>) | Tier-drop pressure from the remaining available pool |
 | V(p) | Market value boost from ADP delta |
+| Q(p, t) | Next-pick risk boost |
 | C(p, R<sub>mᵤ</sub>, t) | Draft timing and roster-construction penalty |
 
-The need term rewards filling starter requirements:
+The need term rewards filling starter requirements, but the weight depends on draft phase $\phi$:
 
 $$
-N(p, R_{m_u}) =
+N_\phi(p, R_{m_u}) =
 \begin{cases}
-\lambda_c, & \mathrm{count}(R_{m_u}, c_p) < \mathrm{starterTarget}(c_p) \\
+\lambda_c \cdot w_\phi, & \mathrm{count}(R_{m_u}, c_p) < \mathrm{starterTarget}(c_p) \\
 0, & \mathrm{otherwise}
 \end{cases}
+$$
+
+The baseline uses a lower $w_\phi$ early, a medium $w_\phi$ in the middle rounds, and a higher $w_\phi$ late. This keeps the engine from blindly filling positions early while still forcing roster completion later.
+
+Tier-drop pressure rewards a candidate when only a few available players remain in the same position tier:
+
+$$
+D(p, A_t) \propto
+\max(4 - |\{j \in A_t: c_j = c_p,\ \mathrm{tier}_j = \mathrm{tier}_p\}|, 0)
 $$
 
 The market term rewards players the model likes more than the market:
 
 $$
 V(p) = \lambda_{\mathrm{adp}} \cdot \max(\Delta_{\mathrm{ADP},p}, 0)
+$$
+
+The next-pick risk term boosts players who are unlikely to survive until the configured user's next pick:
+
+$$
+Q(p,t) = \lambda_q \cdot (1 - \hat{P}(p \in A_k \mid D_t))
 $$
 
 The timing penalty currently discourages early kicker and defense selections and duplicate low-flexibility roster construction:
@@ -197,7 +221,7 @@ C(p, R_{m_u}, t) =
 C_{\mathrm{early}}(p,t) + C_{\mathrm{duplicate}}(p, R_{m_u})
 $$
 
-This structure is deliberately readable. Every recommendation can be decomposed into value, need, tier, market, and penalty components.
+This structure is deliberately readable. Every recommendation can be decomposed into value, phase-weighted need, tier quality, tier-drop pressure, market value, next-pick risk, and penalty components.
 
 ## Availability
 

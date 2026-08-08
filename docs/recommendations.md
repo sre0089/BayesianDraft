@@ -14,18 +14,23 @@ BayesianDraft includes a deterministic baseline recommendation engine.
 ```text
 TotalScore =
   VORP
-  + PositionNeed
+  + DynamicPositionNeed
   + TierScore
+  + TierDropScore
   + MarketScore
+  + NextPickRiskScore
   - Penalty
 ```
 
 Current components:
 
 - `value_score`: points over replacement from baseline rankings.
-- `need_score`: starter vacancy boost for QB, RB, WR, TE, K, and DST.
+- `draft_phase`: early, middle, or late based on the current draft round.
+- `need_score`: starter vacancy boost weighted by draft phase. It matters less early and more later.
 - `tier_score`: boost for higher-tier players.
+- `tier_drop_score`: boost when few same-position players remain in the candidate's tier.
 - `market_score`: boost when ADP is later than model rank.
+- `next_pick_risk_score`: boost when the player is unlikely to make it back to the configured user's next pick.
 - `penalty`: early K/DST and duplicate K/DST penalty.
 - `next_pick_availability`: simple ADP and pick-distance heuristic.
 - Availability model support exists in `bayesiandraft.simulation`, but the baseline recommendation engine still uses a lightweight inline heuristic until recommendation orchestration is wired to the simulator.
@@ -39,6 +44,7 @@ The engine returns:
 - top alternatives
 - total score
 - component scores
+- draft phase
 - confidence
 - estimated next-pick availability
 - explanation bullets
