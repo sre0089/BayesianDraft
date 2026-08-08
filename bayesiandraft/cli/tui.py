@@ -111,12 +111,10 @@ class CliDraftController:
         self._sync_ranking_scroll(visible_count=30)
 
     def set_search(self, query: str) -> None:
+        selected_player_id = self._selected_ranking_player_id()
         self.search_query = query.strip()
-        self.selection_index = 0
-        self.ranking_scroll_offset = 0
-        self.status_message = (
-            "Search cleared." if not self.search_query else f"Search: {self.search_query}"
-        )
+        self._restore_selection(selected_player_id)
+        self.status_message = self._search_status_message()
 
     def start_search(self) -> None:
         self.search_active = True
@@ -124,25 +122,21 @@ class CliDraftController:
 
     def finish_search(self) -> None:
         self.search_active = False
-        self.status_message = (
-            "Search cleared." if not self.search_query else f"Search: {self.search_query}"
-        )
+        self.status_message = self._search_status_message()
 
     def append_search_character(self, character: str) -> None:
         if not character.isprintable():
             return
+        selected_player_id = self._selected_ranking_player_id()
         self.search_query += character
-        self.selection_index = 0
-        self.ranking_scroll_offset = 0
-        self.status_message = f"Search: {self.search_query}"
+        self._restore_selection(selected_player_id)
+        self.status_message = self._search_status_message()
 
     def backspace_search(self) -> None:
+        selected_player_id = self._selected_ranking_player_id()
         self.search_query = self.search_query[:-1]
-        self.selection_index = 0
-        self.ranking_scroll_offset = 0
-        self.status_message = (
-            "Search cleared." if not self.search_query else f"Search: {self.search_query}"
-        )
+        self._restore_selection(selected_player_id)
+        self.status_message = self._search_status_message()
 
     def cycle_position_filter(self, delta: int) -> None:
         options = ("ALL", *POSITIONS)
@@ -348,6 +342,30 @@ class CliDraftController:
             self.ranking_scroll_offset = self.selection_index - visible_count + 1
 
         self.ranking_scroll_offset = max(0, min(self.ranking_scroll_offset, max_offset))
+
+    def _selected_ranking_player_id(self) -> str | None:
+        rows = self.selectable_rankings()
+        if not rows:
+            return None
+        return rows[min(self.selection_index, len(rows) - 1)].player_id
+
+    def _restore_selection(self, player_id: str | None) -> None:
+        rows = self.selectable_rankings()
+        if player_id is not None:
+            for index, row in enumerate(rows):
+                if row.player_id == player_id:
+                    self.selection_index = index
+                    self._sync_ranking_scroll(visible_count=30)
+                    return
+        self.selection_index = 0
+        self.ranking_scroll_offset = 0
+
+    def _search_status_message(self) -> str:
+        if not self.search_query:
+            return "Search cleared."
+        match_count = len(self.selectable_rankings())
+        noun = "match" if match_count == 1 else "matches"
+        return f"Search: {self.search_query} ({match_count} {noun})"
 
     def _recommendation_lines(self) -> list[str]:
         recommendation = self.recommendation()
@@ -606,9 +624,10 @@ class CliDraftController:
         )
 
     def _filter_status_line(self) -> str:
+        match_count = len(self.selectable_rankings())
         return (
             f"Filters: position={self.position_filter} search={self.search_query or '-'} "
-            "| [ ] cycle positions, c clear"
+            f"matches={match_count} | [ ] cycle positions, c clear"
         )
 
 
@@ -790,9 +809,11 @@ def _progress_bar(completed: int, total: int, width: int) -> str:
 def _footer_prompt(controller: CliDraftController) -> str:
     search = controller.search_query or "none"
     mode = "SEARCH" if controller.search_active else controller.current_view.lower()
+    matches = len(controller.selectable_rankings())
     return (
         f"~/BayesianDraft  mode={mode}  filter={search}  "
-        f"pos={controller.position_filter}  enter/d draft  / search  [ ] position  q quit"
+        f"matches={matches}  pos={controller.position_filter}  "
+        "enter/d draft  / search  [ ] position  q quit"
     )
 
 

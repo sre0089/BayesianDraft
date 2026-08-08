@@ -70,6 +70,7 @@ def test_cli_product_prompt_helpers(tmp_path: Path) -> None:
     assert "~/BayesianDraft" in _footer_prompt(controller)
     assert "mode=summary" in _footer_prompt(controller)
     assert "filter=rb" in _footer_prompt(controller)
+    assert "matches=" in _footer_prompt(controller)
     assert "pos=ALL" in _footer_prompt(controller)
 
 
@@ -87,6 +88,7 @@ def test_cli_controller_live_search_filters_without_enter(tmp_path: Path) -> Non
 
     assert controller.search_active is True
     assert controller.search_query == "rB"
+    assert "matches" in controller.status_message
     assert "mode=SEARCH" in _footer_prompt(controller)
     assert {ranking.position.value for ranking in controller.selectable_rankings()} == {"RB"}
 
@@ -97,6 +99,28 @@ def test_cli_controller_live_search_filters_without_enter(tmp_path: Path) -> Non
     _handle_live_search_key(controller, ord("\n"))
 
     assert controller.search_active is False
+
+
+def test_cli_live_search_preserves_selected_match(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(save_path=tmp_path / "draft.json"),
+    )
+    controller.move_view(1)
+    controller.move_selection(1)
+    selected_player_id = controller.selectable_rankings()[controller.selection_index].player_id
+    selected_name = controller.selectable_rankings()[controller.selection_index].full_name
+
+    controller.start_search()
+    for character in selected_name[:8]:
+        _handle_live_search_key(controller, ord(character))
+
+    assert (
+        controller.selectable_rankings()[controller.selection_index].player_id
+        == selected_player_id
+    )
 
 
 def test_cli_controller_filters_and_drafts_selected_player(tmp_path: Path) -> None:
