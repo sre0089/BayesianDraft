@@ -627,30 +627,44 @@ class CliDraftController:
     def _manager_lines(self) -> list[str]:
         selected_manager_id = self._selected_manager_id()
         selected_roster = self.state.rosters[selected_manager_id]
+        selected_points, selected_vorp = self._manager_roster_totals(selected_manager_id)
         lines = [
             "Managers",
-            "Use up/down to inspect every roster as picks come in.",
+            "Use up/down to inspect roster strength as picks come in.",
             "",
+            f"{'Team':<16} {'Picks':>5} {'Proj':>8} {'VORP':>8} Roster",
+            "-" * 70,
         ]
         for index, manager in enumerate(self.state.league_config.draft_order):
             roster = self.state.rosters[manager.id]
+            projected_points, vorp = self._manager_roster_totals(manager.id)
             marker = ">" if index == self.manager_selection_index else " "
             on_clock = "*" if manager.id == self.state.manager_on_clock else " "
             user = "YOU" if manager.id == self.state.league_config.league.user_manager_id else "   "
             lines.append(
-                f"{marker}{on_clock} {self._manager_label(manager.id):<12} "
-                f"{user} picks={len(roster.player_ids):<2} "
+                f"{marker}{on_clock} {self._manager_label(manager.id):<12} {user} "
+                f"{len(roster.player_ids):>5} {projected_points:>8.1f} {vorp:>8.1f} "
                 f"{self._position_count_text(roster.positional_counts)}"
             )
-        lines.extend(["", f"Roster: {self._manager_label(selected_manager_id)}"])
+        lines.extend(
+            [
+                "",
+                f"Roster: {self._manager_label(selected_manager_id)}",
+                f"Team totals: projected={selected_points:.1f} VORP={selected_vorp:.1f}",
+            ]
+        )
         if not selected_roster.player_ids:
             lines.append("No picks yet.")
         else:
             for player_id in selected_roster.player_ids:
                 player = self.state.players[player_id]
+                ranking = self._ranking_by_id(player_id)
+                projected_points = 0 if ranking is None else ranking.projected_points
+                vorp = 0 if ranking is None else ranking.vorp
                 lines.append(
                     f"{self._team_badge(player.nfl_team_id)} {player.position:<3} "
-                    f"{player.full_name}"
+                    f"{player.full_name:<26} proj={projected_points:>6.1f} "
+                    f"vorp={vorp:>6.1f}"
                 )
         return lines
 
@@ -717,6 +731,18 @@ class CliDraftController:
 
     def _position_count_text(self, counts: dict[str, int]) -> str:
         return " ".join(f"{position}:{counts.get(position, 0)}" for position in POSITIONS)
+
+    def _manager_roster_totals(self, manager_id: str) -> tuple[float, float]:
+        roster = self.state.rosters[manager_id]
+        projected_points = 0.0
+        vorp = 0.0
+        for player_id in roster.player_ids:
+            ranking = self._ranking_by_id(player_id)
+            if ranking is None:
+                continue
+            projected_points += ranking.projected_points
+            vorp += ranking.vorp
+        return round(projected_points, 1), round(vorp, 1)
 
     def _team_badge(self, team: str | None) -> str:
         return f"[{team or 'FA':^3}]"
@@ -1186,11 +1212,13 @@ def _draw_manager_workspace(
     right_width = width - left_width - 1
     selected_manager_id = controller._selected_manager_id()
     selected_roster = controller.state.rosters[selected_manager_id]
+    selected_points, selected_vorp = controller._manager_roster_totals(selected_manager_id)
 
     _draw_box(screen, y, x, height, left_width, "Managers")
-    manager_lines = []
+    manager_lines = [f"{'Team':<14} {'Pk':>2} {'Proj':>7} {'VORP':>7}"]
     for index, manager in enumerate(controller.state.league_config.draft_order):
         roster = controller.state.rosters[manager.id]
+        projected_points, vorp = controller._manager_roster_totals(manager.id)
         marker = ">" if index == controller.manager_selection_index else " "
         clock = "*" if manager.id == controller.state.manager_on_clock else " "
         user = (
@@ -1200,7 +1228,7 @@ def _draw_manager_workspace(
         )
         manager_lines.append(
             f"{marker}{clock} {controller._manager_label(manager.id):<12} "
-            f"{user} {len(roster.player_ids):>2} picks"
+            f"{user} {len(roster.player_ids):>2} {projected_points:>7.1f} {vorp:>7.1f}"
         )
     _draw_lines(screen, manager_lines, y + 1, x + 2, height - 2, left_width - 4)
 
@@ -1213,6 +1241,7 @@ def _draw_manager_workspace(
         f"Roster: {controller._manager_label(selected_manager_id)}",
     )
     roster_lines = [
+        f"Totals: projected={selected_points:.1f} VORP={selected_vorp:.1f}",
         controller._position_count_text(selected_roster.positional_counts),
         "",
     ]
@@ -1221,9 +1250,12 @@ def _draw_manager_workspace(
     else:
         for player_id in selected_roster.player_ids:
             player = controller.state.players[player_id]
+            ranking = controller._ranking_by_id(player_id)
+            projected_points = 0 if ranking is None else ranking.projected_points
+            vorp = 0 if ranking is None else ranking.vorp
             roster_lines.append(
                 f"{controller._team_badge(player.nfl_team_id)} {player.position:<3} "
-                f"{player.full_name}"
+                f"{player.full_name:<24} {projected_points:>6.1f} {vorp:>6.1f}"
             )
     _draw_lines(screen, roster_lines, y + 1, x + left_width + 3, height - 2, right_width - 4)
 

@@ -61,6 +61,26 @@ def test_cli_summary_recommendation_updates_after_pick(tmp_path: Path) -> None:
     assert "Example RB One" not in after
 
 
+def test_cli_managers_show_team_strength_scores(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(save_path=tmp_path / "draft.json"),
+    )
+
+    controller.draft_selected_player()
+    controller.view_index = 3
+    controller.manager_selection_index = 0
+
+    lines = controller.view_lines()
+
+    assert any("Proj" in line and "VORP" in line for line in lines)
+    assert any("Team 01" in line and "285.0" in line and "100.0" in line for line in lines)
+    assert "Team totals: projected=285.0 VORP=100.0" in lines
+    assert any("Example RB One" in line and "proj=" in line and "vorp=" in line for line in lines)
+
+
 def test_cli_summary_shows_rollout_when_user_is_on_clock(tmp_path: Path) -> None:
     snapshot, state = load_snapshot_and_draft_state()
     controller = CliDraftController(
