@@ -69,7 +69,7 @@ PYTHONPATH=. python scripts/analyze_draft_paths.py \
 - `Managers`: yazi-style manager browser with every competitor roster, pick count, projected points, VORP, and position counts.
 - `Roster`: configured user manager roster and positional starter needs.
 - `Health`: snapshot coverage and warnings.
-- `Simulation`: multi-path draft analysis showing simulated manager results, draft strategy analysis for your next pick, and risk summary. Press `a` to start the analysis from inside the TUI; the run log updates as paths complete.
+- `Simulation`: multi-path draft analysis showing simulated manager results, draft strategy analysis for your next pick, and risk summary. Press `a` to start the analysis from inside the TUI; the run log updates during the league-path phase and the next-pick strategy phase.
 - `Picks`: recent completed picks.
 
 ## Controls
