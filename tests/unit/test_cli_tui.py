@@ -183,6 +183,32 @@ def test_cli_rankings_scroll_with_selection(tmp_path: Path) -> None:
     assert any(index == controller.selection_index for index, _ in visible_rows)
 
 
+def test_cli_controller_supports_page_and_boundary_navigation(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(save_path=tmp_path / "draft.json"),
+    )
+    controller.move_view(1)
+
+    controller.page_selection(1, page_size=4)
+    assert controller.selection_index == 4
+
+    controller.jump_selection(to_end=True)
+    assert controller.selection_index == len(controller.selectable_rankings()) - 1
+
+    controller.jump_selection(to_end=False)
+    assert controller.selection_index == 0
+
+    controller.view_index = 3
+    controller.jump_selection(to_end=True)
+    assert controller.manager_selection_index == 13
+
+    controller.jump_selection(to_end=False)
+    assert controller.manager_selection_index == 0
+
+
 def test_cli_controller_supports_undo_redo_and_save(tmp_path: Path) -> None:
     snapshot, state = load_snapshot_and_draft_state()
     save_path = tmp_path / "draft.json"

@@ -110,6 +110,20 @@ class CliDraftController:
         self.selection_index = max(0, min(self.selection_index + delta, item_count - 1))
         self._sync_ranking_scroll(visible_count=30)
 
+    def page_selection(self, delta: int, *, page_size: int = 10) -> None:
+        self.move_selection(delta * page_size)
+
+    def jump_selection(self, *, to_end: bool) -> None:
+        if self.current_view == "Managers":
+            self.manager_selection_index = (
+                len(self.state.league_config.draft_order) - 1 if to_end else 0
+            )
+            return
+
+        item_count = len(self.selectable_rankings())
+        self.selection_index = max(item_count - 1, 0) if to_end else 0
+        self._sync_ranking_scroll(visible_count=30)
+
     def set_search(self, query: str) -> None:
         selected_player_id = self._selected_ranking_player_id()
         self.search_query = query.strip()
@@ -659,6 +673,14 @@ def _curses_main(screen: curses.window, controller: CliDraftController) -> None:
             controller.move_selection(1)
         elif key == curses.KEY_UP:
             controller.move_selection(-1)
+        elif key == curses.KEY_NPAGE:
+            controller.page_selection(1)
+        elif key == curses.KEY_PPAGE:
+            controller.page_selection(-1)
+        elif key == curses.KEY_HOME:
+            controller.jump_selection(to_end=False)
+        elif key == curses.KEY_END:
+            controller.jump_selection(to_end=True)
         elif key in {ord("\n"), ord("\r"), ord("d")}:
             controller.draft_selected_player()
         elif key == ord("u"):
