@@ -32,6 +32,7 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
     )
     assert any(line.startswith(">") for line in controller.view_lines())
     assert not any(line.startswith(">") and "proj=" in line for line in controller.view_lines())
+    assert any("Confirm pick 1:" in line for line in controller.view_lines())
     assert any("Selected:" in line for line in controller.view_lines())
     assert any("Projection: mean=" in line for line in controller.view_lines())
 
@@ -99,10 +100,11 @@ def test_cli_controller_live_search_filters_without_enter(tmp_path: Path) -> Non
 
 def test_cli_controller_filters_and_drafts_selected_player(tmp_path: Path) -> None:
     snapshot, state = load_snapshot_and_draft_state()
+    save_path = tmp_path / "draft.json"
     controller = CliDraftController(
         snapshot=snapshot,
         state=state,
-        config=CliDraftConfig(save_path=tmp_path / "draft.json"),
+        config=CliDraftConfig(save_path=save_path),
     )
 
     controller.move_view(1)
@@ -112,6 +114,8 @@ def test_cli_controller_filters_and_drafts_selected_player(tmp_path: Path) -> No
     assert controller.state.current_overall_pick == 2
     assert controller.state.completed_picks[0].player_id == "rb_001"
     assert "Drafted Example RB One" in controller.status_message
+    assert "Autosaved" in controller.status_message
+    assert save_path.exists()
 
 
 def test_cli_controller_filters_rankings_by_position(tmp_path: Path) -> None:
@@ -171,6 +175,21 @@ def test_cli_controller_supports_undo_redo_and_save(tmp_path: Path) -> None:
     assert controller.state.current_overall_pick == 2
     assert save_path.exists()
     assert "Saved draft" in controller.status_message
+
+
+def test_cli_controller_can_disable_autosave(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    save_path = tmp_path / "draft.json"
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(save_path=save_path, autosave=False),
+    )
+
+    controller.draft_selected_player()
+
+    assert not save_path.exists()
+    assert "Autosave off." in controller.status_message
 
 
 def test_cli_controller_loads_scenario(tmp_path: Path) -> None:

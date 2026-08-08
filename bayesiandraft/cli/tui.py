@@ -1,5 +1,6 @@
 import curses
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 from bayesiandraft import __version__
@@ -47,6 +48,7 @@ class CliDraftConfig:
     save_path: Path
     scenario_path: Path | None = None
     auto_pick_to_user: bool = False
+    autosave: bool = True
 
 
 class CliDraftController:
@@ -68,6 +70,7 @@ class CliDraftController:
         self.position_filter = "ALL"
         self.search_active = False
         self.status_message = "Ready."
+        self.last_save_message = "Not saved yet."
         self._rankings = build_baseline_rankings(snapshot)
         self._players_by_id = {player.player_id: player for player in snapshot.players}
         self._projections_by_player_id = {
@@ -200,28 +203,43 @@ class CliDraftController:
         max_index = max(len(self.selectable_rankings()) - 1, 0)
         self.selection_index = min(self.selection_index, max_index)
         self._sync_ranking_scroll(visible_count=30)
+        autosave_message = self._autosave()
         self.status_message = (
             f"Drafted {player.full_name} for {self.state.completed_picks[-1].manager_id}."
+            f" {autosave_message}"
         )
 
     def undo(self) -> None:
         try:
             self.state = self.state.undo()
-            self.status_message = "Undid last pick."
+            autosave_message = self._autosave()
+            self.status_message = f"Undid last pick. {autosave_message}"
         except DraftStateError as exc:
             self.status_message = str(exc)
 
     def redo(self) -> None:
         try:
             self.state = self.state.redo()
-            self.status_message = "Redid pick."
+            autosave_message = self._autosave()
+            self.status_message = f"Redid pick. {autosave_message}"
         except DraftStateError as exc:
             self.status_message = str(exc)
 
     def save(self) -> None:
+        self._save_state()
+        self.status_message = f"Saved draft to {self.config.save_path}"
+
+    def _autosave(self) -> str:
+        if not self.config.autosave:
+            return "Autosave off."
+        self._save_state()
+        return self.last_save_message
+
+    def _save_state(self) -> None:
         self.config.save_path.parent.mkdir(parents=True, exist_ok=True)
         self.state.save(self.config.save_path)
-        self.status_message = f"Saved draft to {self.config.save_path}"
+        saved_at = datetime.now().strftime("%H:%M:%S")
+        self.last_save_message = f"Autosaved {saved_at} to {self.config.save_path}"
 
     def auto_pick_to_user(self) -> int:
         user_manager_id = self.state.league_config.league.user_manager_id
@@ -233,6 +251,8 @@ class CliDraftController:
             self.state = self.state.record_pick(rows[0].player_id)
             count += 1
         self.selection_index = 0
+        if count > 0:
+            self._autosave()
         return count
 
     def view_lines(self) -> list[str]:
@@ -272,6 +292,7 @@ class CliDraftController:
             f"Available {summary.available_player_count}",
             f"Your roster {summary.user_roster_size}",
             f"Next user pick {next_pick}",
+            self.last_save_message,
             "",
             *self._best_overall_recommendation_lines(include_header=True),
             "",
@@ -298,7 +319,8 @@ class CliDraftController:
             for index, row in visible_rows
         )
         selected = rows[self.selection_index]
-        lines.extend(["", *self._selected_player_detail_lines(selected)])
+        lines.extend(["", self._selected_pick_preview_line(selected), ""])
+        lines.extend(self._selected_player_detail_lines(selected))
         return lines
 
     def _visible_rankings(self, *, visible_count: int) -> list[tuple[int, RankingRow]]:
@@ -564,6 +586,14 @@ class CliDraftController:
             ),
         ]
 
+    def _selected_pick_preview_line(self, ranking: RankingRow) -> str:
+        summary = summarize_draft_state(self.state)
+        return (
+            f"Confirm pick {summary.current_overall_pick}: "
+            f"{summary.manager_on_clock} drafts {ranking.full_name} "
+            f"({ranking.position.value}, {ranking.nfl_team_id or 'FA'})"
+        )
+
     def _filter_status_line(self) -> str:
         return (
             f"Filters: position={self.position_filter} search={self.search_query or '-'} "
@@ -784,6 +814,7 @@ def _draw_summary_workspace(
         f"Clock: {summary.manager_on_clock}",
         f"Next user: {summary.next_user_pick or '-'}",
         f"Available: {summary.available_player_count}",
+        controller.last_save_message,
     ]
     _draw_summary_lines(screen, status_lines, y + 1, x + 2, height - 2, left_width - 4)
 
@@ -954,6 +985,7 @@ def _draw_rankings_workspace(
         if selected is None
         else [
             f"{controller._team_badge(selected.nfl_team_id)} {selected.full_name}",
+            controller._selected_pick_preview_line(selected),
             "",
             *controller._selected_player_detail_lines(selected),
             "",

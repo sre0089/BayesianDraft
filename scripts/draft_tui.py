@@ -17,7 +17,12 @@ def main() -> None:
     parser.add_argument(
         "--save-path",
         default="data/processed/cli_draft_state.json",
-        help="Where the terminal UI saves draft state when pressing s.",
+        help="Where the terminal UI saves draft state.",
+    )
+    parser.add_argument(
+        "--no-autosave",
+        action="store_true",
+        help="Disable automatic saves after draft, undo, redo, and auto-pick actions.",
     )
     args = parser.parse_args()
 
@@ -29,6 +34,7 @@ def main() -> None:
             save_path=Path(args.save_path),
             scenario_path=None if args.scenario is None else Path(args.scenario),
             auto_pick_to_user=args.auto_pick_to_user,
+            autosave=not args.no_autosave,
         ),
     )
     run_tui(controller)
