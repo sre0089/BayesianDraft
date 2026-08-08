@@ -1830,7 +1830,7 @@ def _draw_ranking_row(
 ) -> None:
     line = _ranking_line(row, selected=selected).ljust(width)
     stats_start = min(_ranking_stats_start_column(), width)
-    left_attrs = curses.A_BOLD if selected else 0
+    left_attrs = _ranking_name_attrs(selected=selected)
     _safe_addnstr(screen, y, x, line[:stats_start], stats_start, left_attrs)
     if stats_start >= width:
         return
@@ -2006,6 +2006,7 @@ def _init_colors() -> None:
         curses.init_pair(5, curses.COLOR_GREEN, -1)
         curses.init_pair(6, curses.COLOR_WHITE, -1)
         curses.init_pair(13, curses.COLOR_BLACK, curses.COLOR_GREEN)
+        curses.init_pair(20, curses.COLOR_BLACK, curses.COLOR_WHITE)
         for position, (normal_pair, selected_pair) in POSITION_COLOR_PAIRS.items():
             normal_fg, normal_bg, selected_fg, selected_bg = _position_row_colors(position)
             curses.init_pair(normal_pair, normal_fg, normal_bg)
@@ -2098,6 +2099,10 @@ def _ranking_line_attrs(row: RankingRow, *, selected: bool) -> int:
     if selected:
         attrs |= curses.A_BOLD
     return attrs
+
+
+def _ranking_name_attrs(*, selected: bool) -> int:
+    return curses.color_pair(20) | curses.A_BOLD if selected else 0
 
 
 def _ranking_stats_start_column() -> int:

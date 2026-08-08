@@ -8,6 +8,7 @@ from bayesiandraft.cli.tui import (
     _is_quick_search_key,
     _position_color_pair,
     _progress_bar,
+    _ranking_name_attrs,
     _ranking_stats_start_column,
     _summary_flex_need_line,
 )
@@ -444,6 +445,10 @@ def test_cli_position_color_pairs_match_rankings_palette() -> None:
 
 def test_cli_ranking_stats_highlight_starts_after_player_name() -> None:
     assert _ranking_stats_start_column() == 37
+
+
+def test_cli_selected_ranking_name_uses_white_highlight() -> None:
+    assert _ranking_name_attrs(selected=False) == 0
 
 
 def test_cli_controller_logs_decision_audit_event(tmp_path: Path) -> None:
