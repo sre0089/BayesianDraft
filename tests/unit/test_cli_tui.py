@@ -115,12 +115,22 @@ def test_cli_simulation_tab_shows_path_analysis(tmp_path: Path) -> None:
 
     lines = controller.view_lines()
 
+    assert "Multi-path draft analysis" in lines
+    assert any("Press a to run" in line for line in lines)
+    assert "a analyze" in _footer_prompt(controller)
+
+    progress_events = []
+    controller.run_path_analysis(progress_callback=progress_events.append)
+    lines = controller.view_lines()
+
     assert any(line.startswith("After 40 simulated draft paths:") for line in lines)
     assert "Manager Results" in lines
     assert "Your Strategy Outcomes" in lines
     assert any("early path" in line and "avg VORP" in line for line in lines)
     assert "Risk" in lines
     assert any(line.startswith("Best case:") for line in lines)
+    assert len(progress_events) == 40
+    assert any("Finished path analysis." in line for line in lines)
 
 
 def test_cli_product_prompt_helpers(tmp_path: Path) -> None:

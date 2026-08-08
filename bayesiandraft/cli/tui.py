@@ -28,6 +28,8 @@ from bayesiandraft.recommendations import (
 from bayesiandraft.simulation import (
     DraftSimulationConfig,
     LeaguePathAnalysisResult,
+    LeaguePathProgress,
+    LeaguePathProgressCallback,
     LeaguePathSimulationConfig,
     StrategyPathAnalysisResult,
     StrategyPathSimulationConfig,
@@ -96,6 +98,9 @@ class CliDraftController:
             LeaguePathAnalysisResult,
             StrategyPathAnalysisResult,
         ] | None = None
+        self.path_analysis_logs: list[str] = [
+            "Press a on this tab to run multi-path draft analysis."
+        ]
 
         if config.load_existing_save and config.save_path.exists():
             self.state = DraftState.load(config.save_path)
@@ -242,6 +247,7 @@ class CliDraftController:
             self.status_message = str(exc)
             return
 
+        self._invalidate_path_analysis()
         max_index = max(len(self.selectable_rankings()) - 1, 0)
         self.selection_index = min(self.selection_index, max_index)
         self._sync_ranking_scroll(visible_count=30)
@@ -255,6 +261,7 @@ class CliDraftController:
     def undo(self) -> None:
         try:
             self.state = self.state.undo()
+            self._invalidate_path_analysis()
             autosave_message = self._autosave()
             self.status_message = f"Undid last pick. {autosave_message}"
         except DraftStateError as exc:
@@ -263,6 +270,7 @@ class CliDraftController:
     def redo(self) -> None:
         try:
             self.state = self.state.redo()
+            self._invalidate_path_analysis()
             autosave_message = self._autosave()
             self.status_message = f"Redid pick. {autosave_message}"
         except DraftStateError as exc:
@@ -325,6 +333,7 @@ class CliDraftController:
             if not rows:
                 break
             self.state = self.state.record_pick(rows[0].player_id)
+            self._invalidate_path_analysis()
             count += 1
         self.selection_index = 0
         if count > 0:
@@ -699,7 +708,31 @@ class CliDraftController:
         return lines
 
     def _simulation_lines(self) -> list[str]:
-        league_result, strategy_result = self._path_analysis()
+        cache_key = self._path_analysis_key()
+        if self._path_analysis_cache_key != cache_key or self._path_analysis_cache is None:
+            return [
+                "Multi-path draft analysis",
+                "",
+                "Press a to run simulated draft paths from the current board.",
+                "The log below updates as paths finish.",
+                "",
+                "Run Log",
+                *self.path_analysis_logs[-18:],
+            ]
+
+        league_result, strategy_result = self._path_analysis_cache
+        return [
+            *self._simulation_result_lines(league_result, strategy_result),
+            "",
+            "Run Log",
+            *self.path_analysis_logs[-12:],
+        ]
+
+    def _simulation_result_lines(
+        self,
+        league_result: LeaguePathAnalysisResult,
+        strategy_result: StrategyPathAnalysisResult,
+    ) -> list[str]:
         lines = [
             f"After {league_result.simulation_count} simulated draft paths:",
             "",
@@ -738,8 +771,27 @@ class CliDraftController:
         )
         return lines
 
-    def _path_analysis(self) -> tuple[LeaguePathAnalysisResult, StrategyPathAnalysisResult]:
-        cache_key = tuple(pick.player_id for pick in self.state.completed_picks)
+    def run_path_analysis(
+        self,
+        *,
+        progress_callback: LeaguePathProgressCallback | None = None,
+    ) -> tuple[LeaguePathAnalysisResult, StrategyPathAnalysisResult]:
+        self._invalidate_path_analysis()
+        self.path_analysis_logs = ["Starting league path analysis..."]
+        cache_key = self._path_analysis_key()
+        result = self._path_analysis(progress_callback=progress_callback)
+        self._path_analysis_cache_key = cache_key
+        self._path_analysis_cache = result
+        self.path_analysis_logs.append("Finished path analysis.")
+        self.status_message = "Path analysis complete."
+        return result
+
+    def _path_analysis(
+        self,
+        *,
+        progress_callback: LeaguePathProgressCallback | None = None,
+    ) -> tuple[LeaguePathAnalysisResult, StrategyPathAnalysisResult]:
+        cache_key = self._path_analysis_key()
         if self._path_analysis_cache_key == cache_key and self._path_analysis_cache is not None:
             return self._path_analysis_cache
 
@@ -752,7 +804,9 @@ class CliDraftController:
                 seed=71,
                 draft_config=draft_config,
             ),
+            progress_callback=progress_callback,
         )
+        self.path_analysis_logs.append("Comparing RB/WR/QB/TE early paths...")
         strategy_result = analyze_user_strategy_paths(
             self.state,
             self._rankings,
@@ -762,9 +816,17 @@ class CliDraftController:
                 draft_config=draft_config,
             ),
         )
-        self._path_analysis_cache_key = cache_key
-        self._path_analysis_cache = (league_result, strategy_result)
-        return self._path_analysis_cache
+        return league_result, strategy_result
+
+    def _path_analysis_key(self) -> tuple[str, ...]:
+        return tuple(pick.player_id for pick in self.state.completed_picks)
+
+    def _invalidate_path_analysis(self) -> None:
+        had_analysis = self._path_analysis_cache is not None
+        self._path_analysis_cache_key = None
+        self._path_analysis_cache = None
+        if had_analysis:
+            self.path_analysis_logs = ["Board changed. Press a to rerun path analysis."]
 
     def _pick_lines(self) -> list[str]:
         if not self.state.completed_picks:
@@ -910,6 +972,8 @@ def _curses_main(screen: curses.window, controller: CliDraftController) -> None:
             controller.redo()
         elif key == ord("s"):
             controller.save()
+        elif key == ord("a") and controller.current_view == "Simulation":
+            _run_path_analysis_interactive(screen, controller)
         elif key == ord("c"):
             controller.set_search("")
             controller.set_position_filter("ALL")
@@ -949,6 +1013,28 @@ def _handle_live_search_key(controller: CliDraftController, key: int) -> None:
         return
     if 0 <= key <= 255:
         controller.append_search_character(chr(key))
+
+
+def _run_path_analysis_interactive(
+    screen: curses.window,
+    controller: CliDraftController,
+) -> None:
+    def progress_callback(progress: LeaguePathProgress) -> None:
+        leader = controller._manager_label(progress.current_leader_id)
+        controller.path_analysis_logs.append(
+            f"path {progress.completed_paths:>2}/{progress.total_paths} "
+            f"seed={progress.seed} leader={leader} "
+            f"vorp={progress.current_leader_vorp:.1f} "
+            f"status={progress.stopped_reason}"
+        )
+        controller.status_message = (
+            f"Running path analysis {progress.completed_paths}/{progress.total_paths}..."
+        )
+        _draw(screen, controller)
+
+    controller.status_message = "Running path analysis..."
+    controller.run_path_analysis(progress_callback=progress_callback)
+    _draw(screen, controller)
 
 
 def _draw_header(screen: curses.window, controller: CliDraftController, width: int) -> None:
@@ -1053,10 +1139,11 @@ def _footer_prompt(controller: CliDraftController) -> str:
     search = controller.search_query or "none"
     mode = "SEARCH" if controller.search_active else controller.current_view.lower()
     matches = len(controller.selectable_rankings())
+    action = "a analyze  " if controller.current_view == "Simulation" else ""
     return (
         f"~/BayesianDraft  mode={mode}  filter={search}  "
         f"matches={matches}  pos={controller.position_filter}  "
-        "enter/d draft  / search  [ ] position  q quit"
+        f"{action}enter/d draft  / search  [ ] position  q quit"
     )
 
 
