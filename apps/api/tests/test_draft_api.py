@@ -80,6 +80,18 @@ def test_api_returns_recommendations_for_draft() -> None:
     assert len(body["alternatives"]) == 3
 
 
+def test_api_returns_positional_recommendations_for_draft() -> None:
+    client = TestClient(create_app())
+    client.post("/drafts", json={"draft_id": "api_pos_recs"})
+
+    response = client.get("/drafts/api_pos_recs/recommendations/by-position")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert {group["position"] for group in body} >= {"RB", "WR"}
+    assert body[0]["candidates"]
+
+
 def test_api_returns_candidate_rollouts_when_user_is_on_clock() -> None:
     client = TestClient(create_app())
     client.post("/drafts", json={"draft_id": "api_rollouts"})

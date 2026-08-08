@@ -9,6 +9,7 @@ from bayesiandraft.recommendations import (
     CandidateOptimizerConfig,
     optimize_candidates,
     recommend_players,
+    recommend_players_by_needed_position,
 )
 from bayesiandraft.release import BuildInfo, build_info_from_env
 from bayesiandraft_api.service import (
@@ -147,6 +148,14 @@ def create_app(player_snapshot_path: str | Path | None = None) -> FastAPI:
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return result.model_dump(mode="json")
+
+    @app.get("/drafts/{draft_id}/recommendations/by-position")
+    def positional_recommendations(draft_id: str) -> list[dict[str, object]]:
+        state = _get_state_or_404(service, draft_id)
+        return [
+            group.model_dump(mode="json")
+            for group in recommend_players_by_needed_position(state, service.rankings())
+        ]
 
     @app.get("/drafts/{draft_id}/candidate-rollouts")
     def candidate_rollouts(

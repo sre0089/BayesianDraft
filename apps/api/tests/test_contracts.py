@@ -13,6 +13,7 @@ def test_openapi_schema_includes_draft_contracts() -> None:
     paths = schema["paths"]
 
     assert "/drafts/{draft_id}/recommendations" in paths
+    assert "/drafts/{draft_id}/recommendations/by-position" in paths
     assert "/drafts/{draft_id}/candidate-rollouts" in paths
     assert "/drafts/{draft_id}/picks" in paths
 
