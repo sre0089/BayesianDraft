@@ -66,6 +66,18 @@ Then launch the CLI with real player names:
 PYTHONPATH=. python scripts/draft_tui.py --snapshot data/processed/dynastyprocess_rankings_2026.json
 ```
 
+For faster draft-day recommendations, build a simulated path bank first and load it into the TUI:
+
+```bash
+PYTHONPATH=. python scripts/build_path_bank.py \
+  --snapshot data/processed/dynastyprocess_rankings_2026.json \
+  --simulations 10000 \
+  --out data/processed/path_bank_2026.json
+PYTHONPATH=. python scripts/draft_tui.py \
+  --snapshot data/processed/dynastyprocess_rankings_2026.json \
+  --path-bank data/processed/path_bank_2026.json
+```
+
 ## Interactive CLI
 
 Run the keyboard-driven terminal draft room with:

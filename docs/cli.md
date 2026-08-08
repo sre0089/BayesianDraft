@@ -33,6 +33,23 @@ PYTHONPATH=. python scripts/draft_tui.py \
   --snapshot data/processed/dynastyprocess_rankings_2026.json
 ```
 
+For fast draft-day opportunity-cost recommendations, build a path bank before the draft:
+
+```bash
+PYTHONPATH=. python scripts/build_path_bank.py \
+  --snapshot data/processed/dynastyprocess_rankings_2026.json \
+  --simulations 10000 \
+  --out data/processed/path_bank_2026.json
+```
+
+Then launch the TUI with the path bank:
+
+```bash
+PYTHONPATH=. python scripts/draft_tui.py \
+  --snapshot data/processed/dynastyprocess_rankings_2026.json \
+  --path-bank data/processed/path_bank_2026.json
+```
+
 Use `--scenario` only with snapshots that contain the player IDs referenced by that scenario. The built-in pick-8 scenario is designed for the built-in synthetic fixture.
 
 For rehearsal runs where you want BayesianDraft to simulate the early picks and jump directly to your configured draft slot, add:
@@ -63,9 +80,9 @@ PYTHONPATH=. python scripts/analyze_draft_paths.py \
 
 ## Views
 
-- `Summary`: current pick, manager on clock, available player count, roster size, Flex need, save status, next user pick, Draft Assistant readout, and best-now recommendation. The Draft Assistant shows a live quick direction that updates after every pick from the current board, plus cached deep-simulation guidance when it is still fresh.
+- `Summary`: current pick, manager on clock, available player count, roster size, Flex need, save status, next user pick, Draft Assistant readout, and best-now recommendation. The Draft Assistant shows a live quick direction that updates after every pick from the current board, path-bank opportunity-cost guidance when loaded, plus cached deep-simulation guidance when it is still fresh.
 - `Rankings`: scrollable available-player table, match count, pick preview, and selected-player detail when the terminal is wide enough. Press `/` or start typing while on Rankings to filter immediately.
-- `Recommendations`: best overall recommendation, live positional groups, score breakdown, stale/fresh path-analysis status, and top five available players for each position your roster still needs.
+- `Recommendations`: best overall recommendation, live positional groups, score breakdown including `opp` opportunity cost, stale/fresh path-analysis status, and top five available players for each position your roster still needs.
 - `Managers`: yazi-style manager browser with every competitor roster, pick count, projected points, VORP, and position counts.
 - `Roster`: configured user manager roster, positional starter needs, and Flex status.
 - `Health`: snapshot coverage and warnings.

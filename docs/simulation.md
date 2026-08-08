@@ -63,6 +63,30 @@ Win rate:     13%
 
 The CLI `Simulation` tab uses the same analysis code with a smaller path count so it remains responsive while entering picks live.
 
+## Path Bank
+
+A path bank is a pre-draft cache of many seeded draft paths plus lookup tables for player availability, expected positional value by pick, and positional drop-off by pick.
+
+Build it before the draft:
+
+```bash
+PYTHONPATH=. python scripts/build_path_bank.py \
+  --snapshot data/processed/dynastyprocess_rankings_2026.json \
+  --simulations 10000 \
+  --out data/processed/path_bank_2026.json
+```
+
+Inspect and latency-test it:
+
+```bash
+PYTHONPATH=. python scripts/inspect_path_bank.py data/processed/path_bank_2026.json
+PYTHONPATH=. python scripts/audit_fast_recommendations.py \
+  --snapshot data/processed/dynastyprocess_rankings_2026.json \
+  --path-bank data/processed/path_bank_2026.json
+```
+
+During a live draft, the TUI can load the path bank and update opportunity-cost recommendations after every pick without rerunning deep simulation. The engine uses exact matching paths when the real draft follows a saved path, compatible similar paths when possible, and falls back to the full bank when the live draft diverges too far.
+
 Current limitations:
 
 - Opponent behavior is still heuristic and only uses the current draft.

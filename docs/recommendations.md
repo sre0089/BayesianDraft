@@ -17,6 +17,7 @@ TotalScore =
   + DynamicPositionNeed
   + TierScore
   + TierDropScore
+  + OpportunityCostScore
   + MarketScore
   + NextPickRiskScore
   - Penalty
@@ -29,6 +30,7 @@ Current components:
 - `need_score`: starter vacancy boost weighted by draft phase. It includes configured Flex slots once base eligible-position needs are filled. It matters less early and more later.
 - `tier_score`: boost for higher-tier players.
 - `tier_drop_score`: boost when few same-position players remain in the candidate's tier.
+- `opportunity_cost_score`: optional path-bank boost when the best current player at a position is much better than the expected option at the user's next pick.
 - `market_score`: boost when ADP is later than model rank.
 - `next_pick_risk_score`: boost when the player is unlikely to make it back to the configured user's next pick.
 - `penalty`: early K/DST and duplicate K/DST penalty.
@@ -50,6 +52,16 @@ The engine returns:
 - explanation bullets
 
 The CLI also groups recommendations by positions the configured user roster still needs. Each group shows up to five available players ranked by the same recommendation score for that position. For the configured `FLEX` slot, eligible RB/WR/TE groups stay open after the base RB/WR/TE starters are filled until the Flex requirement is covered.
+
+When a path bank is loaded, the recommendation engine prices the choice as:
+
+```text
+take this position now
+vs
+expected best same-position option at the user's next pick
+```
+
+This is how the engine can prefer a high-upside QB over a need-based RB when the saved paths suggest the RB replacement later is acceptable, or prefer RB when the RB tier is expected to collapse before the next pick.
 
 ## Candidate Rollout Optimizer
 
