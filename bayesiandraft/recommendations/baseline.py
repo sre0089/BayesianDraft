@@ -50,7 +50,7 @@ def recommend_players(
     *,
     limit: int = 4,
     path_context: PathBankContext | None = None,
-    candidate_pool_size: int = 260,
+    candidate_pool_size: int = 180,
 ) -> RecommendationResult:
     available_ids = set(draft_state.available_player_ids)
     ranking_by_id = {ranking.player_id: ranking for ranking in rankings}
