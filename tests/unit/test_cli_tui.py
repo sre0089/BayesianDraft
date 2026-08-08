@@ -221,6 +221,22 @@ def test_cli_summary_does_not_auto_run_rollout_when_user_is_on_clock(tmp_path: P
     assert not any("Rollout: avg VORP" in line for line in controller.view_lines())
 
 
+def test_cli_marks_user_on_clock_in_summary(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(
+            save_path=tmp_path / "draft.json",
+            scenario_path=Path("data/fixtures/rehearsal_user_pick_8.json"),
+        ),
+    )
+
+    assert controller.is_user_on_clock() is True
+    assert "YOUR PICK NOW" in controller.view_lines()
+    assert "YOU ARE ON CLOCK" in controller.summary_decision_lines()
+
+
 def test_cli_summary_stays_light_at_later_user_pick(tmp_path: Path) -> None:
     snapshot, state = load_snapshot_and_draft_state(
         "data/processed/dynastyprocess_rankings_2026.json"

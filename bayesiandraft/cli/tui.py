@@ -140,6 +140,9 @@ class CliDraftController:
     def current_view(self) -> str:
         return VIEWS[self.view_index]
 
+    def is_user_on_clock(self) -> bool:
+        return self.state.manager_on_clock == self.state.league_config.league.user_manager_id
+
     def move_view(self, delta: int) -> None:
         self.help_active = False
         self.view_index = (self.view_index + delta) % len(VIEWS)
@@ -480,6 +483,11 @@ class CliDraftController:
     def _summary_lines(self) -> list[str]:
         summary = summarize_draft_state(self.state)
         next_pick = "-" if summary.next_user_pick is None else str(summary.next_user_pick)
+        clock_line = (
+            "YOUR PICK NOW"
+            if self.is_user_on_clock()
+            else f"On clock {summary.manager_on_clock}"
+        )
         return [
             "BayesianDraft",
             *COMPACT_LOGO_LINES,
@@ -492,7 +500,7 @@ class CliDraftController:
             "",
             "CURRENT PICK",
             f">>> {summary.current_overall_pick}/{self.state.total_picks} <<<",
-            f"On clock {summary.manager_on_clock}",
+            clock_line,
             f"Available {summary.available_player_count}",
             f"Your roster {summary.user_roster_size}",
             f"Next user pick {next_pick}",
@@ -521,7 +529,17 @@ class CliDraftController:
         primary_name = primary_ranking.full_name if primary_ranking else primary.player_id
         primary_position = "-" if primary_ranking is None else primary_ranking.position.value
         quick_direction = self.quick_direction()
-        lines = [
+        lines = []
+        if self.is_user_on_clock():
+            lines.extend(
+                [
+                    "YOU ARE ON CLOCK",
+                    "Action: pick from this panel or Rankings, then press Enter/d.",
+                    "",
+                ]
+            )
+        lines.extend(
+            [
             "Pick Now",
             (
                 f"Draft: {primary_name} ({primary_position}) "
@@ -530,7 +548,8 @@ class CliDraftController:
             "Meaning: best single pick from the live board for your roster.",
             "",
             "Position Lean",
-        ]
+            ]
+        )
         if quick_direction is None:
             lines.append("Lean: no live direction available.")
         else:
@@ -1440,24 +1459,38 @@ def _run_path_analysis_interactive(
 def _draw_header(screen: curses.window, controller: CliDraftController, width: int) -> None:
     summary = summarize_draft_state(controller.state)
     brand = " bayesiandraft@draft-room % bayesiandraft "
+    clock_text = (
+        "YOUR PICK NOW"
+        if controller.is_user_on_clock()
+        else f"Clock {summary.manager_on_clock}"
+    )
     status = (
         f"Version {__version__}  "
         f"Pick {summary.current_overall_pick}/{controller.state.total_picks}  "
-        f"Round {controller.state.current_round or '-'}  Clock {summary.manager_on_clock}"
+        f"Round {controller.state.current_round or '-'}  {clock_text}"
     )
     _safe_addnstr(screen, 0, 0, brand.ljust(width), width, curses.color_pair(3) | curses.A_BOLD)
-    _safe_addnstr(screen, 1, 2, status.ljust(max(width - 2, 1)), max(width - 2, 1), curses.A_BOLD)
+    status_attrs = curses.color_pair(13) | curses.A_BOLD | curses.A_REVERSE
+    if not controller.is_user_on_clock():
+        status_attrs = curses.A_BOLD
+    _safe_addnstr(screen, 1, 2, status.ljust(max(width - 2, 1)), max(width - 2, 1), status_attrs)
     progress = _progress_bar(summary.completed_pick_count, controller.state.total_picks, width - 24)
+    progress_prefix = "YOU ARE ON CLOCK  " if controller.is_user_on_clock() else "Draft progress "
+    progress_attrs = (
+        curses.color_pair(13) | curses.A_BOLD
+        if controller.is_user_on_clock()
+        else curses.color_pair(5)
+    )
     _safe_addnstr(
         screen,
         2,
         2,
         (
-            f"Draft progress {progress} {summary.available_player_count} available  "
+            f"{progress_prefix}{progress} {summary.available_player_count} available  "
             f"Next user {summary.next_user_pick or '-'}"
         ).ljust(max(width - 2, 1)),
         max(width - 2, 1),
-        curses.color_pair(5),
+        progress_attrs,
     )
 
 
@@ -1568,6 +1601,11 @@ def _draw_summary_workspace(
     user_roster = controller.state.rosters[user_manager_id]
 
     _draw_box(screen, y, x, height, left_width, "Status")
+    clock_line = (
+        "YOUR PICK NOW"
+        if controller.is_user_on_clock()
+        else f"Clock: {summary.manager_on_clock}"
+    )
     status_lines = [
         "BayesianDraft",
         *COMPACT_LOGO_LINES,
@@ -1578,7 +1616,7 @@ def _draw_summary_workspace(
         "CURRENT PICK",
         f">>> {summary.current_overall_pick}/{controller.state.total_picks} <<<",
         f"Round: {controller.state.current_round or '-'}",
-        f"Clock: {summary.manager_on_clock}",
+        clock_line,
         f"Next user: {summary.next_user_pick or '-'}",
         f"Available: {summary.available_player_count}",
         controller.last_save_message,
@@ -1668,6 +1706,8 @@ def _summary_line_attrs(line: str) -> int:
         return curses.color_pair(6) | curses.A_BOLD
     if line == "CURRENT PICK":
         return curses.color_pair(4) | curses.A_BOLD
+    if line == "YOUR PICK NOW":
+        return curses.color_pair(13) | curses.A_BOLD | curses.A_REVERSE
     if line.startswith(">>>"):
         return curses.color_pair(5) | curses.A_BOLD | curses.A_REVERSE
     if line.startswith("Pick") or line.startswith("Clock") or line.startswith("Next"):
@@ -1717,6 +1757,8 @@ def _draw_decision_lines(
 
 
 def _decision_line_attrs(line: str) -> int:
+    if line == "YOU ARE ON CLOCK":
+        return curses.color_pair(13) | curses.A_BOLD | curses.A_REVERSE
     if line in {
         "Pick Now",
         "Position Lean",
@@ -1875,6 +1917,7 @@ def _init_colors() -> None:
         curses.init_pair(4, curses.COLOR_BLUE, -1)
         curses.init_pair(5, curses.COLOR_GREEN, -1)
         curses.init_pair(6, curses.COLOR_WHITE, -1)
+        curses.init_pair(13, curses.COLOR_BLACK, curses.COLOR_GREEN)
     except curses.error:
         return
 
