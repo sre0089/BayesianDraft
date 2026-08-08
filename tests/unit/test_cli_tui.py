@@ -23,6 +23,7 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
     assert any("Best overall recommendation" in line for line in controller.view_lines())
     assert any(line.startswith("Best overall:") for line in controller.view_lines())
     assert any(line.startswith("Breakdown:") for line in controller.view_lines())
+    assert any("drop" in line and "risk" in line for line in controller.view_lines())
 
     controller.move_view(1)
 
@@ -334,6 +335,8 @@ def test_cli_controller_renders_recommendations_roster_health_and_picks(
     assert any("RB need=" in line for line in recommendation_lines)
     assert any("WR need=" in line for line in recommendation_lines)
     assert any("Breakdown:" in line for line in recommendation_lines)
+    assert any("phase=" in line for line in recommendation_lines)
+    assert any("drop" in line and "risk" in line for line in recommendation_lines)
     assert not any("conf=" in line for line in recommendation_lines)
 
     controller.view_index = 3

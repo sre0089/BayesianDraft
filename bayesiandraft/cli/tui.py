@@ -509,15 +509,15 @@ class CliDraftController:
         prefix = f"{recommendation.rank:>3}. " if include_rank else "Best overall: "
         return (
             f"{prefix}{name} ({position}) score={recommendation.total_score:.1f} "
-            f"need={recommendation.need_score:.1f} value={recommendation.value_score:.1f} "
-            f"tier={recommendation.tier_score:.1f} market={recommendation.market_score:.1f}"
+            f"phase={recommendation.draft_phase}"
         )
 
     def _recommendation_breakdown_line(self, recommendation: RecommendationScore) -> str:
         return (
             f"Breakdown: need {recommendation.need_score:+.1f} | "
-            f"value {recommendation.value_score:+.1f} | "
-            f"tier {recommendation.tier_score:+.1f} | "
+            f"value {recommendation.value_score:+.1f} | tier {recommendation.tier_score:+.1f} | "
+            f"drop {recommendation.tier_drop_score:+.1f} | "
+            f"risk {recommendation.next_pick_risk_score:+.1f} | "
             f"market {recommendation.market_score:+.1f} | "
             f"penalty {-recommendation.penalty:+.1f}"
         )
