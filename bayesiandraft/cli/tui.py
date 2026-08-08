@@ -62,6 +62,7 @@ class CliDraftController:
         self.config = config
         self.view_index = 0
         self.selection_index = 0
+        self.ranking_scroll_offset = 0
         self.manager_selection_index = self._default_manager_selection_index()
         self.search_query = ""
         self.position_filter = "ALL"
@@ -91,6 +92,7 @@ class CliDraftController:
     def move_view(self, delta: int) -> None:
         self.view_index = (self.view_index + delta) % len(VIEWS)
         self.selection_index = 0
+        self.ranking_scroll_offset = 0
 
     def move_selection(self, delta: int) -> None:
         if self.current_view == "Managers":
@@ -103,10 +105,12 @@ class CliDraftController:
 
         item_count = max(len(self.selectable_rankings()), 1)
         self.selection_index = max(0, min(self.selection_index + delta, item_count - 1))
+        self._sync_ranking_scroll(visible_count=30)
 
     def set_search(self, query: str) -> None:
         self.search_query = query.strip()
         self.selection_index = 0
+        self.ranking_scroll_offset = 0
         self.status_message = (
             "Search cleared." if not self.search_query else f"Search: {self.search_query}"
         )
@@ -126,11 +130,13 @@ class CliDraftController:
             return
         self.search_query += character
         self.selection_index = 0
+        self.ranking_scroll_offset = 0
         self.status_message = f"Search: {self.search_query}"
 
     def backspace_search(self) -> None:
         self.search_query = self.search_query[:-1]
         self.selection_index = 0
+        self.ranking_scroll_offset = 0
         self.status_message = (
             "Search cleared." if not self.search_query else f"Search: {self.search_query}"
         )
@@ -140,6 +146,7 @@ class CliDraftController:
         current_index = options.index(self.position_filter)
         self.position_filter = options[(current_index + delta) % len(options)]
         self.selection_index = 0
+        self.ranking_scroll_offset = 0
         self.status_message = f"Position filter: {self.position_filter}"
 
     def set_position_filter(self, position: str) -> None:
@@ -148,6 +155,7 @@ class CliDraftController:
             return
         self.position_filter = normalized
         self.selection_index = 0
+        self.ranking_scroll_offset = 0
         self.status_message = f"Position filter: {self.position_filter}"
 
     def selectable_rankings(self) -> list[RankingRow]:
@@ -191,6 +199,7 @@ class CliDraftController:
 
         max_index = max(len(self.selectable_rankings()) - 1, 0)
         self.selection_index = min(self.selection_index, max_index)
+        self._sync_ranking_scroll(visible_count=30)
         self.status_message = (
             f"Drafted {player.full_name} for {self.state.completed_picks[-1].manager_id}."
         )
@@ -278,15 +287,45 @@ class CliDraftController:
         rows = self.selectable_rankings()
         if not rows:
             return ["No available players match the current filter."]
+        visible_rows = self._visible_rankings(visible_count=30)
         lines = [self._filter_status_line(), ""]
         lines.extend([_ranking_header_line(), _ranking_separator_line()])
         lines.extend(
-            _ranking_line(row, selected=index == self.selection_index)
-            for index, row in enumerate(rows[:30])
+            _ranking_line(
+                row,
+                selected=index == self.selection_index,
+            )
+            for index, row in visible_rows
         )
         selected = rows[self.selection_index]
         lines.extend(["", *self._selected_player_detail_lines(selected)])
         return lines
+
+    def _visible_rankings(self, *, visible_count: int) -> list[tuple[int, RankingRow]]:
+        rows = self.selectable_rankings()
+        if not rows or visible_count <= 0:
+            return []
+
+        self._sync_ranking_scroll(visible_count=visible_count)
+        start = self.ranking_scroll_offset
+        end = min(start + visible_count, len(rows))
+        return list(enumerate(rows[start:end], start=start))
+
+    def _sync_ranking_scroll(self, *, visible_count: int) -> None:
+        rows = self.selectable_rankings()
+        if not rows or visible_count <= 0:
+            self.ranking_scroll_offset = 0
+            return
+
+        max_offset = max(len(rows) - visible_count, 0)
+        self.ranking_scroll_offset = max(0, min(self.ranking_scroll_offset, max_offset))
+
+        if self.selection_index < self.ranking_scroll_offset:
+            self.ranking_scroll_offset = self.selection_index
+        elif self.selection_index >= self.ranking_scroll_offset + visible_count:
+            self.ranking_scroll_offset = self.selection_index - visible_count + 1
+
+        self.ranking_scroll_offset = max(0, min(self.ranking_scroll_offset, max_offset))
 
     def _recommendation_lines(self) -> list[str]:
         recommendation = self.recommendation()
@@ -896,12 +935,13 @@ def _draw_rankings_workspace(
     _draw_box(screen, y, x, height, left_width, "Available Players")
     if rows:
         row_limit = max(height - 4, 0)
+        visible_rows = controller._visible_rankings(visible_count=row_limit)
         ranking_lines = [
             _ranking_header_line(),
             _ranking_separator_line(),
             *[
                 _ranking_line(row, selected=index == controller.selection_index)
-                for index, row in enumerate(rows[:row_limit])
+                for index, row in visible_rows
             ],
         ]
     else:

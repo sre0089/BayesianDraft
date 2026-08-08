@@ -135,6 +135,25 @@ def test_cli_controller_filters_rankings_by_position(tmp_path: Path) -> None:
     assert controller.position_filter == "TE"
 
 
+def test_cli_rankings_scroll_with_selection(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(save_path=tmp_path / "draft.json"),
+    )
+    controller.move_view(1)
+
+    for _ in range(7):
+        controller.move_selection(1)
+
+    visible_rows = controller._visible_rankings(visible_count=5)
+
+    assert controller.selection_index == 7
+    assert controller.ranking_scroll_offset > 0
+    assert any(index == controller.selection_index for index, _ in visible_rows)
+
+
 def test_cli_controller_supports_undo_redo_and_save(tmp_path: Path) -> None:
     snapshot, state = load_snapshot_and_draft_state()
     save_path = tmp_path / "draft.json"
