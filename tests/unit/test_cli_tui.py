@@ -74,7 +74,11 @@ def test_cli_summary_shows_rollout_when_user_is_on_clock(tmp_path: Path) -> None
 
     assert controller.state.manager_on_clock == "user_manager"
     assert any("Best path:" in line and "score=" in line for line in controller.view_lines())
-    assert any("Rollout: avg VORP" in line for line in controller.view_lines())
+    assert any(
+        "Rollout: avg VORP" in line and "downside" in line and "vol" in line
+        for line in controller.view_lines()
+    )
+    assert any("Next pick options:" in line for line in controller.view_lines())
 
 
 def test_cli_product_prompt_helpers(tmp_path: Path) -> None:

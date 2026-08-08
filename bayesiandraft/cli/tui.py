@@ -508,9 +508,12 @@ class CliDraftController:
             )
             lines.append(
                 f"   avg_vorp={candidate.average_vorp:.1f} "
-                f"avg_pts={candidate.average_projected_points:.1f} "
-                f"roster={candidate.average_roster_size:.1f}"
+                f"downside={candidate.downside_vorp:.1f} "
+                f"vol={candidate.vorp_volatility:.1f} "
+                f"balance={candidate.roster_balance_score:.1f} "
+                f"current={candidate.current_pick_score:.1f}"
             )
+            lines.append(f"   {self._next_pick_options_text(candidate.next_pick_position_options)}")
             lines.extend(f"   - {item}" for item in candidate.explanation[:3])
             lines.append("")
         return lines
@@ -564,11 +567,18 @@ class CliDraftController:
             f"Best path: {name} score={primary.optimizer_score:.1f} ({comparison})",
             (
                 f"Rollout: avg VORP {primary.average_vorp:.1f} | "
-                f"avg pts {primary.average_projected_points:.1f} | "
-                f"roster {primary.average_roster_size:.1f}"
+                f"downside {primary.downside_vorp:.1f} | "
+                f"vol {primary.vorp_volatility:.1f}"
             ),
+            self._next_pick_options_text(primary.next_pick_position_options),
             "",
         ]
+
+    def _next_pick_options_text(self, options: dict[str, float]) -> str:
+        if not options:
+            return "Next pick options: no ranked options projected"
+        parts = [f"{position} {count:.1f}" for position, count in sorted(options.items())]
+        return "Next pick options: " + ", ".join(parts)
 
     def _recommendation_score_line(
         self,
