@@ -8,7 +8,7 @@ Launch with the built-in fixture:
 PYTHONPATH=. python scripts/draft_tui.py
 ```
 
-The CLI starts at pick 1 by default. During a live draft, select the drafted player and press Enter or `d`; the pick is recorded for whichever manager is currently on clock. Rankings, recommendations, rosters, and availability update immediately after each pick.
+The CLI starts at pick 1 by default. During a live draft, select the drafted player and press Enter or `d`; the pick is recorded for whichever manager is currently on clock. Rankings, recommendations, rosters, and availability update immediately after each pick. Draft, undo, redo, and auto-pick actions autosave by default.
 The Summary view opens as a compact dashboard with status, the current best overall recommendation, roster, recent-pick, version, and snapshot context.
 
 Start directly at the pick-8 rehearsal scenario only when you want a quick local demo:
@@ -45,9 +45,9 @@ PYTHONPATH=. python scripts/draft_tui.py \
 
 ## Views
 
-- `Summary`: current pick, manager on clock, available player count, roster size, next user pick, and the live best overall recommendation.
-- `Rankings`: scrollable available-player table and selected-player detail when the terminal is wide enough.
-- `Recommendations`: best overall recommendation plus top five available players for each position your roster still needs.
+- `Summary`: current pick, manager on clock, available player count, roster size, save status, next user pick, and the live best overall recommendation with score breakdown.
+- `Rankings`: scrollable available-player table, match count, pick preview, and selected-player detail when the terminal is wide enough.
+- `Recommendations`: best overall recommendation plus score breakdown and top five available players for each position your roster still needs.
 - `Managers`: yazi-style manager browser with every competitor roster, pick count, and position counts.
 - `Roster`: configured user manager roster and positional starter needs.
 - `Health`: snapshot coverage and warnings.
@@ -61,7 +61,7 @@ PYTHONPATH=. python scripts/draft_tui.py \
 | Left / Right | Move between views |
 | Up / Down | Move ranking selection or manager selection; rankings scroll with the highlighted row |
 | Enter or `d` | Draft the selected player |
-| `/` | Start live search; typed characters filter immediately |
+| `/` | Start live search; typed characters filter immediately and show match count |
 | Enter or Esc | Finish live search |
 | Backspace | Remove the last live-search character |
 | `[` / `]` | Cycle positional ranking filters |
@@ -73,10 +73,16 @@ PYTHONPATH=. python scripts/draft_tui.py \
 | `s` | Save draft state |
 | `q` or Esc | Quit |
 
-By default, pressing `s` writes to `data/processed/cli_draft_state.json`. Override it with:
+By default, autosave and pressing `s` write to `data/processed/cli_draft_state.json`. Override it with:
 
 ```bash
 PYTHONPATH=. python scripts/draft_tui.py --save-path /tmp/my-draft.json
+```
+
+Disable autosave for rehearsal runs with:
+
+```bash
+PYTHONPATH=. python scripts/draft_tui.py --no-autosave
 ```
 
 ## Notes
