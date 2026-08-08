@@ -755,7 +755,14 @@ def _draw_summary_workspace(
         "",
         "Enter every pick as it happens; this updates after each pick.",
     ]
-    _draw_lines(screen, decision_lines, y + 1, center_x + 2, height - 2, center_width - 4)
+    _draw_decision_lines(
+        screen,
+        decision_lines,
+        y + 1,
+        center_x + 2,
+        height - 2,
+        center_width - 4,
+    )
 
     right_x = center_x + center_width + 1
     top_height = max(height // 2, 7)
@@ -846,6 +853,31 @@ def _draw_lines(
     for offset, line in enumerate(lines[:max_lines]):
         attrs = curses.A_REVERSE if line.startswith(">") else 0
         _safe_addnstr(screen, y + offset, x, line, width, attrs)
+
+
+def _draw_decision_lines(
+    screen: curses.window,
+    lines: list[str],
+    y: int,
+    x: int,
+    max_lines: int,
+    width: int,
+) -> None:
+    for offset, line in enumerate(lines[:max_lines]):
+        attrs = _decision_line_attrs(line)
+        _safe_addnstr(screen, y + offset, x, line, width, attrs)
+
+
+def _decision_line_attrs(line: str) -> int:
+    if line == "Best overall recommendation":
+        return curses.color_pair(4) | curses.A_BOLD
+    if line.startswith("Best overall:"):
+        return curses.color_pair(5) | curses.A_BOLD | curses.A_REVERSE
+    if line.startswith("Availability before next pick:"):
+        return curses.color_pair(6) | curses.A_BOLD
+    if line == "Why:":
+        return curses.A_BOLD
+    return 0
 
 
 def _draw_rankings_workspace(
