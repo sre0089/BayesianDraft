@@ -9,7 +9,7 @@ PYTHONPATH=. python scripts/draft_tui.py
 ```
 
 The CLI starts at pick 1 by default. During a live draft, select the drafted player and press Enter or `d`; the pick is recorded for whichever manager is currently on clock. Rankings, recommendations, rosters, and availability update immediately after each pick.
-The Summary view opens as a compact dashboard with status, recommendation, roster, recent-pick, version, and snapshot context.
+The Summary view opens as a compact dashboard with status, the current best overall recommendation, roster, recent-pick, version, and snapshot context.
 
 Start directly at the pick-8 rehearsal scenario only when you want a quick local demo:
 
@@ -45,7 +45,7 @@ PYTHONPATH=. python scripts/draft_tui.py \
 
 ## Views
 
-- `Summary`: current pick, manager on clock, available player count, roster size, and next user pick.
+- `Summary`: current pick, manager on clock, available player count, roster size, next user pick, and the live best overall recommendation.
 - `Rankings`: split-pane available players and selected-player detail when the terminal is wide enough.
 - `Recommendations`: best overall recommendation plus top five available players for each position your roster still needs.
 - `Managers`: yazi-style manager browser with every competitor roster, pick count, and position counts.
