@@ -381,6 +381,8 @@ class CliDraftController:
             f"Next user pick {next_pick}",
             self.last_save_message,
             "",
+            *self._draft_assistant_lines(),
+            "",
             *self._best_overall_recommendation_lines(include_header=True),
             "",
             "Live entry: draft the selected player for whoever is currently on clock.",
@@ -408,6 +410,39 @@ class CliDraftController:
         selected = rows[self.selection_index]
         lines.extend(["", self._selected_pick_preview_line(selected), ""])
         lines.extend(self._selected_player_detail_lines(selected))
+        return lines
+
+    def _draft_assistant_lines(self) -> list[str]:
+        recommendation = self.recommendation()
+        if recommendation is None:
+            return ["Draft Assistant", "No recommendation is available yet."]
+
+        primary = recommendation.primary
+        primary_ranking = self._ranking_by_id(primary.player_id)
+        primary_name = primary_ranking.full_name if primary_ranking else primary.player_id
+        lines = [
+            "Draft Assistant",
+            f"Current recommendation: {primary_name}",
+        ]
+        if self._path_analysis_cache is None:
+            lines.append("Strategy: run Simulation with a to compare next-pick paths.")
+        else:
+            _league_result, strategy_result = self._path_analysis_cache
+            if strategy_result.paths:
+                best_path = strategy_result.paths[0]
+                worst_path = strategy_result.paths[-1]
+                lines.append(
+                    f"Best next-pick direction: {best_path.position} "
+                    f"({best_path.average_vorp:.1f} avg VORP)"
+                )
+                lines.append(
+                    f"Avoid unless value falls: {worst_path.position} "
+                    f"({worst_path.average_vorp:.1f} avg VORP)"
+                )
+            else:
+                lines.append("Strategy: no future user pick is available to test.")
+        risk_text = primary.explanation[0] if primary.explanation else "board value shifts."
+        lines.append(f"Main risk: {risk_text}")
         return lines
 
     def _visible_rankings(self, *, visible_count: int) -> list[tuple[int, RankingRow]]:

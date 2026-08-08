@@ -21,6 +21,9 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
     assert any("Live entry:" in line for line in controller.view_lines())
     assert any("| __ )" in line for line in controller.view_lines())
     assert any("Best overall recommendation" in line for line in controller.view_lines())
+    assert "Draft Assistant" in controller.view_lines()
+    assert any("Current recommendation:" in line for line in controller.view_lines())
+    assert any("run Simulation" in line for line in controller.view_lines())
     assert any(line.startswith("Best overall:") for line in controller.view_lines())
     assert any(line.startswith("Breakdown:") for line in controller.view_lines())
     assert any("drop" in line and "risk" in line for line in controller.view_lines())
@@ -59,6 +62,25 @@ def test_cli_summary_recommendation_updates_after_pick(tmp_path: Path) -> None:
     after = next(line for line in controller.view_lines() if line.startswith("Best overall:"))
     assert before != after
     assert "Example RB One" not in after
+
+
+def test_cli_draft_assistant_uses_strategy_analysis(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(
+            save_path=tmp_path / "draft.json",
+            scenario_path=Path("data/fixtures/rehearsal_user_pick_8.json"),
+        ),
+    )
+
+    controller.run_path_analysis()
+
+    lines = controller.view_lines()
+
+    assert any("Best next-pick direction:" in line for line in lines)
+    assert any("Avoid unless value falls:" in line for line in lines)
 
 
 def test_cli_managers_show_team_strength_scores(tmp_path: Path) -> None:
