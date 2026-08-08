@@ -46,7 +46,7 @@ PYTHONPATH=. python scripts/draft_tui.py \
 ## Views
 
 - `Summary`: current pick, manager on clock, available player count, roster size, next user pick, and the live best overall recommendation.
-- `Rankings`: split-pane available players and selected-player detail when the terminal is wide enough.
+- `Rankings`: scrollable available-player table and selected-player detail when the terminal is wide enough.
 - `Recommendations`: best overall recommendation plus top five available players for each position your roster still needs.
 - `Managers`: yazi-style manager browser with every competitor roster, pick count, and position counts.
 - `Roster`: configured user manager roster and positional starter needs.
@@ -59,7 +59,7 @@ PYTHONPATH=. python scripts/draft_tui.py \
 | Key | Action |
 | --- | --- |
 | Left / Right | Move between views |
-| Up / Down | Move ranking selection or manager selection |
+| Up / Down | Move ranking selection or manager selection; rankings scroll with the highlighted row |
 | Enter or `d` | Draft the selected player |
 | `/` | Start live search; typed characters filter immediately |
 | Enter or Esc | Finish live search |
