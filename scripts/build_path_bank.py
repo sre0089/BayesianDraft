@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from collections.abc import Callable
 from time import perf_counter
 
 from bayesiandraft.rankings import build_baseline_rankings
@@ -48,7 +49,7 @@ def main() -> None:
     )
 
 
-def _progress_printer(progress_every: int, start: float):
+def _progress_printer(progress_every: int, start: float) -> Callable[[int, int, int, str], None]:
     def print_progress(completed: int, total: int, seed: int, status: str) -> None:
         if status != "indexing" and completed < total and completed % progress_every != 0:
             return
