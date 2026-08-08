@@ -1,4 +1,5 @@
 from collections import defaultdict
+from collections.abc import Callable
 from hashlib import sha256
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from bayesiandraft.simulation.draft import DraftSimulationConfig, simulate_remai
 
 PATH_BANK_SCHEMA_VERSION = "1.0"
 VALUE_POSITIONS = ("QB", "RB", "WR", "TE", "DST", "K")
+PathBankProgressCallback = Callable[[int, int, int, str], None]
 
 
 class PathBankPick(BaseModel):
@@ -63,6 +65,7 @@ def build_path_bank(
     simulation_count: PositiveInt,
     seed: int,
     candidate_limit: PositiveInt,
+    progress_callback: PathBankProgressCallback | None = None,
 ) -> DraftPathBank:
     paths: list[DraftPath] = []
     draft_config = DraftSimulationConfig(
@@ -98,7 +101,21 @@ def build_path_bank(
                 picks=picks,
             )
         )
+        if progress_callback is not None:
+            progress_callback(
+                offset + 1,
+                simulation_count,
+                path_seed,
+                simulated.stopped_reason,
+            )
 
+    if progress_callback is not None:
+        progress_callback(
+            simulation_count,
+            simulation_count,
+            seed + simulation_count - 1,
+            "indexing",
+        )
     return DraftPathBank(
         metadata=PathBankMetadata(
             snapshot_id=snapshot_id,

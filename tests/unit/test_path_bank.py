@@ -28,6 +28,27 @@ def test_build_path_bank_creates_paths_and_lookup_tables(tmp_path) -> None:
     assert loaded.position_dropoff_by_pick
 
 
+def test_build_path_bank_reports_progress() -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    rankings = build_baseline_rankings(snapshot)
+    events: list[tuple[int, int, int, str]] = []
+
+    build_path_bank(
+        state,
+        rankings,
+        snapshot_id=snapshot.snapshot.snapshot_id,
+        simulation_count=2,
+        seed=15,
+        candidate_limit=30,
+        progress_callback=lambda completed, total, seed, status: events.append(
+            (completed, total, seed, status)
+        ),
+    )
+
+    assert events[0][:3] == (1, 2, 15)
+    assert events[-1] == (2, 2, 16, "indexing")
+
+
 def test_path_bank_context_estimates_live_opportunity_cost() -> None:
     snapshot, state = load_snapshot_and_draft_state()
     rankings = build_baseline_rankings(snapshot)
