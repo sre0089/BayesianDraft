@@ -6,6 +6,7 @@ from bayesiandraft.cli.tui import (
     _footer_prompt,
     _handle_live_search_key,
     _is_quick_search_key,
+    _position_color_pair,
     _progress_bar,
     _summary_flex_need_line,
 )
@@ -421,6 +422,16 @@ def test_cli_controller_filters_and_drafts_selected_player(tmp_path: Path) -> No
     assert "Drafted Example RB One" in controller.status_message
     assert "Autosaved" in controller.status_message
     assert save_path.exists()
+
+
+def test_cli_position_color_pairs_match_rankings_palette() -> None:
+    assert _position_color_pair("WR") == 7
+    assert _position_color_pair("RB") == 8
+    assert _position_color_pair("TE") == 9
+    assert _position_color_pair("QB") == 10
+    assert _position_color_pair("DST") == 11
+    assert _position_color_pair("K") == 12
+    assert _position_color_pair("unknown") == 6
 
 
 def test_cli_controller_logs_decision_audit_event(tmp_path: Path) -> None:

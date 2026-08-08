@@ -53,6 +53,14 @@ VIEWS = (
     "Picks",
 )
 POSITIONS = ("QB", "RB", "WR", "TE", "DST", "K")
+POSITION_COLOR_PAIRS = {
+    "WR": 7,
+    "RB": 8,
+    "TE": 9,
+    "QB": 10,
+    "DST": 11,
+    "K": 12,
+}
 COMPACT_LOGO_LINES = (
     r"  ____  ____  ",
     r" | __ )|  _ \ ",
@@ -1532,6 +1540,15 @@ def _draw_body(
             body_height - 2,
             width - 6,
         )
+    elif controller.current_view == "Rankings":
+        _draw_rankings_lines(
+            screen,
+            controller,
+            top + 1,
+            2,
+            max(body_height - 2, 0),
+            max(width - 4, 1),
+        )
     else:
         _draw_lines(
             screen,
@@ -1743,6 +1760,72 @@ def _draw_lines(
         _safe_addnstr(screen, y + offset, x, line, width, attrs)
 
 
+def _draw_rankings_lines(
+    screen: curses.window,
+    controller: CliDraftController,
+    y: int,
+    x: int,
+    max_lines: int,
+    width: int,
+) -> None:
+    rows = controller.selectable_rankings()
+    if not rows:
+        _safe_addnstr(
+            screen,
+            y,
+            x,
+            "No available players match the current filter.",
+            width,
+        )
+        return
+
+    current_y = y
+    _safe_addnstr(screen, current_y, x, controller._filter_status_line(), width)
+    current_y += 2
+    if current_y - y >= max_lines:
+        return
+
+    _safe_addnstr(screen, current_y, x, _ranking_header_line(), width, curses.A_BOLD)
+    current_y += 1
+    if current_y - y >= max_lines:
+        return
+
+    _safe_addnstr(screen, current_y, x, _ranking_separator_line(), width, curses.A_DIM)
+    current_y += 1
+
+    detail_line_count = 6
+    row_limit = max(max_lines - (current_y - y) - detail_line_count, 1)
+    for index, row in controller._visible_rankings(visible_count=row_limit):
+        if current_y - y >= max_lines:
+            return
+        selected = index == controller.selection_index
+        _safe_addnstr(
+            screen,
+            current_y,
+            x,
+            _ranking_line(row, selected=selected),
+            width,
+            _ranking_line_attrs(row, selected=selected),
+        )
+        current_y += 1
+
+    if current_y - y + detail_line_count > max_lines:
+        return
+
+    selected_row = rows[controller.selection_index]
+    detail_lines = [
+        "",
+        controller._selected_pick_preview_line(selected_row),
+        "",
+        *controller._selected_player_detail_lines(selected_row),
+    ]
+    for line in detail_lines:
+        if current_y - y >= max_lines:
+            return
+        _safe_addnstr(screen, current_y, x, line, width)
+        current_y += 1
+
+
 def _draw_decision_lines(
     screen: curses.window,
     lines: list[str],
@@ -1803,20 +1886,7 @@ def _draw_rankings_workspace(
     selected = rows[controller.selection_index] if rows else None
 
     _draw_box(screen, y, x, height, left_width, "Available Players")
-    if rows:
-        row_limit = max(height - 4, 0)
-        visible_rows = controller._visible_rankings(visible_count=row_limit)
-        ranking_lines = [
-            _ranking_header_line(),
-            _ranking_separator_line(),
-            *[
-                _ranking_line(row, selected=index == controller.selection_index)
-                for index, row in visible_rows
-            ],
-        ]
-    else:
-        ranking_lines = ["No available players match the current filter."]
-    _draw_lines(screen, ranking_lines, y + 1, x + 2, height - 2, left_width - 4)
+    _draw_rankings_lines(screen, controller, y + 1, x + 2, height - 2, left_width - 4)
 
     _draw_box(screen, y, x + left_width + 1, height, right_width, "Player Detail")
     detail_lines = (
@@ -1917,6 +1987,12 @@ def _init_colors() -> None:
         curses.init_pair(4, curses.COLOR_BLUE, -1)
         curses.init_pair(5, curses.COLOR_GREEN, -1)
         curses.init_pair(6, curses.COLOR_WHITE, -1)
+        curses.init_pair(7, curses.COLOR_GREEN, -1)
+        curses.init_pair(8, curses.COLOR_BLUE, -1)
+        curses.init_pair(9, curses.COLOR_RED, -1)
+        curses.init_pair(10, curses.COLOR_MAGENTA, -1)
+        curses.init_pair(11, curses.COLOR_WHITE, -1)
+        curses.init_pair(12, curses.COLOR_YELLOW, -1)
         curses.init_pair(13, curses.COLOR_BLACK, curses.COLOR_GREEN)
     except curses.error:
         return
@@ -1966,6 +2042,19 @@ def _quick_direction_reason(score: RecommendationScore) -> str:
     if not parts:
         return "best current score"
     return " + ".join(parts[:3])
+
+
+def _position_color_pair(position: str) -> int:
+    return POSITION_COLOR_PAIRS.get(position.upper(), 6)
+
+
+def _ranking_line_attrs(row: RankingRow, *, selected: bool) -> int:
+    attrs = curses.color_pair(_position_color_pair(row.position.value))
+    if row.position.value == "DST":
+        attrs |= curses.A_DIM
+    if selected:
+        attrs |= curses.A_REVERSE | curses.A_BOLD
+    return attrs
 
 
 def _ranking_line(row: RankingRow, *, selected: bool) -> str:
