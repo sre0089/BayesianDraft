@@ -43,8 +43,12 @@ def test_candidate_optimizer_is_seeded() -> None:
     assert first.primary.player_id in state.available_player_ids
     assert first.primary.downside_vorp <= first.primary.average_vorp
     assert first.primary.vorp_volatility >= 0
+    assert first.primary.roster_balance_score >= 0
+    assert first.primary.current_pick_score >= 0
     assert isinstance(first.primary.next_pick_position_options, dict)
     assert first.primary.explanation
+    assert any("downside" in item for item in first.primary.explanation)
+    assert any("Volatility" in item for item in first.primary.explanation)
 
 
 def test_candidate_optimizer_returns_alternatives() -> None:

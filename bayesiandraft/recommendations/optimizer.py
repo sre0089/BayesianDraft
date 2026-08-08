@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, PositiveInt
 
 from bayesiandraft.draft import DraftState
 from bayesiandraft.rankings import RankingRow
+from bayesiandraft.recommendations.baseline import recommend_players
 from bayesiandraft.simulation import DraftSimulationConfig, simulate_candidate_rollout
 
 
@@ -21,6 +22,8 @@ class OptimizedCandidate(BaseModel):
     average_vorp: float
     downside_vorp: float
     vorp_volatility: float
+    roster_balance_score: float
+    current_pick_score: float
     average_roster_size: float
     roster_position_counts: dict[str, float] = Field(default_factory=dict)
     next_pick_position_options: dict[str, float] = Field(default_factory=dict)
@@ -54,6 +57,15 @@ def optimize_candidates(
     )
     if not candidate_rankings:
         raise ValueError("no available players to optimize")
+    current_recommendations = recommend_players(
+        draft_state,
+        rankings,
+        limit=max(len(candidate_rankings), 1),
+    )
+    current_scores = {
+        score.player_id: score.total_score
+        for score in [current_recommendations.primary, *current_recommendations.alternatives]
+    }
 
     optimized = [
         _optimize_candidate(
@@ -62,6 +74,7 @@ def optimize_candidates(
             candidate_ranking=ranking,
             seed=optimizer_config.seed + index,
             simulation_count=optimizer_config.simulation_count,
+            current_pick_score=current_scores.get(ranking.player_id, 0),
         )
         for index, ranking in enumerate(candidate_rankings)
     ]
@@ -126,6 +139,7 @@ def _optimize_candidate(
     candidate_ranking: RankingRow,
     seed: int,
     simulation_count: int,
+    current_pick_score: float,
 ) -> OptimizedCandidate:
     rollout = simulate_candidate_rollout(
         draft_state,
@@ -133,10 +147,15 @@ def _optimize_candidate(
         candidate_player_id=candidate_ranking.player_id,
         config=DraftSimulationConfig(simulation_count=simulation_count, seed=seed),
     )
+    roster_balance_score = _roster_balance_score(rollout.roster_position_counts)
+    market_score = max(candidate_ranking.adp_delta or 0, 0) * 0.2
     optimizer_score = (
-        rollout.average_vorp
-        + candidate_ranking.vorp * 0.25
-        + max(candidate_ranking.adp_delta or 0, 0) * 0.2
+        rollout.average_vorp * 0.55
+        + rollout.downside_vorp * 0.25
+        - rollout.vorp_volatility * 0.15
+        + roster_balance_score
+        + market_score
+        + current_pick_score * 0.15
     )
 
     return OptimizedCandidate(
@@ -147,16 +166,38 @@ def _optimize_candidate(
         average_vorp=rollout.average_vorp,
         downside_vorp=rollout.downside_vorp,
         vorp_volatility=rollout.vorp_volatility,
+        roster_balance_score=round(roster_balance_score, 4),
+        current_pick_score=round(current_pick_score, 4),
         average_roster_size=rollout.average_roster_size,
         roster_position_counts=rollout.roster_position_counts,
         next_pick_position_options=rollout.next_pick_position_options,
-        explanation=_explain_candidate(candidate_ranking, rollout.average_vorp),
+        explanation=_explain_candidate(
+            candidate_ranking,
+            average_vorp=rollout.average_vorp,
+            downside_vorp=rollout.downside_vorp,
+            volatility=rollout.vorp_volatility,
+            roster_balance_score=roster_balance_score,
+        ),
     )
 
 
-def _explain_candidate(ranking: RankingRow, average_vorp: float) -> list[str]:
+def _roster_balance_score(position_counts: dict[str, float]) -> float:
+    core_positions = ("QB", "RB", "WR", "TE")
+    filled_positions = sum(1 for position in core_positions if position_counts.get(position, 0) > 0)
+    return filled_positions * 4
+
+
+def _explain_candidate(
+    ranking: RankingRow,
+    *,
+    average_vorp: float,
+    downside_vorp: float,
+    volatility: float,
+    roster_balance_score: float,
+) -> list[str]:
     explanation = [
-        f"Rollout roster averages {average_vorp:.1f} VORP.",
+        f"Rollout roster averages {average_vorp:.1f} VORP with {downside_vorp:.1f} downside.",
+        f"Volatility is {volatility:.1f}; roster balance adds {roster_balance_score:.1f}.",
         (
             f"Candidate ranks {ranking.overall_rank} overall and "
             f"{ranking.position_rank} at {ranking.position}."
