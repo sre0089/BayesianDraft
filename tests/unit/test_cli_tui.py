@@ -178,6 +178,27 @@ def test_cli_product_prompt_helpers(tmp_path: Path) -> None:
     assert "filter=rb" in _footer_prompt(controller)
     assert "matches=" in _footer_prompt(controller)
     assert "pos=ALL" in _footer_prompt(controller)
+    assert "? help" in _footer_prompt(controller)
+
+
+def test_cli_help_overlay_explains_scores(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(save_path=tmp_path / "draft.json"),
+    )
+
+    controller.toggle_help()
+
+    assert controller.help_active is True
+    assert "BayesianDraft Help" in controller.view_lines()
+    assert any("avg VORP" in line for line in controller.view_lines())
+    assert "mode=HELP" in _footer_prompt(controller)
+
+    controller.toggle_help()
+
+    assert controller.help_active is False
 
 
 def test_cli_controller_live_search_filters_without_enter(tmp_path: Path) -> None:

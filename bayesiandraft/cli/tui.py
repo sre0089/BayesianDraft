@@ -87,6 +87,7 @@ class CliDraftController:
         self.search_query = ""
         self.position_filter = "ALL"
         self.search_active = False
+        self.help_active = False
         self.status_message = "Ready."
         self.last_save_message = "Not saved yet."
         self._rankings = build_baseline_rankings(snapshot)
@@ -123,6 +124,7 @@ class CliDraftController:
         return VIEWS[self.view_index]
 
     def move_view(self, delta: int) -> None:
+        self.help_active = False
         self.view_index = (self.view_index + delta) % len(VIEWS)
         self.selection_index = 0
         self.ranking_scroll_offset = 0
@@ -167,6 +169,10 @@ class CliDraftController:
     def finish_search(self) -> None:
         self.search_active = False
         self.status_message = self._search_status_message()
+
+    def toggle_help(self) -> None:
+        self.help_active = not self.help_active
+        self.status_message = "Help open." if self.help_active else "Help closed."
 
     def append_search_character(self, character: str) -> None:
         if not character.isprintable():
@@ -343,6 +349,8 @@ class CliDraftController:
         return count
 
     def view_lines(self) -> list[str]:
+        if self.help_active:
+            return self._help_lines()
         view = self.current_view
         if view == "Summary":
             return self._summary_lines()
@@ -359,6 +367,29 @@ class CliDraftController:
         if view == "Simulation":
             return self._simulation_lines()
         return self._pick_lines()
+
+    def _help_lines(self) -> list[str]:
+        return [
+            "BayesianDraft Help",
+            "",
+            "Core scores",
+            "avg points: projected score for best starters plus discounted bench.",
+            "avg VORP: value over replacement for best starters plus discounted bench.",
+            "avg finish: average simulated manager finish; lower is better.",
+            "top3: share of simulations where the team finished top three.",
+            "ADP delta: market pick minus model rank; positive means the market waits longer.",
+            "market: recommendation boost for useful ADP discounts.",
+            "",
+            "Simulation",
+            "Press a on Simulation to run league paths and next-pick strategy paths.",
+            "Strategy rows force only your next pick direction, then simulate normally.",
+            "",
+            "Controls",
+            "left/right views, up/down select, enter/d draft, / search, ? help.",
+            "[/] cycle positions, 0 all, 1-6 positions, u undo, r redo, s save, q quit.",
+            "",
+            "Press ? again to close help.",
+        ]
 
     def _summary_lines(self) -> list[str]:
         summary = summarize_draft_state(self.state)
@@ -1038,6 +1069,8 @@ def _curses_main(screen: curses.window, controller: CliDraftController) -> None:
             controller.set_position_filter("ALL")
         elif key == ord("/"):
             controller.start_search()
+        elif key == ord("?"):
+            controller.toggle_help()
 
 
 def _draw(screen: curses.window, controller: CliDraftController) -> None:
@@ -1201,13 +1234,18 @@ def _progress_bar(completed: int, total: int, width: int) -> str:
 
 def _footer_prompt(controller: CliDraftController) -> str:
     search = controller.search_query or "none"
-    mode = "SEARCH" if controller.search_active else controller.current_view.lower()
+    if controller.help_active:
+        mode = "HELP"
+    elif controller.search_active:
+        mode = "SEARCH"
+    else:
+        mode = controller.current_view.lower()
     matches = len(controller.selectable_rankings())
     action = "a analyze  " if controller.current_view == "Simulation" else ""
     return (
         f"~/BayesianDraft  mode={mode}  filter={search}  "
         f"matches={matches}  pos={controller.position_filter}  "
-        f"{action}enter/d draft  / search  [ ] position  q quit"
+        f"{action}enter/d draft  / search  ? help  [ ] position  q quit"
     )
 
 
