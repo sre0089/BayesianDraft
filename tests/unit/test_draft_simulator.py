@@ -69,6 +69,8 @@ def test_candidate_rollout_adds_candidate_to_user_roster() -> None:
     assert result.candidate_player_id == "rb_003"
     assert result.average_roster_size >= 1
     assert result.average_projected_points > 0
+    assert result.downside_vorp <= result.average_vorp
+    assert result.vorp_volatility >= 0
     assert result.roster_position_counts["RB"] >= 1
 
 

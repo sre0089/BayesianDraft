@@ -41,6 +41,8 @@ def test_candidate_optimizer_is_seeded() -> None:
 
     assert first == second
     assert first.primary.player_id in state.available_player_ids
+    assert first.primary.downside_vorp <= first.primary.average_vorp
+    assert first.primary.vorp_volatility >= 0
     assert first.primary.explanation
 
 

@@ -1,6 +1,7 @@
 import math
 import random
 from collections import Counter
+from statistics import pstdev
 
 from pydantic import BaseModel, Field, PositiveInt
 
@@ -34,6 +35,8 @@ class CandidateRolloutResult(BaseModel):
     seed: int
     average_projected_points: float
     average_vorp: float
+    downside_vorp: float
+    vorp_volatility: float
     average_roster_size: float
     roster_position_counts: dict[str, float] = Field(default_factory=dict)
 
@@ -125,6 +128,8 @@ def simulate_candidate_rollout(
         seed=simulation_config.seed,
         average_projected_points=round(_mean(projected_points), 4),
         average_vorp=round(_mean(vorp_values), 4),
+        downside_vorp=round(_percentile(vorp_values, 0.2), 4),
+        vorp_volatility=round(pstdev(vorp_values), 4) if len(vorp_values) > 1 else 0,
         average_roster_size=round(_mean(roster_sizes), 4),
         roster_position_counts={
             position: round(count / simulation_config.simulation_count, 4)
@@ -212,3 +217,11 @@ def _mean(values: list[float] | list[int]) -> float:
     if not values:
         return 0
     return sum(values) / len(values)
+
+
+def _percentile(values: list[float], quantile: float) -> float:
+    if not values:
+        return 0
+    sorted_values = sorted(values)
+    index = min(max(round((len(sorted_values) - 1) * quantile), 0), len(sorted_values) - 1)
+    return sorted_values[index]

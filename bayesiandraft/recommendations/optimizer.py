@@ -19,6 +19,8 @@ class OptimizedCandidate(BaseModel):
     optimizer_score: float
     average_projected_points: float
     average_vorp: float
+    downside_vorp: float
+    vorp_volatility: float
     average_roster_size: float
     roster_position_counts: dict[str, float] = Field(default_factory=dict)
     explanation: list[str]
@@ -142,6 +144,8 @@ def _optimize_candidate(
         optimizer_score=round(optimizer_score, 4),
         average_projected_points=rollout.average_projected_points,
         average_vorp=rollout.average_vorp,
+        downside_vorp=rollout.downside_vorp,
+        vorp_volatility=rollout.vorp_volatility,
         average_roster_size=rollout.average_roster_size,
         roster_position_counts=rollout.roster_position_counts,
         explanation=_explain_candidate(candidate_ranking, rollout.average_vorp),
