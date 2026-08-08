@@ -14,6 +14,7 @@ Initial endpoint groups:
 - Manager rosters
 - User roster
 - Rankings
+- Position-based recommendation groups
 - Player details
 - Save and load draft
 
@@ -36,6 +37,7 @@ Request and response models must be typed, validation errors should be useful, a
 - `GET /drafts/{draft_id}/rosters`
 - `GET /drafts/{draft_id}/rosters/user`
 - `GET /drafts/{draft_id}/recommendations`
+- `GET /drafts/{draft_id}/recommendations/by-position`
 - `GET /drafts/{draft_id}/candidate-rollouts`
 - `POST /drafts/{draft_id}/save`
 - `POST /drafts/load`

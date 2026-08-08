@@ -60,6 +60,8 @@ PYTHONPATH=. python scripts/draft_tui.py \
 | --- | --- |
 | Left / Right | Move between views |
 | Up / Down | Move ranking selection or manager selection; rankings scroll with the highlighted row |
+| Page Up / Page Down | Move through rankings or managers in larger jumps |
+| Home / End | Jump to the first or last ranking or manager |
 | Enter or `d` | Draft the selected player |
 | `/` | Start live search; typed characters filter immediately and show match count |
 | Enter or Esc | Finish live search |
@@ -83,6 +85,18 @@ Disable autosave for rehearsal runs with:
 
 ```bash
 PYTHONPATH=. python scripts/draft_tui.py --no-autosave
+```
+
+Resume from the save path if it exists:
+
+```bash
+PYTHONPATH=. python scripts/draft_tui.py --load-save
+```
+
+Write accepted-pick audit events with recommendation context:
+
+```bash
+PYTHONPATH=. python scripts/draft_tui.py --audit-path data/processed/decision_audit.json
 ```
 
 ## Notes
