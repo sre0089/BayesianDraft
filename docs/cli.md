@@ -69,7 +69,7 @@ PYTHONPATH=. python scripts/analyze_draft_paths.py \
 - `Managers`: yazi-style manager browser with every competitor roster, pick count, projected points, VORP, and position counts.
 - `Roster`: configured user manager roster and positional starter needs.
 - `Health`: snapshot coverage and warnings.
-- `Simulation`: multi-path draft analysis showing simulated manager results, user strategy outcomes, and risk summary.
+- `Simulation`: multi-path draft analysis showing simulated manager results, user strategy outcomes, and risk summary. Press `a` to start the analysis from inside the TUI; the run log updates as each path completes.
 - `Picks`: recent completed picks.
 
 ## Controls
@@ -91,6 +91,7 @@ PYTHONPATH=. python scripts/analyze_draft_paths.py \
 | `u` | Undo last pick |
 | `r` | Redo pick |
 | `s` | Save draft state |
+| `a` | Run multi-path analysis when the Simulation view is active |
 | `q` or Esc | Quit |
 
 By default, autosave and pressing `s` write to `data/processed/cli_draft_state.json`. Override it with:
