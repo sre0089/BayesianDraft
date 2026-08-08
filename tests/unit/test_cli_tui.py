@@ -24,6 +24,7 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
     assert any(line.startswith("Best overall:") for line in controller.view_lines())
     assert any(line.startswith("Breakdown:") for line in controller.view_lines())
     assert any("drop" in line and "risk" in line for line in controller.view_lines())
+    assert any("Best path:" in line for line in controller.view_lines())
 
     controller.move_view(1)
 
@@ -58,6 +59,22 @@ def test_cli_summary_recommendation_updates_after_pick(tmp_path: Path) -> None:
     after = next(line for line in controller.view_lines() if line.startswith("Best overall:"))
     assert before != after
     assert "Example RB One" not in after
+
+
+def test_cli_summary_shows_rollout_when_user_is_on_clock(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(
+            save_path=tmp_path / "draft.json",
+            scenario_path=Path("data/fixtures/rehearsal_user_pick_8.json"),
+        ),
+    )
+
+    assert controller.state.manager_on_clock == "user_manager"
+    assert any("Best path:" in line and "score=" in line for line in controller.view_lines())
+    assert any("Rollout: avg VORP" in line for line in controller.view_lines())
 
 
 def test_cli_product_prompt_helpers(tmp_path: Path) -> None:

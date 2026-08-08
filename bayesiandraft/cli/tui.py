@@ -16,9 +16,12 @@ from bayesiandraft.draft import (
 )
 from bayesiandraft.rankings import RankingRow, build_baseline_rankings
 from bayesiandraft.recommendations import (
+    CandidateOptimizationResult,
+    CandidateOptimizerConfig,
     PositionalRecommendationGroup,
     RecommendationResult,
     RecommendationScore,
+    optimize_candidates,
     recommend_players,
     recommend_players_by_needed_position,
 )
@@ -201,6 +204,16 @@ class CliDraftController:
 
     def positional_recommendations(self) -> list[PositionalRecommendationGroup]:
         return recommend_players_by_needed_position(self.state, self._rankings)
+
+    def rollout_recommendation(self) -> CandidateOptimizationResult | None:
+        try:
+            return optimize_candidates(
+                self.state,
+                self._rankings,
+                config=CandidateOptimizerConfig(limit=3, candidate_pool_size=8, simulation_count=8),
+            )
+        except ValueError:
+            return None
 
     def draft_selected_player(self) -> None:
         rows = self.selectable_rankings()
@@ -491,11 +504,36 @@ class CliDraftController:
                 self._recommendation_score_line(primary, include_rank=False),
                 self._recommendation_breakdown_line(primary),
                 f"Availability before next pick: {primary.next_pick_availability:.0%}",
+                "",
+                *self._rollout_summary_lines(primary.player_id),
                 "Why:",
                 *[f"- {item}" for item in primary.explanation[:4]],
             ]
         )
         return lines
+
+    def _rollout_summary_lines(self, baseline_player_id: str) -> list[str]:
+        rollout = self.rollout_recommendation()
+        if rollout is None:
+            return ["Best path: available when your team is on clock.", ""]
+
+        primary = rollout.primary
+        ranking = self._ranking_by_id(primary.player_id)
+        name = ranking.full_name if ranking else primary.player_id
+        comparison = (
+            "matches best-now pick"
+            if primary.player_id == baseline_player_id
+            else "differs from best-now pick"
+        )
+        return [
+            f"Best path: {name} score={primary.optimizer_score:.1f} ({comparison})",
+            (
+                f"Rollout: avg VORP {primary.average_vorp:.1f} | "
+                f"avg pts {primary.average_projected_points:.1f} | "
+                f"roster {primary.average_roster_size:.1f}"
+            ),
+            "",
+        ]
 
     def _recommendation_score_line(
         self,
