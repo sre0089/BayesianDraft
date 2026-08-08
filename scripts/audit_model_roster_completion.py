@@ -112,15 +112,16 @@ def _run_audit_draft(
                 stopped_reason = "no_recommendation"
                 break
         else:
-            selected_player_id = _sample_opponent_pick_or_none(
+            opponent_pick = _sample_opponent_pick_or_none(
                 state,
                 rankings,
                 rng=rng,
                 candidate_limit=candidate_limit,
             )
-            if selected_player_id is None:
+            if opponent_pick is None:
                 stopped_reason = "no_ranked_players"
                 break
+            selected_player_id = opponent_pick
         state = state.record_pick(selected_player_id)
 
     user_roster = state.rosters[user_manager_id]
