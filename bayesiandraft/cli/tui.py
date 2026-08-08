@@ -54,12 +54,12 @@ VIEWS = (
 )
 POSITIONS = ("QB", "RB", "WR", "TE", "DST", "K")
 POSITION_COLOR_PAIRS = {
-    "WR": 7,
-    "RB": 8,
-    "TE": 9,
-    "QB": 10,
-    "DST": 11,
-    "K": 12,
+    "WR": (7, 14),
+    "RB": (8, 15),
+    "TE": (9, 16),
+    "QB": (10, 17),
+    "DST": (11, 18),
+    "K": (12, 19),
 }
 COMPACT_LOGO_LINES = (
     r"  ____  ____  ",
@@ -1803,7 +1803,7 @@ def _draw_rankings_lines(
             screen,
             current_y,
             x,
-            _ranking_line(row, selected=selected),
+            _ranking_line(row, selected=selected).ljust(width),
             width,
             _ranking_line_attrs(row, selected=selected),
         )
@@ -1987,13 +1987,11 @@ def _init_colors() -> None:
         curses.init_pair(4, curses.COLOR_BLUE, -1)
         curses.init_pair(5, curses.COLOR_GREEN, -1)
         curses.init_pair(6, curses.COLOR_WHITE, -1)
-        curses.init_pair(7, curses.COLOR_GREEN, -1)
-        curses.init_pair(8, curses.COLOR_BLUE, -1)
-        curses.init_pair(9, curses.COLOR_RED, -1)
-        curses.init_pair(10, curses.COLOR_MAGENTA, -1)
-        curses.init_pair(11, curses.COLOR_WHITE, -1)
-        curses.init_pair(12, curses.COLOR_YELLOW, -1)
         curses.init_pair(13, curses.COLOR_BLACK, curses.COLOR_GREEN)
+        for position, (normal_pair, selected_pair) in POSITION_COLOR_PAIRS.items():
+            normal_bg, selected_bg = _position_background_colors(position)
+            curses.init_pair(normal_pair, curses.COLOR_WHITE, normal_bg)
+            curses.init_pair(selected_pair, curses.COLOR_WHITE, selected_bg)
     except curses.error:
         return
 
@@ -2044,16 +2042,39 @@ def _quick_direction_reason(score: RecommendationScore) -> str:
     return " + ".join(parts[:3])
 
 
-def _position_color_pair(position: str) -> int:
-    return POSITION_COLOR_PAIRS.get(position.upper(), 6)
+def _position_background_colors(position: str) -> tuple[int, int]:
+    if curses.COLORS >= 256:
+        colors_256 = {
+            "WR": (28, 22),
+            "RB": (26, 18),
+            "TE": (124, 88),
+            "QB": (92, 53),
+            "DST": (240, 236),
+            "K": (130, 94),
+        }
+        return colors_256.get(position.upper(), (-1, -1))
+
+    fallback_colors = {
+        "WR": curses.COLOR_GREEN,
+        "RB": curses.COLOR_BLUE,
+        "TE": curses.COLOR_RED,
+        "QB": curses.COLOR_MAGENTA,
+        "DST": curses.COLOR_BLACK,
+        "K": curses.COLOR_YELLOW,
+    }
+    color = fallback_colors.get(position.upper(), -1)
+    return color, color
+
+
+def _position_color_pair(position: str, *, selected: bool = False) -> int:
+    normal_pair, selected_pair = POSITION_COLOR_PAIRS.get(position.upper(), (6, 6))
+    return selected_pair if selected else normal_pair
 
 
 def _ranking_line_attrs(row: RankingRow, *, selected: bool) -> int:
-    attrs = curses.color_pair(_position_color_pair(row.position.value))
-    if row.position.value == "DST":
-        attrs |= curses.A_DIM
+    attrs = curses.color_pair(_position_color_pair(row.position.value, selected=selected))
     if selected:
-        attrs |= curses.A_REVERSE | curses.A_BOLD
+        attrs |= curses.A_BOLD
     return attrs
 
 

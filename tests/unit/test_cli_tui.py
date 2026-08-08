@@ -431,7 +431,14 @@ def test_cli_position_color_pairs_match_rankings_palette() -> None:
     assert _position_color_pair("QB") == 10
     assert _position_color_pair("DST") == 11
     assert _position_color_pair("K") == 12
+    assert _position_color_pair("WR", selected=True) == 14
+    assert _position_color_pair("RB", selected=True) == 15
+    assert _position_color_pair("TE", selected=True) == 16
+    assert _position_color_pair("QB", selected=True) == 17
+    assert _position_color_pair("DST", selected=True) == 18
+    assert _position_color_pair("K", selected=True) == 19
     assert _position_color_pair("unknown") == 6
+    assert _position_color_pair("unknown", selected=True) == 6
 
 
 def test_cli_controller_logs_decision_audit_event(tmp_path: Path) -> None:
