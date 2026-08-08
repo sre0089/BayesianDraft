@@ -105,3 +105,16 @@ def test_flex_need_waits_for_base_flex_positions() -> None:
     flex_groups = recommend_players_by_needed_position(state, build_baseline_rankings(snapshot))
 
     assert {"RB", "WR", "TE"} <= {group.position for group in flex_groups}
+
+
+def test_flex_need_boosts_eligible_candidates_after_base_slots_are_full() -> None:
+    snapshot = load_player_snapshot(Path("data/fixtures/baseline_players_2026.json"))
+    state = _draft_state()
+    state.rosters["user_manager"].positional_counts = {"RB": 2, "WR": 2, "TE": 1}
+
+    groups = recommend_players_by_needed_position(state, build_baseline_rankings(snapshot))
+    rb_group = next(group for group in groups if group.position == "RB")
+
+    assert rb_group.remaining_need == 1
+    assert rb_group.candidates[0].need_score > 0
+    assert any("FLEX" in item for item in rb_group.candidates[0].explanation)

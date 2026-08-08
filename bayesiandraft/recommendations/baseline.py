@@ -32,7 +32,7 @@ class PositionalRecommendationGroup(BaseModel):
     candidates: list[RecommendationScore]
 
 
-STARTER_TARGETS = {
+DEFAULT_STARTER_TARGETS = {
     "QB": 1,
     "RB": 2,
     "WR": 2,
@@ -103,8 +103,13 @@ def _score_candidate(
 ) -> RecommendationScore:
     roster = draft_state.rosters[draft_state.league_config.league.user_manager_id]
     drafted_position_count = roster.positional_counts.get(ranking.position.value, 0)
-    target_count = STARTER_TARGETS[ranking.position.value]
-    starting_need = max(target_count - drafted_position_count, 0)
+    target_count = _starter_targets(draft_state).get(
+        ranking.position.value,
+        DEFAULT_STARTER_TARGETS[ranking.position.value],
+    )
+    base_need = max(target_count - drafted_position_count, 0)
+    flex_need = _flex_need_for_position(draft_state, ranking.position.value)
+    starting_need = base_need + flex_need
     draft_phase = _draft_phase(draft_state)
     need_weight = _need_weight(draft_phase)
     value_score = ranking.vorp
@@ -143,6 +148,8 @@ def _score_candidate(
         explanation=_explain(
             ranking,
             starting_need=starting_need,
+            base_need=base_need,
+            flex_need=flex_need,
             draft_phase=draft_phase,
             need_weight=need_weight,
             tier_drop_score=tier_drop_score,
@@ -158,8 +165,9 @@ def _needed_positions(draft_state: DraftState) -> dict[str, int]:
     roster = draft_state.rosters[draft_state.league_config.league.user_manager_id]
     needs: dict[str, int] = {}
     base_flex_needs = 0
+    starter_targets = _starter_targets(draft_state)
 
-    for position, target_count in STARTER_TARGETS.items():
+    for position, target_count in starter_targets.items():
         remaining = max(target_count - roster.positional_counts.get(position, 0), 0)
         if remaining > 0:
             needs[position] = remaining
@@ -174,12 +182,51 @@ def _needed_positions(draft_state: DraftState) -> dict[str, int]:
     flex_roster_count = sum(
         roster.positional_counts.get(position, 0) for position in flex_positions
     )
-    base_flex_target = sum(STARTER_TARGETS.get(position, 0) for position in flex_positions)
+    base_flex_target = sum(starter_targets.get(position, 0) for position in flex_positions)
     if flex_roster_count < base_flex_target + flex_slots:
         for position in flex_positions:
             needs[position] = max(needs.get(position, 0), 1)
 
     return needs
+
+
+def _starter_targets(draft_state: DraftState) -> dict[str, int]:
+    flex_slot_names = set(draft_state.league_config.roster.flex_eligibility)
+    return {
+        position: count
+        for position, count in draft_state.league_config.roster.starting_slots.items()
+        if position not in flex_slot_names
+    }
+
+
+def _flex_need_for_position(draft_state: DraftState, position: str) -> int:
+    roster = draft_state.rosters[draft_state.league_config.league.user_manager_id]
+    starter_targets = _starter_targets(draft_state)
+    flex_need = 0
+    for flex_slot, eligible_positions in draft_state.league_config.roster.flex_eligibility.items():
+        if position not in eligible_positions:
+            continue
+        base_needs = sum(
+            max(
+                starter_targets.get(eligible_position, 0)
+                - roster.positional_counts.get(eligible_position, 0),
+                0,
+            )
+            for eligible_position in eligible_positions
+        )
+        if base_needs > 0:
+            continue
+        flex_slots = draft_state.league_config.roster.starting_slots.get(flex_slot, 0)
+        eligible_count = sum(
+            roster.positional_counts.get(eligible_position, 0)
+            for eligible_position in eligible_positions
+        )
+        base_target = sum(
+            starter_targets.get(eligible_position, 0)
+            for eligible_position in eligible_positions
+        )
+        flex_need += max(base_target + flex_slots - eligible_count, 0)
+    return flex_need
 
 
 def _late_position_penalty(
@@ -272,6 +319,8 @@ def _explain(
     ranking: RankingRow,
     *,
     starting_need: int,
+    base_need: int,
+    flex_need: int,
     draft_phase: str,
     need_weight: float,
     tier_drop_score: float,
@@ -286,7 +335,10 @@ def _explain(
         f"Adds {ranking.vorp:.1f} points over replacement.",
     ]
     if starting_need > 0:
-        explanation.append(f"Fills a remaining starter need at {ranking.position}.")
+        if base_need > 0:
+            explanation.append(f"Fills a remaining starter need at {ranking.position}.")
+        elif flex_need > 0:
+            explanation.append(f"Fills a remaining FLEX need with {ranking.position}.")
     if ranking.tier == 1:
         explanation.append("Still sits in the top tier at the position.")
     if tier_drop_score > 0:

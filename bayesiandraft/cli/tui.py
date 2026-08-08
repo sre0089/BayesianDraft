@@ -1413,6 +1413,7 @@ def _draw_summary_workspace(
     _draw_box(screen, y, right_x, top_height, right_width, "Your Roster")
     roster_lines = [f"Picks: {len(user_roster.player_ids)}"]
     roster_lines.append(controller._position_count_text(user_roster.positional_counts))
+    roster_lines.append(_summary_flex_need_line(controller))
     roster_lines.append("")
     if user_roster.player_ids:
         for player_id in user_roster.player_ids[-8:]:
@@ -1483,6 +1484,21 @@ def _summary_line_attrs(line: str) -> int:
     if line.startswith("Pick") or line.startswith("Clock") or line.startswith("Next"):
         return curses.color_pair(5) | curses.A_BOLD
     return 0
+
+
+def _summary_flex_need_line(controller: CliDraftController) -> str:
+    user_manager_id = controller.state.league_config.league.user_manager_id
+    report = build_roster_balance_report(controller.state, user_manager_id)
+    flex_balance = next(
+        (position for position in report.positions if position.position == "FLEX"),
+        None,
+    )
+    if flex_balance is None:
+        return "FLEX: none"
+    return (
+        f"FLEX: {flex_balance.current_count}/{flex_balance.starter_target} "
+        f"need {flex_balance.remaining_starter_need}"
+    )
 
 
 def _draw_lines(

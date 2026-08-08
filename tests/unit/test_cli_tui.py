@@ -7,6 +7,7 @@ from bayesiandraft.cli.tui import (
     _handle_live_search_key,
     _is_quick_search_key,
     _progress_bar,
+    _summary_flex_need_line,
 )
 from scripts.common import load_snapshot_and_draft_state
 
@@ -64,6 +65,17 @@ def test_cli_wide_summary_decision_panel_shows_quick_direction(tmp_path: Path) -
     assert "Draft Assistant" in lines
     assert any("Quick direction:" in line for line in lines)
     assert any("Deep sim: run Simulation" in line for line in lines)
+
+
+def test_cli_summary_roster_panel_tracks_flex_need(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(save_path=tmp_path / "draft.json"),
+    )
+
+    assert _summary_flex_need_line(controller) == "FLEX: 0/1 need 1"
 
 
 def test_cli_summary_recommendation_updates_after_pick(tmp_path: Path) -> None:
