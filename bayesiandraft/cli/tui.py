@@ -2064,8 +2064,8 @@ def _position_row_colors(position: str) -> tuple[int, int, int, int]:
     if curses.COLORS >= 256:
         # Modern muted backgrounds, stronger selected backgrounds.
         colors_256 = {
-            "WR": (curses.COLOR_WHITE, 23, curses.COLOR_WHITE, 29),
-            "RB": (curses.COLOR_WHITE, 24, curses.COLOR_WHITE, 31),
+            "WR": (curses.COLOR_WHITE, 29, curses.COLOR_WHITE, 35),
+            "RB": (curses.COLOR_WHITE, 17, curses.COLOR_WHITE, 24),
             "TE": (curses.COLOR_WHITE, 89, curses.COLOR_WHITE, 132),
             "QB": (curses.COLOR_WHITE, 54, curses.COLOR_WHITE, 98),
             "DST": (curses.COLOR_WHITE, 237, curses.COLOR_WHITE, 244),
