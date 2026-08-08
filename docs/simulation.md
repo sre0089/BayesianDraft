@@ -11,14 +11,15 @@ Current implementation:
 - `simulate_remaining_draft` rolls forward from a `DraftState` until the draft is complete or the ranked player pool is exhausted.
 - `simulate_candidate_rollout` records a user pick, simulates the remaining draft repeatedly, and summarizes the user's resulting roster value.
 - `analyze_league_paths` runs many full-draft paths and aggregates manager projected points, VORP, median outcome, volatility, average finish, top-three rate, and first-place rate.
-- `analyze_user_strategy_paths` forces the user's next pick by position and compares how each early-position path performs after the rest of the draft is simulated.
+- `analyze_user_strategy_paths` samples possible boards at the user's next pick, forces that next pick by position, and compares how each path performs after the rest of the draft is simulated.
+- `score_roster_strength` scores simulated teams by best legal starting lineup plus discounted positive bench value instead of raw full-roster totals.
 - `DraftSimulationConfig` controls simulation count, seed, ADP spread, roster-need weight, and candidate pool size.
 - Remaining-draft simulation uses first-pass opponent profiles inferred from completed picks.
 - All stochastic paths are seeded and reproducible.
 
 ## Multi-Path Draft Analysis
 
-Multi-path analysis answers a broader draft-day question than a single recommendation: if the current draft continues in many plausible ways, which teams usually end up strongest and which first-pick strategy gives the user the best final roster distribution?
+Multi-path analysis answers a broader draft-day question than a single recommendation: if the current draft continues in many plausible ways, which teams usually end up strongest and which next-pick strategy gives the user the best final roster distribution?
 
 The standalone report script can run heavier analysis from a fresh snapshot, a rehearsal state, or a saved live draft:
 
@@ -66,7 +67,7 @@ Current limitations:
 
 - Opponent behavior is still heuristic and only uses the current draft.
 - The fixture player pool is intentionally small, so fixture simulations stop when ranked players run out.
-- Draft-path analysis compares roster strength using projection and VORP totals, not full weekly schedule outcomes.
+- Draft-path analysis compares roster strength using projected best-lineup and discounted-bench value, not full weekly schedule outcomes.
 - Candidate rollout and path analysis do not yet estimate playoff or championship probability.
 
 ## Season Simulation

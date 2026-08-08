@@ -63,13 +63,13 @@ PYTHONPATH=. python scripts/analyze_draft_paths.py \
 
 ## Views
 
-- `Summary`: current pick, manager on clock, available player count, roster size, save status, next user pick, best-now recommendation, and best-path rollout when your team is on clock.
-- `Rankings`: scrollable available-player table, match count, pick preview, and selected-player detail when the terminal is wide enough.
+- `Summary`: current pick, manager on clock, available player count, roster size, save status, next user pick, Draft Assistant readout, best-now recommendation, and best-path rollout when your team is on clock. The Draft Assistant calls out the current recommendation, best simulated next-pick direction after path analysis has run, and why the recommendation changed after picks.
+- `Rankings`: scrollable available-player table, match count, pick preview, and selected-player detail when the terminal is wide enough. Press `/` or start typing while on Rankings to filter immediately.
 - `Recommendations`: best overall recommendation, best-path rollout comparison, score breakdown, and top five available players for each position your roster still needs.
 - `Managers`: yazi-style manager browser with every competitor roster, pick count, projected points, VORP, and position counts.
 - `Roster`: configured user manager roster and positional starter needs.
 - `Health`: snapshot coverage and warnings.
-- `Simulation`: multi-path draft analysis showing simulated manager results, draft strategy analysis for your next pick, and risk summary. Press `a` to start the analysis from inside the TUI; the run log updates during the league-path phase and the next-pick strategy phase.
+- `Simulation`: multi-path draft analysis showing simulated manager results, draft strategy analysis for your next pick, and risk summary. Press `a` to start the analysis from inside the TUI; the run log updates during the league-path phase and the next-pick strategy phase. When the board changes after analysis, the view marks the results stale and asks you to rerun.
 - `Picks`: recent completed picks.
 
 ## Controls
@@ -82,6 +82,7 @@ PYTHONPATH=. python scripts/analyze_draft_paths.py \
 | Home / End | Jump to the first or last ranking or manager |
 | Enter or `d` | Draft the selected player |
 | `/` | Start live search; typed characters filter immediately and show match count |
+| Type on Rankings | Start live search without pressing `/` |
 | Enter or Esc | Finish live search |
 | Backspace | Remove the last live-search character |
 | `[` / `]` | Cycle positional ranking filters |
@@ -92,6 +93,7 @@ PYTHONPATH=. python scripts/analyze_draft_paths.py \
 | `r` | Redo pick |
 | `s` | Save draft state |
 | `a` | Run multi-path analysis when the Simulation view is active |
+| `?` | Toggle in-app help for controls and score definitions |
 | `q` or Esc | Quit |
 
 By default, autosave and pressing `s` write to `data/processed/cli_draft_state.json`. Override it with:
