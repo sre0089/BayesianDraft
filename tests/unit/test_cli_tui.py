@@ -67,6 +67,7 @@ def test_cli_summary_recommendation_updates_after_pick(tmp_path: Path) -> None:
     after = next(line for line in controller.view_lines() if line.startswith("Best overall:"))
     assert before != after
     assert "Example RB One" not in after
+    assert any("Recommendation" in line for line in controller.view_lines())
 
 
 def test_cli_draft_assistant_uses_strategy_analysis(tmp_path: Path) -> None:
@@ -86,6 +87,31 @@ def test_cli_draft_assistant_uses_strategy_analysis(tmp_path: Path) -> None:
 
     assert any("Best next-pick direction:" in line for line in lines)
     assert any("Avoid unless value falls:" in line for line in lines)
+
+
+def test_cli_marks_simulation_stale_after_board_changes(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(
+            save_path=tmp_path / "draft.json",
+            scenario_path=Path("data/fixtures/rehearsal_user_pick_8.json"),
+        ),
+    )
+    controller.view_index = 6
+    controller.run_path_analysis()
+
+    assert any(
+        line.startswith("After 40 simulated draft paths:")
+        for line in controller.view_lines()
+    )
+
+    controller.draft_selected_player()
+
+    lines = controller.view_lines()
+    assert "Multi-path draft analysis" in lines
+    assert any("Simulation stale:" in line for line in lines)
 
 
 def test_cli_managers_show_team_strength_scores(tmp_path: Path) -> None:

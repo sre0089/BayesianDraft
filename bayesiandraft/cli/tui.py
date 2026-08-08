@@ -89,6 +89,7 @@ class CliDraftController:
         self.search_active = False
         self.help_active = False
         self.status_message = "Ready."
+        self.recommendation_change_message = "No recommendation changes yet."
         self.last_save_message = "Not saved yet."
         self._rankings = build_baseline_rankings(snapshot)
         self._players_by_id = {player.player_id: player for player in snapshot.players}
@@ -251,6 +252,7 @@ class CliDraftController:
         try:
             recommendation = self.recommendation()
             self.state = self.state.record_pick(player.player_id)
+            self._record_recommendation_change(player.player_id, recommendation)
         except DraftStateError as exc:
             self.status_message = str(exc)
             return
@@ -270,6 +272,7 @@ class CliDraftController:
         try:
             self.state = self.state.undo()
             self._invalidate_path_analysis()
+            self.recommendation_change_message = "Recommendation may have changed after undo."
             autosave_message = self._autosave()
             self.status_message = f"Undid last pick. {autosave_message}"
         except DraftStateError as exc:
@@ -279,6 +282,7 @@ class CliDraftController:
         try:
             self.state = self.state.redo()
             self._invalidate_path_analysis()
+            self.recommendation_change_message = "Recommendation may have changed after redo."
             autosave_message = self._autosave()
             self.status_message = f"Redid pick. {autosave_message}"
         except DraftStateError as exc:
@@ -342,6 +346,7 @@ class CliDraftController:
                 break
             self.state = self.state.record_pick(rows[0].player_id)
             self._invalidate_path_analysis()
+            self.recommendation_change_message = "Recommendation changed after auto-pick."
             count += 1
         self.selection_index = 0
         if count > 0:
@@ -413,6 +418,7 @@ class CliDraftController:
             self.last_save_message,
             "",
             *self._draft_assistant_lines(),
+            self.recommendation_change_message,
             "",
             *self._best_overall_recommendation_lines(include_header=True),
             "",
@@ -525,6 +531,30 @@ class CliDraftController:
         match_count = len(self.selectable_rankings())
         noun = "match" if match_count == 1 else "matches"
         return f"Search: {self.search_query} ({match_count} {noun})"
+
+    def _record_recommendation_change(
+        self,
+        drafted_player_id: str,
+        before: RecommendationResult | None,
+    ) -> None:
+        after = self.recommendation()
+        drafted = self.state.players[drafted_player_id]
+        if before is None or after is None:
+            self.recommendation_change_message = (
+                f"Recommendation changed after {drafted.full_name} was drafted."
+            )
+            return
+        if before.primary.player_id == after.primary.player_id:
+            self.recommendation_change_message = (
+                f"Recommendation stayed on {self._player_name(after.primary.player_id)}."
+            )
+            return
+        before_name = self._player_name(before.primary.player_id)
+        after_name = self._player_name(after.primary.player_id)
+        self.recommendation_change_message = (
+            f"Recommendation changed: {before_name} -> {after_name} "
+            f"because {drafted.full_name} left the board."
+        )
 
     def _recommendation_lines(self) -> list[str]:
         recommendation = self.recommendation()
@@ -907,7 +937,9 @@ class CliDraftController:
         self._path_analysis_cache_key = None
         self._path_analysis_cache = None
         if had_analysis:
-            self.path_analysis_logs = ["Board changed. Press a to rerun path analysis."]
+            self.path_analysis_logs = [
+                "Simulation stale: board changed. Press a to rerun path analysis."
+            ]
 
     def _pick_lines(self) -> list[str]:
         if not self.state.completed_picks:
@@ -926,6 +958,10 @@ class CliDraftController:
             if ranking.player_id == player_id:
                 return ranking
         return None
+
+    def _player_name(self, player_id: str) -> str:
+        player = self.state.players.get(player_id)
+        return player.full_name if player else player_id
 
     def _default_manager_selection_index(self) -> int:
         user_manager_id = self.state.league_config.league.user_manager_id
