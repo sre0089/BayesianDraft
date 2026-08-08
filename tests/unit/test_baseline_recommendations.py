@@ -5,6 +5,7 @@ from bayesiandraft.data import load_player_snapshot
 from bayesiandraft.draft import DraftState, Player
 from bayesiandraft.rankings import build_baseline_rankings
 from bayesiandraft.recommendations import recommend_players, recommend_players_by_needed_position
+from bayesiandraft.recommendations.baseline import _need_weight
 
 
 def _draft_state() -> DraftState:
@@ -26,9 +27,24 @@ def test_recommendation_returns_primary_and_alternatives() -> None:
     result = recommend_players(_draft_state(), build_baseline_rankings(snapshot))
 
     assert result.primary.player_id == "rb_001"
+    assert result.primary.draft_phase == "early"
     assert result.primary.confidence > 0
+    assert result.primary.next_pick_risk_score > 0
     assert result.primary.explanation
     assert len(result.alternatives) == 3
+
+
+def test_need_weight_increases_later_in_draft() -> None:
+    assert _need_weight("early") < _need_weight("middle")
+    assert _need_weight("middle") < _need_weight("late")
+
+
+def test_tier_drop_score_rewards_thin_tiers() -> None:
+    snapshot = load_player_snapshot(Path("data/fixtures/baseline_players_2026.json"))
+    result = recommend_players(_draft_state(), build_baseline_rankings(snapshot))
+
+    assert result.primary.tier_drop_score > 0
+    assert any("tier-drop boost" in item for item in result.primary.explanation)
 
 
 def test_recommendation_changes_after_player_is_drafted() -> None:

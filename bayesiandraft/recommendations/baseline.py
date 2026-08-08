@@ -7,11 +7,14 @@ from bayesiandraft.rankings import RankingRow
 class RecommendationScore(BaseModel):
     player_id: str
     rank: int
+    draft_phase: str
     total_score: float
     value_score: float
     need_score: float
     tier_score: float
+    tier_drop_score: float
     market_score: float
+    next_pick_risk_score: float
     penalty: float
     confidence: float
     next_pick_availability: float
@@ -48,7 +51,7 @@ def recommend_players(
     available_ids = set(draft_state.available_player_ids)
     ranking_by_id = {ranking.player_id: ranking for ranking in rankings}
     scored = [
-        _score_candidate(draft_state, ranking)
+        _score_candidate(draft_state, ranking, rankings)
         for ranking in rankings
         if ranking.player_id in available_ids
     ]
@@ -75,7 +78,7 @@ def recommend_players_by_needed_position(
 
     for position, remaining_need in needed_positions.items():
         scored = [
-            _score_candidate(draft_state, ranking)
+            _score_candidate(draft_state, ranking, rankings)
             for ranking in rankings
             if ranking.player_id in available_ids and ranking.position.value == position
         ]
@@ -93,35 +96,58 @@ def recommend_players_by_needed_position(
     return groups
 
 
-def _score_candidate(draft_state: DraftState, ranking: RankingRow) -> RecommendationScore:
+def _score_candidate(
+    draft_state: DraftState,
+    ranking: RankingRow,
+    rankings: list[RankingRow],
+) -> RecommendationScore:
     roster = draft_state.rosters[draft_state.league_config.league.user_manager_id]
     drafted_position_count = roster.positional_counts.get(ranking.position.value, 0)
     target_count = STARTER_TARGETS[ranking.position.value]
     starting_need = max(target_count - drafted_position_count, 0)
+    draft_phase = _draft_phase(draft_state)
+    need_weight = _need_weight(draft_phase)
     value_score = ranking.vorp
-    need_score = starting_need * 35
+    need_score = starting_need * 35 * need_weight
     tier_score = max(4 - ranking.tier, 0) * 8
+    tier_drop_score = _tier_drop_score(draft_state, ranking, rankings, draft_phase)
     market_score = max(ranking.adp_delta or 0, 0) * 0.5
     penalty = _late_position_penalty(draft_state, ranking, drafted_position_count)
-    total_score = value_score + need_score + tier_score + market_score - penalty
     next_pick_availability = _estimate_next_pick_availability(draft_state, ranking)
+    next_pick_risk_score = _next_pick_risk_score(next_pick_availability, draft_phase)
+    total_score = (
+        value_score
+        + need_score
+        + tier_score
+        + tier_drop_score
+        + market_score
+        + next_pick_risk_score
+        - penalty
+    )
     confidence = _confidence_from_margin(total_score, value_score)
 
     return RecommendationScore(
         player_id=ranking.player_id,
         rank=ranking.overall_rank,
+        draft_phase=draft_phase,
         total_score=round(total_score, 3),
         value_score=round(value_score, 3),
         need_score=round(need_score, 3),
         tier_score=round(tier_score, 3),
+        tier_drop_score=round(tier_drop_score, 3),
         market_score=round(market_score, 3),
+        next_pick_risk_score=round(next_pick_risk_score, 3),
         penalty=round(penalty, 3),
         confidence=confidence,
         next_pick_availability=next_pick_availability,
         explanation=_explain(
             ranking,
             starting_need=starting_need,
+            draft_phase=draft_phase,
+            need_weight=need_weight,
+            tier_drop_score=tier_drop_score,
             market_score=market_score,
+            next_pick_risk_score=next_pick_risk_score,
             penalty=penalty,
             availability=next_pick_availability,
         ),
@@ -168,6 +194,59 @@ def _late_position_penalty(
     return 45 if draft_state.current_round is not None and draft_state.current_round < 14 else 0
 
 
+def _draft_phase(draft_state: DraftState) -> str:
+    round_number = draft_state.current_round or 1
+    if round_number <= 4:
+        return "early"
+    if round_number <= 10:
+        return "middle"
+    return "late"
+
+
+def _need_weight(draft_phase: str) -> float:
+    return {
+        "early": 0.35,
+        "middle": 0.8,
+        "late": 1.2,
+    }[draft_phase]
+
+
+def _tier_drop_score(
+    draft_state: DraftState,
+    ranking: RankingRow,
+    rankings: list[RankingRow],
+    draft_phase: str,
+) -> float:
+    available_ids = set(draft_state.available_player_ids)
+    same_position_tier_count = sum(
+        1
+        for row in rankings
+        if row.player_id in available_ids
+        and row.position == ranking.position
+        and row.tier == ranking.tier
+    )
+    if same_position_tier_count > 3:
+        return 0
+
+    phase_multiplier = {
+        "early": 1.2,
+        "middle": 1.0,
+        "late": 0.6,
+    }[draft_phase]
+    tier_quality = max(4 - ranking.tier, 0)
+    scarcity = max(4 - same_position_tier_count, 0)
+    return scarcity * tier_quality * 4 * phase_multiplier
+
+
+def _next_pick_risk_score(availability: float, draft_phase: str) -> float:
+    phase_multiplier = {
+        "early": 1.1,
+        "middle": 1.0,
+        "late": 0.7,
+    }[draft_phase]
+    return (1 - availability) * 18 * phase_multiplier
+
+
 def _estimate_next_pick_availability(draft_state: DraftState, ranking: RankingRow) -> float:
     future_picks = draft_state.user_future_picks
     if not future_picks:
@@ -193,11 +272,16 @@ def _explain(
     ranking: RankingRow,
     *,
     starting_need: int,
+    draft_phase: str,
+    need_weight: float,
+    tier_drop_score: float,
     market_score: float,
+    next_pick_risk_score: float,
     penalty: float,
     availability: float,
 ) -> list[str]:
     explanation = [
+        f"Draft phase is {draft_phase}; roster need weight is {need_weight:.0%}.",
         f"Ranks {ranking.overall_rank} overall and {ranking.position_rank} at {ranking.position}.",
         f"Adds {ranking.vorp:.1f} points over replacement.",
     ]
@@ -205,10 +289,14 @@ def _explain(
         explanation.append(f"Fills a remaining starter need at {ranking.position}.")
     if ranking.tier == 1:
         explanation.append("Still sits in the top tier at the position.")
+    if tier_drop_score > 0:
+        explanation.append("Gets a tier-drop boost because similar options are thinning.")
     if market_score > 0:
         explanation.append(
             f"Market cost is favorable by {ranking.adp_delta:.1f} picks versus rank."
         )
+    if next_pick_risk_score > 0:
+        explanation.append("Gets a next-pick risk boost because it may not come back.")
     if penalty > 0:
         explanation.append("Penalty applied for spending early draft capital on K/DST.")
     explanation.append(f"Estimated next-pick availability is {availability:.0%}.")
