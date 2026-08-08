@@ -125,8 +125,11 @@ def test_cli_simulation_tab_shows_path_analysis(tmp_path: Path) -> None:
 
     assert any(line.startswith("After 40 simulated draft paths:") for line in lines)
     assert "Manager Results" in lines
-    assert "Your Strategy Outcomes" in lines
-    assert any("early path" in line and "avg VORP" in line for line in lines)
+    assert "Draft Strategy Analysis" in lines
+    assert any(
+        "early path" in line and "avg VORP" in line and "target" in line
+        for line in lines
+    )
     assert "Risk" in lines
     assert any(line.startswith("Best case:") for line in lines)
     assert len(progress_events) == 40

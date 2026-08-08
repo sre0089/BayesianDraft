@@ -745,15 +745,16 @@ class CliDraftController:
                 f"avg pts {manager.average_projected_points:>7.1f}   "
                 f"avg finish {manager.average_finish:>4.1f}"
             )
-        lines.extend(["", "Your Strategy Outcomes"])
+        lines.extend(["", "Draft Strategy Analysis"])
         if not strategy_result.paths:
-            lines.append("Available when your team is currently on clock.")
+            lines.append("No future user pick is available to test.")
         else:
             for path in strategy_result.paths:
                 lines.append(
                     f"{path.label:<18} avg VORP {path.average_vorp:>7.1f}   "
                     f"avg pts {path.average_projected_points:>7.1f}   "
-                    f"top3 {path.top_three_rate:>5.0%}"
+                    f"top3 {path.top_three_rate:>5.0%}   "
+                    f"target {path.forced_player_name}"
                 )
 
         risk = league_result.user_risk
@@ -806,7 +807,9 @@ class CliDraftController:
             ),
             progress_callback=progress_callback,
         )
-        self.path_analysis_logs.append("Comparing RB/WR/QB/TE early paths...")
+        self.path_analysis_logs.append(
+            "Sampling boards at your next pick and comparing RB/WR/QB/TE paths..."
+        )
         strategy_result = analyze_user_strategy_paths(
             self.state,
             self._rankings,
