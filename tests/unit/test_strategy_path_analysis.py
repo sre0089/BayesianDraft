@@ -4,7 +4,7 @@ from bayesiandraft.simulation.draft import DraftSimulationConfig
 from scripts.common import load_snapshot_and_draft_state
 
 
-def test_strategy_path_analysis_waits_for_user_pick() -> None:
+def test_strategy_path_analysis_samples_boards_before_user_pick() -> None:
     snapshot, state = load_snapshot_and_draft_state()
     rankings = build_baseline_rankings(snapshot)
 
@@ -17,7 +17,9 @@ def test_strategy_path_analysis_waits_for_user_pick() -> None:
         ),
     )
 
-    assert result.paths == []
+    assert result.paths
+    assert all(path.forced_player_id for path in result.paths)
+    assert all(path.average_projected_points >= 0 for path in result.paths)
 
 
 def test_strategy_path_analysis_compares_forced_positions() -> None:
