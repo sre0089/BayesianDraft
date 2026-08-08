@@ -50,13 +50,26 @@ def recommend_players(
     *,
     limit: int = 4,
     path_context: PathBankContext | None = None,
+    candidate_pool_size: int = 260,
 ) -> RecommendationResult:
     available_ids = set(draft_state.available_player_ids)
     ranking_by_id = {ranking.player_id: ranking for ranking in rankings}
+    tier_counts = _tier_counts(rankings, available_ids)
+    candidate_rankings = _candidate_rankings(
+        draft_state,
+        rankings,
+        available_ids,
+        candidate_pool_size=candidate_pool_size,
+    )
     scored = [
-        _score_candidate(draft_state, ranking, rankings, path_context=path_context)
-        for ranking in rankings
-        if ranking.player_id in available_ids
+        _score_candidate(
+            draft_state,
+            ranking,
+            rankings,
+            path_context=path_context,
+            tier_counts=tier_counts,
+        )
+        for ranking in candidate_rankings
     ]
     scored.sort(key=lambda score: (-score.total_score, ranking_by_id[score.player_id].overall_rank))
 
@@ -78,11 +91,18 @@ def recommend_players_by_needed_position(
     available_ids = set(draft_state.available_player_ids)
     ranking_by_id = {ranking.player_id: ranking for ranking in rankings}
     needed_positions = _needed_positions(draft_state)
+    tier_counts = _tier_counts(rankings, available_ids)
     groups: list[PositionalRecommendationGroup] = []
 
     for position, remaining_need in needed_positions.items():
         scored = [
-            _score_candidate(draft_state, ranking, rankings, path_context=path_context)
+            _score_candidate(
+                draft_state,
+                ranking,
+                rankings,
+                path_context=path_context,
+                tier_counts=tier_counts,
+            )
             for ranking in rankings
             if ranking.player_id in available_ids and ranking.position.value == position
         ]
@@ -106,6 +126,7 @@ def _score_candidate(
     rankings: list[RankingRow],
     *,
     path_context: PathBankContext | None = None,
+    tier_counts: dict[tuple[str, int], int] | None = None,
 ) -> RecommendationScore:
     roster = draft_state.rosters[draft_state.league_config.league.user_manager_id]
     drafted_position_count = roster.positional_counts.get(ranking.position.value, 0)
@@ -121,7 +142,13 @@ def _score_candidate(
     value_score = ranking.vorp
     need_score = starting_need * 35 * need_weight
     tier_score = max(4 - ranking.tier, 0) * 8
-    tier_drop_score = _tier_drop_score(draft_state, ranking, rankings, draft_phase)
+    tier_drop_score = _tier_drop_score(
+        draft_state,
+        ranking,
+        rankings,
+        draft_phase,
+        tier_counts=tier_counts,
+    )
     opportunity_cost_score = _opportunity_cost_score(path_context, ranking)
     market_score = max(ranking.adp_delta or 0, 0) * 0.5
     penalty = _late_position_penalty(draft_state, ranking, drafted_position_count)
@@ -201,6 +228,41 @@ def _needed_positions(draft_state: DraftState) -> dict[str, int]:
     return needs
 
 
+def _candidate_rankings(
+    draft_state: DraftState,
+    rankings: list[RankingRow],
+    available_ids: set[str],
+    *,
+    candidate_pool_size: int,
+    per_needed_position: int = 12,
+) -> list[RankingRow]:
+    candidate_ids: set[str] = set()
+    candidates: list[RankingRow] = []
+    for ranking in rankings:
+        if ranking.player_id not in available_ids:
+            continue
+        if len(candidates) < candidate_pool_size:
+            candidates.append(ranking)
+            candidate_ids.add(ranking.player_id)
+
+    needed_positions = _needed_positions(draft_state)
+    needed_counts = {position: 0 for position in needed_positions}
+    for ranking in rankings:
+        position = ranking.position.value
+        if position not in needed_counts:
+            continue
+        if needed_counts[position] >= per_needed_position:
+            continue
+        if ranking.player_id not in available_ids:
+            continue
+        needed_counts[position] += 1
+        if ranking.player_id in candidate_ids:
+            continue
+        candidates.append(ranking)
+        candidate_ids.add(ranking.player_id)
+    return candidates
+
+
 def _starter_targets(draft_state: DraftState) -> dict[str, int]:
     flex_slot_names = set(draft_state.league_config.roster.flex_eligibility)
     return {
@@ -252,6 +314,19 @@ def _opportunity_cost_score(
     return min(estimate.opportunity_cost * 0.35, 35)
 
 
+def _tier_counts(
+    rankings: list[RankingRow],
+    available_ids: set[str],
+) -> dict[tuple[str, int], int]:
+    counts: dict[tuple[str, int], int] = {}
+    for ranking in rankings:
+        if ranking.player_id not in available_ids:
+            continue
+        key = (ranking.position.value, ranking.tier)
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
 def _late_position_penalty(
     draft_state: DraftState,
     ranking: RankingRow,
@@ -286,15 +361,12 @@ def _tier_drop_score(
     ranking: RankingRow,
     rankings: list[RankingRow],
     draft_phase: str,
+    *,
+    tier_counts: dict[tuple[str, int], int] | None = None,
 ) -> float:
-    available_ids = set(draft_state.available_player_ids)
-    same_position_tier_count = sum(
-        1
-        for row in rankings
-        if row.player_id in available_ids
-        and row.position == ranking.position
-        and row.tier == ranking.tier
-    )
+    if tier_counts is None:
+        tier_counts = _tier_counts(rankings, set(draft_state.available_player_ids))
+    same_position_tier_count = tier_counts.get((ranking.position.value, ranking.tier), 0)
     if same_position_tier_count > 3:
         return 0
 
