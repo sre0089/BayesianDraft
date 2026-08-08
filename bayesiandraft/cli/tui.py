@@ -278,6 +278,7 @@ class CliDraftController:
         if not rows:
             return ["No available players match the current filter."]
         lines = [self._filter_status_line(), ""]
+        lines.extend([_ranking_header_line(), _ranking_separator_line()])
         lines.extend(
             _ranking_line(row, selected=index == self.selection_index)
             for index, row in enumerate(rows[:30])
@@ -855,11 +856,17 @@ def _draw_rankings_workspace(
     selected = rows[controller.selection_index] if rows else None
 
     _draw_box(screen, y, x, height, left_width, "Available Players")
-    ranking_lines = [
-        _ranking_line(row, selected=index == controller.selection_index)
-        for index, row in enumerate(rows[: max(height - 2, 0)])
-    ]
-    if not ranking_lines:
+    if rows:
+        row_limit = max(height - 4, 0)
+        ranking_lines = [
+            _ranking_header_line(),
+            _ranking_separator_line(),
+            *[
+                _ranking_line(row, selected=index == controller.selection_index)
+                for index, row in enumerate(rows[:row_limit])
+            ],
+        ]
+    else:
         ranking_lines = ["No available players match the current filter."]
     _draw_lines(screen, ranking_lines, y + 1, x + 2, height - 2, left_width - 4)
 
@@ -991,7 +998,18 @@ def _safe_addnstr(
 def _ranking_line(row: RankingRow, *, selected: bool) -> str:
     marker = ">" if selected else " "
     return (
-        f"{marker} {row.overall_rank:>3}. {row.full_name:<28} {row.position.value:<3} "
-        f"tier={row.tier:<2} proj={row.projected_points:>6.1f} "
-        f"vorp={row.vorp:>6.1f} adp={row.adp or 0:>6.1f}"
+        f"{marker} {row.overall_rank:>4}  {row.full_name:<28} {row.position.value:<3} "
+        f"{row.tier:>4} {row.projected_points:>7.1f} {row.vorp:>7.1f} "
+        f"{row.adp or 0:>7.1f}"
     )
+
+
+def _ranking_header_line() -> str:
+    return (
+        f"  {'Rank':>4}  {'Player':<28} {'Pos':<3} {'Tier':>4} "
+        f"{'Proj':>7} {'VORP':>7} {'ADP':>7}"
+    )
+
+
+def _ranking_separator_line() -> str:
+    return "  " + "-" * (len(_ranking_header_line()) - 2)
