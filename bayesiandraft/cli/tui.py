@@ -32,6 +32,8 @@ from bayesiandraft.simulation import (
     LeaguePathProgressCallback,
     LeaguePathSimulationConfig,
     StrategyPathAnalysisResult,
+    StrategyPathProgress,
+    StrategyPathProgressCallback,
     StrategyPathSimulationConfig,
     analyze_league_paths,
     analyze_user_strategy_paths,
@@ -776,11 +778,15 @@ class CliDraftController:
         self,
         *,
         progress_callback: LeaguePathProgressCallback | None = None,
+        strategy_progress_callback: StrategyPathProgressCallback | None = None,
     ) -> tuple[LeaguePathAnalysisResult, StrategyPathAnalysisResult]:
         self._invalidate_path_analysis()
         self.path_analysis_logs = ["Starting league path analysis..."]
         cache_key = self._path_analysis_key()
-        result = self._path_analysis(progress_callback=progress_callback)
+        result = self._path_analysis(
+            progress_callback=progress_callback,
+            strategy_progress_callback=strategy_progress_callback,
+        )
         self._path_analysis_cache_key = cache_key
         self._path_analysis_cache = result
         self.path_analysis_logs.append("Finished path analysis.")
@@ -791,6 +797,7 @@ class CliDraftController:
         self,
         *,
         progress_callback: LeaguePathProgressCallback | None = None,
+        strategy_progress_callback: StrategyPathProgressCallback | None = None,
     ) -> tuple[LeaguePathAnalysisResult, StrategyPathAnalysisResult]:
         cache_key = self._path_analysis_key()
         if self._path_analysis_cache_key == cache_key and self._path_analysis_cache is not None:
@@ -822,6 +829,7 @@ class CliDraftController:
                 seed=211,
                 draft_config=draft_config,
             ),
+            progress_callback=strategy_progress_callback,
         )
         return league_result, strategy_result
 
@@ -1026,7 +1034,7 @@ def _run_path_analysis_interactive(
     screen: curses.window,
     controller: CliDraftController,
 ) -> None:
-    def progress_callback(progress: LeaguePathProgress) -> None:
+    def league_progress(progress: LeaguePathProgress) -> None:
         leader = controller._manager_label(progress.current_leader_id)
         controller.path_analysis_logs.append(
             f"path {progress.completed_paths:>2}/{progress.total_paths} "
@@ -1039,8 +1047,22 @@ def _run_path_analysis_interactive(
         )
         _draw(screen, controller)
 
+    def strategy_progress(progress: StrategyPathProgress) -> None:
+        target = progress.forced_player_name or "no candidate"
+        controller.path_analysis_logs.append(
+            f"strategy {progress.completed_paths:>2}/{progress.total_paths} "
+            f"board={progress.board_sample} pos={progress.position} target={target}"
+        )
+        controller.status_message = (
+            f"Testing draft strategies {progress.completed_paths}/{progress.total_paths}..."
+        )
+        _draw(screen, controller)
+
     controller.status_message = "Running path analysis..."
-    controller.run_path_analysis(progress_callback=progress_callback)
+    controller.run_path_analysis(
+        progress_callback=league_progress,
+        strategy_progress_callback=strategy_progress,
+    )
     _draw(screen, controller)
 
 
