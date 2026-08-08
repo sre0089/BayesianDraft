@@ -25,7 +25,15 @@ from bayesiandraft.recommendations import (
     recommend_players,
     recommend_players_by_needed_position,
 )
-from bayesiandraft.simulation import benchmark_remaining_draft
+from bayesiandraft.simulation import (
+    DraftSimulationConfig,
+    LeaguePathAnalysisResult,
+    LeaguePathSimulationConfig,
+    StrategyPathAnalysisResult,
+    StrategyPathSimulationConfig,
+    analyze_league_paths,
+    analyze_user_strategy_paths,
+)
 
 VIEWS = (
     "Summary",
@@ -83,6 +91,11 @@ class CliDraftController:
             projection.player_id: projection for projection in snapshot.projections
         }
         self._adp_by_player_id = {adp.player_id: adp for adp in snapshot.adp}
+        self._path_analysis_cache_key: tuple[str, ...] | None = None
+        self._path_analysis_cache: tuple[
+            LeaguePathAnalysisResult,
+            StrategyPathAnalysisResult,
+        ] | None = None
 
         if config.load_existing_save and config.save_path.exists():
             self.state = DraftState.load(config.save_path)
@@ -686,15 +699,72 @@ class CliDraftController:
         return lines
 
     def _simulation_lines(self) -> list[str]:
-        result = benchmark_remaining_draft(self.state, self._rankings)
-        return [
-            "Seeded simulation smoke benchmark",
+        league_result, strategy_result = self._path_analysis()
+        lines = [
+            f"After {league_result.simulation_count} simulated draft paths:",
             "",
-            f"Completed picks after simulation: {result.completed_pick_count}",
-            f"Seed: {result.seed}",
-            f"Runtime seconds: {result.elapsed_seconds}",
-            f"Stopped reason: {result.stopped_reason}",
+            "Manager Results",
         ]
+        for index, manager in enumerate(league_result.manager_results[:8], start=1):
+            lines.append(
+                f"{index}. {self._manager_label(manager.manager_id):<12} "
+                f"avg VORP {manager.average_vorp:>7.1f}   "
+                f"avg pts {manager.average_projected_points:>7.1f}   "
+                f"avg finish {manager.average_finish:>4.1f}"
+            )
+        lines.extend(["", "Your Strategy Outcomes"])
+        if not strategy_result.paths:
+            lines.append("Available when your team is currently on clock.")
+        else:
+            for path in strategy_result.paths:
+                lines.append(
+                    f"{path.label:<18} avg VORP {path.average_vorp:>7.1f}   "
+                    f"avg pts {path.average_projected_points:>7.1f}   "
+                    f"top3 {path.top_three_rate:>5.0%}"
+                )
+
+        risk = league_result.user_risk
+        lines.extend(
+            [
+                "",
+                "Risk",
+                f"Best case: {risk.best_case_vorp:>7.1f} VORP",
+                f"Median:    {risk.median_vorp:>7.1f} VORP",
+                f"Worst:     {risk.worst_case_vorp:>7.1f} VORP",
+                f"Volatility:{risk.vorp_volatility:>7.1f}",
+                f"Top 3 rate:{risk.top_three_rate:>7.0%}",
+                f"Win rate:  {risk.first_place_rate:>7.0%}",
+            ]
+        )
+        return lines
+
+    def _path_analysis(self) -> tuple[LeaguePathAnalysisResult, StrategyPathAnalysisResult]:
+        cache_key = tuple(pick.player_id for pick in self.state.completed_picks)
+        if self._path_analysis_cache_key == cache_key and self._path_analysis_cache is not None:
+            return self._path_analysis_cache
+
+        draft_config = DraftSimulationConfig(simulation_count=40, seed=71, candidate_limit=120)
+        league_result = analyze_league_paths(
+            self.state,
+            self._rankings,
+            config=LeaguePathSimulationConfig(
+                simulation_count=40,
+                seed=71,
+                draft_config=draft_config,
+            ),
+        )
+        strategy_result = analyze_user_strategy_paths(
+            self.state,
+            self._rankings,
+            config=StrategyPathSimulationConfig(
+                simulation_count=12,
+                seed=211,
+                draft_config=draft_config,
+            ),
+        )
+        self._path_analysis_cache_key = cache_key
+        self._path_analysis_cache = (league_result, strategy_result)
+        return self._path_analysis_cache
 
     def _pick_lines(self) -> list[str]:
         if not self.state.completed_picks:

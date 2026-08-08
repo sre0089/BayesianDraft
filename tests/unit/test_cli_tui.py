@@ -101,6 +101,28 @@ def test_cli_summary_shows_rollout_when_user_is_on_clock(tmp_path: Path) -> None
     assert any("Next pick options:" in line for line in controller.view_lines())
 
 
+def test_cli_simulation_tab_shows_path_analysis(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(
+            save_path=tmp_path / "draft.json",
+            scenario_path=Path("data/fixtures/rehearsal_user_pick_8.json"),
+        ),
+    )
+    controller.view_index = 6
+
+    lines = controller.view_lines()
+
+    assert any(line.startswith("After 40 simulated draft paths:") for line in lines)
+    assert "Manager Results" in lines
+    assert "Your Strategy Outcomes" in lines
+    assert any("early path" in line and "avg VORP" in line for line in lines)
+    assert "Risk" in lines
+    assert any(line.startswith("Best case:") for line in lines)
+
+
 def test_cli_product_prompt_helpers(tmp_path: Path) -> None:
     snapshot, state = load_snapshot_and_draft_state()
     controller = CliDraftController(
