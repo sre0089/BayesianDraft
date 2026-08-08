@@ -162,6 +162,7 @@ def create_app(player_snapshot_path: str | Path | None = None) -> FastAPI:
         draft_id: str,
         limit: int = 4,
         simulation_count: int = 25,
+        per_needed_position: int = 1,
     ) -> dict[str, object]:
         state = _get_state_or_404(service, draft_id)
         try:
@@ -171,6 +172,7 @@ def create_app(player_snapshot_path: str | Path | None = None) -> FastAPI:
                 config=CandidateOptimizerConfig(
                     limit=limit,
                     candidate_pool_size=max(limit * 2, limit),
+                    per_needed_position=per_needed_position,
                     simulation_count=simulation_count,
                 ),
             )

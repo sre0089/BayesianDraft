@@ -98,7 +98,10 @@ def test_api_returns_candidate_rollouts_when_user_is_on_clock() -> None:
     for player_id in ["rb_001", "wr_001", "qb_001", "rb_002", "wr_002", "te_001", "wr_003"]:
         client.post("/drafts/api_rollouts/picks", json={"player_id": player_id})
 
-    response = client.get("/drafts/api_rollouts/candidate-rollouts?limit=2&simulation_count=4")
+    response = client.get(
+        "/drafts/api_rollouts/candidate-rollouts?"
+        "limit=2&simulation_count=4&per_needed_position=1"
+    )
 
     assert response.status_code == 200
     body = response.json()
