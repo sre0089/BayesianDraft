@@ -1989,9 +1989,9 @@ def _init_colors() -> None:
         curses.init_pair(6, curses.COLOR_WHITE, -1)
         curses.init_pair(13, curses.COLOR_BLACK, curses.COLOR_GREEN)
         for position, (normal_pair, selected_pair) in POSITION_COLOR_PAIRS.items():
-            normal_bg, selected_bg = _position_background_colors(position)
-            curses.init_pair(normal_pair, curses.COLOR_WHITE, normal_bg)
-            curses.init_pair(selected_pair, curses.COLOR_WHITE, selected_bg)
+            normal_fg, normal_bg, selected_fg, selected_bg = _position_row_colors(position)
+            curses.init_pair(normal_pair, normal_fg, normal_bg)
+            curses.init_pair(selected_pair, selected_fg, selected_bg)
     except curses.error:
         return
 
@@ -2042,17 +2042,21 @@ def _quick_direction_reason(score: RecommendationScore) -> str:
     return " + ".join(parts[:3])
 
 
-def _position_background_colors(position: str) -> tuple[int, int]:
+def _position_row_colors(position: str) -> tuple[int, int, int, int]:
     if curses.COLORS >= 256:
+        # Muted normal backgrounds, darker selected backgrounds.
         colors_256 = {
-            "WR": (28, 22),
-            "RB": (26, 18),
-            "TE": (124, 88),
-            "QB": (92, 53),
-            "DST": (240, 236),
-            "K": (130, 94),
+            "WR": (curses.COLOR_WHITE, 22, curses.COLOR_WHITE, 28),
+            "RB": (curses.COLOR_WHITE, 17, curses.COLOR_WHITE, 19),
+            "TE": (curses.COLOR_WHITE, 52, curses.COLOR_WHITE, 88),
+            "QB": (curses.COLOR_WHITE, 53, curses.COLOR_WHITE, 91),
+            "DST": (curses.COLOR_WHITE, 236, curses.COLOR_WHITE, 240),
+            "K": (curses.COLOR_WHITE, 58, curses.COLOR_WHITE, 94),
         }
-        return colors_256.get(position.upper(), (-1, -1))
+        return colors_256.get(
+            position.upper(),
+            (curses.COLOR_WHITE, -1, curses.COLOR_WHITE, -1),
+        )
 
     fallback_colors = {
         "WR": curses.COLOR_GREEN,
@@ -2063,7 +2067,7 @@ def _position_background_colors(position: str) -> tuple[int, int]:
         "K": curses.COLOR_YELLOW,
     }
     color = fallback_colors.get(position.upper(), -1)
-    return color, color
+    return curses.COLOR_WHITE, curses.COLOR_BLACK, curses.COLOR_WHITE, color
 
 
 def _position_color_pair(position: str, *, selected: bool = False) -> int:
