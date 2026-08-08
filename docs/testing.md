@@ -42,6 +42,20 @@ PYTHONPATH=. python scripts/league_report.py
 
 This prints the validated league setup, draft size, user draft position, and non-blocking config warnings.
 
+## Recommendation Roster Audit
+
+Run sampled drafts where the configured user manager blindly follows the model's top recommendation:
+
+```bash
+PYTHONPATH=. python scripts/audit_model_roster_completion.py \
+  --snapshot data/processed/dynastyprocess_rankings_2026.json \
+  --drafts 10 \
+  --seed 91 \
+  --candidate-limit 250
+```
+
+This reports whether the final user roster covers every configured starter and Flex requirement.
+
 ## Privacy Scan
 
 Run the privacy scan with:
