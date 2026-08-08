@@ -9,6 +9,8 @@ from bayesiandraft.cli.tui import (
     _progress_bar,
     _summary_flex_need_line,
 )
+from bayesiandraft.rankings import build_baseline_rankings
+from bayesiandraft.simulation import build_path_bank
 from scripts.common import load_snapshot_and_draft_state
 
 
@@ -76,6 +78,35 @@ def test_cli_summary_roster_panel_tracks_flex_need(tmp_path: Path) -> None:
     )
 
     assert _summary_flex_need_line(controller) == "FLEX: 0/1 need 1"
+
+
+def test_cli_uses_path_bank_for_fast_opportunity_context(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    path_bank = build_path_bank(
+        state,
+        build_baseline_rankings(snapshot),
+        snapshot_id=snapshot.snapshot.snapshot_id,
+        simulation_count=3,
+        seed=51,
+        candidate_limit=30,
+    )
+    path_bank_path = tmp_path / "path_bank.json"
+    path_bank.save(path_bank_path)
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(
+            save_path=tmp_path / "draft.json",
+            path_bank_path=path_bank_path,
+        ),
+    )
+
+    lines = controller.view_lines()
+
+    assert any("Path bank:" in line and "similar paths" in line for line in lines)
+    assert any("Opportunity:" in line for line in lines)
+    assert any("Expected later:" in line for line in lines)
+    assert any("opp" in line for line in lines if line.startswith("Breakdown:"))
 
 
 def test_cli_summary_recommendation_updates_after_pick(tmp_path: Path) -> None:

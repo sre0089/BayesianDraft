@@ -33,6 +33,10 @@ def main() -> None:
         "--audit-path",
         help="Optional path for accepted-pick audit events.",
     )
+    parser.add_argument(
+        "--path-bank",
+        help="Optional precomputed path-bank JSON for fast opportunity-cost recommendations.",
+    )
     args = parser.parse_args()
 
     snapshot, state = load_snapshot_and_draft_state(args.snapshot)
@@ -43,6 +47,7 @@ def main() -> None:
             save_path=Path(args.save_path),
             audit_path=None if args.audit_path is None else Path(args.audit_path),
             scenario_path=None if args.scenario is None else Path(args.scenario),
+            path_bank_path=None if args.path_bank is None else Path(args.path_bank),
             auto_pick_to_user=args.auto_pick_to_user,
             autosave=not args.no_autosave,
             load_existing_save=args.load_save,

@@ -18,14 +18,17 @@ from bayesiandraft.rankings import RankingRow, build_baseline_rankings
 from bayesiandraft.recommendations import (
     CandidateOptimizationResult,
     CandidateOptimizerConfig,
+    PathBankContext,
     PositionalRecommendationGroup,
     RecommendationResult,
     RecommendationScore,
+    build_path_bank_context,
     optimize_candidates,
     recommend_players,
     recommend_players_by_needed_position,
 )
 from bayesiandraft.simulation import (
+    DraftPathBank,
     DraftSimulationConfig,
     LeaguePathAnalysisResult,
     LeaguePathProgress,
@@ -64,6 +67,7 @@ class CliDraftConfig:
     save_path: Path
     audit_path: Path | None = None
     scenario_path: Path | None = None
+    path_bank_path: Path | None = None
     auto_pick_to_user: bool = False
     autosave: bool = True
     load_existing_save: bool = False
@@ -106,11 +110,14 @@ class CliDraftController:
             projection.player_id: projection for projection in snapshot.projections
         }
         self._adp_by_player_id = {adp.player_id: adp for adp in snapshot.adp}
+        self.path_bank: DraftPathBank | None = self._load_path_bank(config.path_bank_path)
         self._path_analysis_cache_key: tuple[str, ...] | None = None
         self._path_analysis_cache: tuple[
             LeaguePathAnalysisResult,
             StrategyPathAnalysisResult,
         ] | None = None
+        self._path_bank_context_key: tuple[str, ...] | None = None
+        self._path_bank_context: PathBankContext | None = None
         self.path_analysis_logs: list[str] = [
             "Press a on this tab to run multi-path draft analysis."
         ]
@@ -234,12 +241,34 @@ class CliDraftController:
 
     def recommendation(self) -> RecommendationResult | None:
         try:
-            return recommend_players(self.state, self._rankings)
+            return recommend_players(
+                self.state,
+                self._rankings,
+                path_context=self.path_bank_context(),
+            )
         except ValueError:
             return None
 
     def positional_recommendations(self) -> list[PositionalRecommendationGroup]:
-        return recommend_players_by_needed_position(self.state, self._rankings)
+        return recommend_players_by_needed_position(
+            self.state,
+            self._rankings,
+            path_context=self.path_bank_context(),
+        )
+
+    def path_bank_context(self) -> PathBankContext | None:
+        if self.path_bank is None:
+            return None
+        cache_key = self._path_analysis_key()
+        if self._path_bank_context_key == cache_key:
+            return self._path_bank_context
+        self._path_bank_context = build_path_bank_context(
+            self.state,
+            self._rankings,
+            self.path_bank,
+        )
+        self._path_bank_context_key = cache_key
+        return self._path_bank_context
 
     def quick_direction(self) -> QuickDirection | None:
         candidates: list[tuple[PositionalRecommendationGroup, RecommendationScore]] = []
@@ -341,6 +370,20 @@ class CliDraftController:
         self.state.save(self.config.save_path)
         saved_at = datetime.now().strftime("%H:%M:%S")
         self.last_save_message = f"Autosaved {saved_at} to {self.config.save_path}"
+
+    def _load_path_bank(self, path: Path | None) -> DraftPathBank | None:
+        if path is None:
+            return None
+        try:
+            path_bank = DraftPathBank.load(path)
+        except OSError:
+            self.status_message = f"Path bank not found: {path}"
+            return None
+        except ValueError:
+            self.status_message = f"Path bank invalid: {path}"
+            return None
+        self.status_message = f"Loaded path bank with {path_bank.metadata.simulation_count} paths."
+        return path_bank
 
     def _audit_pick(
         self,
@@ -518,10 +561,25 @@ class CliDraftController:
                 f"({quick_direction.player_name}, score {quick_direction.score:.1f})"
             )
             lines.append(f"Why: {quick_direction.reason}; updates after every pick.")
+        lines.extend(self._path_bank_assistant_lines())
         lines.extend(self._deep_strategy_assistant_lines(quick_direction))
         risk_text = primary.explanation[0] if primary.explanation else "board value shifts."
         lines.append(f"Main risk: {risk_text}")
         return lines
+
+    def _path_bank_assistant_lines(self) -> list[str]:
+        context = self.path_bank_context()
+        if context is None:
+            return ["Path bank: not loaded."]
+        if context.next_user_pick is None:
+            return ["Path bank: loaded; no future user pick to price."]
+        return [
+            (
+                f"Path bank: {context.sample_quality} sample, "
+                f"{context.similar_path_count} similar paths, next user {context.next_user_pick}."
+            ),
+            *self._opportunity_summary_lines(context),
+        ]
 
     def _deep_strategy_assistant_lines(
         self,
@@ -634,6 +692,8 @@ class CliDraftController:
         lines = [
             "Top 5 by positions you still need",
             "These groups come from your current roster vacancies and update after every pick.",
+            "",
+            *self._path_bank_detail_lines(),
             "",
             *self._positional_recommendation_lines(),
             "",
@@ -763,6 +823,39 @@ class CliDraftController:
             "",
         ]
 
+    def _path_bank_detail_lines(self) -> list[str]:
+        context = self.path_bank_context()
+        if context is None:
+            return ["Path bank: not loaded. Use --path-bank for fast opportunity cost."]
+        lines = [
+            (
+                f"Path bank: {context.sample_quality} sample | "
+                f"exact {context.exact_match_count} | similar {context.similar_path_count}"
+            )
+        ]
+        lines.extend(self._opportunity_summary_lines(context))
+        return lines
+
+    def _opportunity_summary_lines(self, context: PathBankContext) -> list[str]:
+        estimates = sorted(
+            context.opportunity_by_position.values(),
+            key=lambda estimate: (-estimate.opportunity_cost, estimate.position),
+        )
+        if not estimates:
+            return ["Opportunity: no future replacement values available."]
+        parts = [
+            f"{estimate.position} +{estimate.opportunity_cost:.1f}"
+            for estimate in estimates[:4]
+        ]
+        later_parts = [
+            f"{estimate.position}: {estimate.expected_later_player_name or '-'}"
+            for estimate in estimates[:3]
+        ]
+        return [
+            "Opportunity: " + " | ".join(parts),
+            "Expected later: " + " | ".join(later_parts),
+        ]
+
     def _next_pick_options_text(self, options: dict[str, float]) -> str:
         if not options:
             return "Next pick options: no ranked options projected"
@@ -789,6 +882,7 @@ class CliDraftController:
             f"Breakdown: need {recommendation.need_score:+.1f} | "
             f"value {recommendation.value_score:+.1f} | tier {recommendation.tier_score:+.1f} | "
             f"drop {recommendation.tier_drop_score:+.1f} | "
+            f"opp {recommendation.opportunity_cost_score:+.1f} | "
             f"risk {recommendation.next_pick_risk_score:+.1f} | "
             f"market {recommendation.market_score:+.1f} | "
             f"penalty {-recommendation.penalty:+.1f}"
