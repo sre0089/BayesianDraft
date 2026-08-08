@@ -1799,14 +1799,7 @@ def _draw_rankings_lines(
         if current_y - y >= max_lines:
             return
         selected = index == controller.selection_index
-        _safe_addnstr(
-            screen,
-            current_y,
-            x,
-            _ranking_line(row, selected=selected).ljust(width),
-            width,
-            _ranking_line_attrs(row, selected=selected),
-        )
+        _draw_ranking_row(screen, current_y, x, width, row, selected=selected)
         current_y += 1
 
     if current_y - y + detail_line_count > max_lines:
@@ -1824,6 +1817,31 @@ def _draw_rankings_lines(
             return
         _safe_addnstr(screen, current_y, x, line, width)
         current_y += 1
+
+
+def _draw_ranking_row(
+    screen: curses.window,
+    y: int,
+    x: int,
+    width: int,
+    row: RankingRow,
+    *,
+    selected: bool,
+) -> None:
+    line = _ranking_line(row, selected=selected).ljust(width)
+    stats_start = min(_ranking_stats_start_column(), width)
+    left_attrs = curses.A_BOLD if selected else 0
+    _safe_addnstr(screen, y, x, line[:stats_start], stats_start, left_attrs)
+    if stats_start >= width:
+        return
+    _safe_addnstr(
+        screen,
+        y,
+        x + stats_start,
+        line[stats_start:],
+        width - stats_start,
+        _ranking_line_attrs(row, selected=selected),
+    )
 
 
 def _draw_decision_lines(
@@ -2080,6 +2098,15 @@ def _ranking_line_attrs(row: RankingRow, *, selected: bool) -> int:
     if selected:
         attrs |= curses.A_BOLD
     return attrs
+
+
+def _ranking_stats_start_column() -> int:
+    marker_width = 2
+    rank_width = 4
+    rank_gap = 2
+    name_width = 28
+    name_gap = 1
+    return marker_width + rank_width + rank_gap + name_width + name_gap
 
 
 def _ranking_line(row: RankingRow, *, selected: bool) -> str:

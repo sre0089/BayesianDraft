@@ -8,6 +8,7 @@ from bayesiandraft.cli.tui import (
     _is_quick_search_key,
     _position_color_pair,
     _progress_bar,
+    _ranking_stats_start_column,
     _summary_flex_need_line,
 )
 from bayesiandraft.rankings import build_baseline_rankings
@@ -439,6 +440,10 @@ def test_cli_position_color_pairs_match_rankings_palette() -> None:
     assert _position_color_pair("K", selected=True) == 19
     assert _position_color_pair("unknown") == 6
     assert _position_color_pair("unknown", selected=True) == 6
+
+
+def test_cli_ranking_stats_highlight_starts_after_player_name() -> None:
+    assert _ranking_stats_start_column() == 37
 
 
 def test_cli_controller_logs_decision_audit_event(tmp_path: Path) -> None:
