@@ -28,7 +28,8 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
     assert any("Best overall recommendation" in line for line in controller.view_lines())
     assert "Draft Assistant" in controller.view_lines()
     assert any("Current recommendation:" in line for line in controller.view_lines())
-    assert any("run Simulation" in line for line in controller.view_lines())
+    assert any("Quick direction:" in line for line in controller.view_lines())
+    assert any("Deep sim: run Simulation" in line for line in controller.view_lines())
     assert any(line.startswith("Best overall:") for line in controller.view_lines())
     assert any(line.startswith("Breakdown:") for line in controller.view_lines())
     assert any("drop" in line and "risk" in line for line in controller.view_lines())
@@ -85,6 +86,7 @@ def test_cli_draft_assistant_uses_strategy_analysis(tmp_path: Path) -> None:
 
     lines = controller.view_lines()
 
+    assert any("Quick direction:" in line for line in lines)
     assert any("Best next-pick direction:" in line for line in lines)
     assert any("Avoid unless value falls:" in line for line in lines)
 
@@ -112,6 +114,9 @@ def test_cli_marks_simulation_stale_after_board_changes(tmp_path: Path) -> None:
     lines = controller.view_lines()
     assert "Multi-path draft analysis" in lines
     assert any("Simulation stale:" in line for line in lines)
+    controller.view_index = 0
+    assert any("Quick direction:" in line for line in controller.view_lines())
+    assert any("Deep sim: stale" in line for line in controller.view_lines())
 
 
 def test_cli_managers_show_team_strength_scores(tmp_path: Path) -> None:

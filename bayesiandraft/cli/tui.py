@@ -69,6 +69,15 @@ class CliDraftConfig:
     load_existing_save: bool = False
 
 
+@dataclass(frozen=True)
+class QuickDirection:
+    position: str
+    player_id: str
+    player_name: str
+    score: float
+    reason: str
+
+
 class CliDraftController:
     def __init__(
         self,
@@ -231,6 +240,35 @@ class CliDraftController:
 
     def positional_recommendations(self) -> list[PositionalRecommendationGroup]:
         return recommend_players_by_needed_position(self.state, self._rankings)
+
+    def quick_direction(self) -> QuickDirection | None:
+        candidates: list[tuple[PositionalRecommendationGroup, RecommendationScore]] = []
+        for group in self.positional_recommendations():
+            if group.candidates:
+                candidates.append((group, group.candidates[0]))
+
+        if not candidates:
+            recommendation = self.recommendation()
+            if recommendation is None:
+                return None
+            primary = recommendation.primary
+            ranking = self._ranking_by_id(primary.player_id)
+            return QuickDirection(
+                position="-" if ranking is None else ranking.position.value,
+                player_id=primary.player_id,
+                player_name=self._player_name(primary.player_id),
+                score=primary.total_score,
+                reason="best overall board value",
+            )
+
+        group, score = max(candidates, key=lambda item: item[1].total_score)
+        return QuickDirection(
+            position=group.position,
+            player_id=score.player_id,
+            player_name=self._player_name(score.player_id),
+            score=score.total_score,
+            reason=_quick_direction_reason(score),
+        )
 
     def rollout_recommendation(self) -> CandidateOptimizationResult | None:
         try:
@@ -457,30 +495,52 @@ class CliDraftController:
         primary = recommendation.primary
         primary_ranking = self._ranking_by_id(primary.player_id)
         primary_name = primary_ranking.full_name if primary_ranking else primary.player_id
+        quick_direction = self.quick_direction()
         lines = [
             "Draft Assistant",
             f"Current recommendation: {primary_name}",
         ]
-        if self._path_analysis_cache is None:
-            lines.append("Strategy: run Simulation with a to compare next-pick paths.")
+        if quick_direction is None:
+            lines.append("Quick direction: no live direction available.")
         else:
-            _league_result, strategy_result = self._path_analysis_cache
-            if strategy_result.paths:
-                best_path = strategy_result.paths[0]
-                worst_path = strategy_result.paths[-1]
-                lines.append(
-                    f"Best next-pick direction: {best_path.position} "
-                    f"({best_path.average_vorp:.1f} avg VORP)"
-                )
-                lines.append(
-                    f"Avoid unless value falls: {worst_path.position} "
-                    f"({worst_path.average_vorp:.1f} avg VORP)"
-                )
-            else:
-                lines.append("Strategy: no future user pick is available to test.")
+            lines.append(
+                f"Quick direction: {quick_direction.position} "
+                f"({quick_direction.player_name}, score {quick_direction.score:.1f})"
+            )
+            lines.append(f"Why: {quick_direction.reason}; updates after every pick.")
+        lines.extend(self._deep_strategy_assistant_lines(quick_direction))
         risk_text = primary.explanation[0] if primary.explanation else "board value shifts."
         lines.append(f"Main risk: {risk_text}")
         return lines
+
+    def _deep_strategy_assistant_lines(
+        self,
+        quick_direction: QuickDirection | None,
+    ) -> list[str]:
+        if self._path_analysis_cache is None:
+            return ["Deep sim: run Simulation with a when you have time."]
+        if self._path_analysis_cache_key != self._path_analysis_key():
+            return ["Deep sim: stale; quick direction is using the live board."]
+
+        _league_result, strategy_result = self._path_analysis_cache
+        if not strategy_result.paths:
+            return ["Deep sim: no future user pick is available to test."]
+
+        best_path = strategy_result.paths[0]
+        worst_path = strategy_result.paths[-1]
+        agreement = ""
+        if quick_direction is not None and best_path.position == quick_direction.position:
+            agreement = " and agrees with quick direction"
+        return [
+            (
+                f"Best next-pick direction: {best_path.position} "
+                f"({best_path.average_vorp:.1f} avg VORP{agreement})"
+            ),
+            (
+                f"Avoid unless value falls: {worst_path.position} "
+                f"({worst_path.average_vorp:.1f} avg VORP)"
+            ),
+        ]
 
     def _visible_rankings(self, *, visible_count: int) -> list[tuple[int, RankingRow]]:
         rows = self.selectable_rankings()
@@ -674,6 +734,11 @@ class CliDraftController:
         if self._path_analysis_cache is None:
             return [
                 "Path analysis: run Simulation with a for draft paths and strategy comparison.",
+                "",
+            ]
+        if self._path_analysis_cache_key != self._path_analysis_key():
+            return [
+                "Path analysis: stale; Summary quick direction is live. Press a to rerun.",
                 "",
             ]
         _league_result, strategy_result = self._path_analysis_cache
@@ -929,7 +994,6 @@ class CliDraftController:
     def _invalidate_path_analysis(self) -> None:
         had_analysis = self._path_analysis_cache is not None
         self._path_analysis_cache_key = None
-        self._path_analysis_cache = None
         if had_analysis:
             self.path_analysis_logs = [
                 "Simulation stale: board changed. Press a to rerun path analysis."
@@ -1613,6 +1677,23 @@ def _safe_addnstr(
         screen.addnstr(y, x, text, max_width, attrs)
     except curses.error:
         return
+
+
+def _quick_direction_reason(score: RecommendationScore) -> str:
+    parts: list[str] = []
+    if score.need_score > 0:
+        parts.append("roster need")
+    if score.value_score > 0:
+        parts.append("player value")
+    if score.tier_score > 0 or score.tier_drop_score > 0:
+        parts.append("tier pressure")
+    if score.next_pick_risk_score > 0:
+        parts.append("next-pick risk")
+    if score.market_score > 0:
+        parts.append("ADP discount")
+    if not parts:
+        return "best current score"
+    return " + ".join(parts[:3])
 
 
 def _ranking_line(row: RankingRow, *, selected: bool) -> str:
