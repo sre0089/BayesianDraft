@@ -2062,14 +2062,14 @@ def _quick_direction_reason(score: RecommendationScore) -> str:
 
 def _position_row_colors(position: str) -> tuple[int, int, int, int]:
     if curses.COLORS >= 256:
-        # Muted normal backgrounds, darker selected backgrounds.
+        # Modern muted backgrounds, stronger selected backgrounds.
         colors_256 = {
-            "WR": (curses.COLOR_WHITE, 22, curses.COLOR_WHITE, 28),
-            "RB": (curses.COLOR_WHITE, 17, curses.COLOR_WHITE, 19),
-            "TE": (curses.COLOR_WHITE, 52, curses.COLOR_WHITE, 88),
-            "QB": (curses.COLOR_WHITE, 53, curses.COLOR_WHITE, 91),
-            "DST": (curses.COLOR_WHITE, 236, curses.COLOR_WHITE, 240),
-            "K": (curses.COLOR_WHITE, 58, curses.COLOR_WHITE, 94),
+            "WR": (curses.COLOR_WHITE, 23, curses.COLOR_WHITE, 29),
+            "RB": (curses.COLOR_WHITE, 24, curses.COLOR_WHITE, 31),
+            "TE": (curses.COLOR_WHITE, 89, curses.COLOR_WHITE, 132),
+            "QB": (curses.COLOR_WHITE, 54, curses.COLOR_WHITE, 98),
+            "DST": (curses.COLOR_WHITE, 237, curses.COLOR_WHITE, 244),
+            "K": (curses.COLOR_WHITE, 94, curses.COLOR_WHITE, 136),
         }
         return colors_256.get(
             position.upper(),
