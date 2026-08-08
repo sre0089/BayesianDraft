@@ -567,7 +567,7 @@ class CliDraftController:
             "",
             *self._positional_recommendation_lines(),
             "",
-            *self._rollout_recommendation_lines(recommendation.primary.player_id),
+            *self._path_guidance_lines(),
             "",
             "Best overall recommendation",
             "Scores combine VORP, starter need, tier, ADP value, availability, and penalties.",
@@ -663,34 +663,28 @@ class CliDraftController:
                 self._recommendation_breakdown_line(primary),
                 f"Availability before next pick: {primary.next_pick_availability:.0%}",
                 "",
-                *self._rollout_summary_lines(primary.player_id),
+                *self._path_guidance_lines(),
                 "Why:",
                 *[f"- {item}" for item in primary.explanation[:4]],
             ]
         )
         return lines
 
-    def _rollout_summary_lines(self, baseline_player_id: str) -> list[str]:
-        rollout = self.rollout_recommendation()
-        if rollout is None:
-            return ["Best path: available when your team is on clock.", ""]
-
-        primary = rollout.primary
-        ranking = self._ranking_by_id(primary.player_id)
-        name = ranking.full_name if ranking else primary.player_id
-        comparison = (
-            "matches best-now pick"
-            if primary.player_id == baseline_player_id
-            else "differs from best-now pick"
-        )
+    def _path_guidance_lines(self) -> list[str]:
+        if self._path_analysis_cache is None:
+            return [
+                "Path analysis: run Simulation with a for draft paths and strategy comparison.",
+                "",
+            ]
+        _league_result, strategy_result = self._path_analysis_cache
+        if not strategy_result.paths:
+            return ["Path analysis: no future user pick is available to test.", ""]
+        best_path = strategy_result.paths[0]
         return [
-            f"Best path: {name} score={primary.optimizer_score:.1f} ({comparison})",
             (
-                f"Rollout: avg VORP {primary.average_vorp:.1f} | "
-                f"downside {primary.downside_vorp:.1f} | "
-                f"vol {primary.vorp_volatility:.1f}"
+                f"Path analysis: best next-pick direction {best_path.position} "
+                f"({best_path.average_vorp:.1f} avg VORP, top3 {best_path.top_three_rate:.0%})."
             ),
-            self._next_pick_options_text(primary.next_pick_position_options),
             "",
         ]
 

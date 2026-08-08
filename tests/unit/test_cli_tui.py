@@ -32,7 +32,7 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
     assert any(line.startswith("Best overall:") for line in controller.view_lines())
     assert any(line.startswith("Breakdown:") for line in controller.view_lines())
     assert any("drop" in line and "risk" in line for line in controller.view_lines())
-    assert any("Best path:" in line for line in controller.view_lines())
+    assert any("Path analysis:" in line for line in controller.view_lines())
 
     controller.move_view(1)
 
@@ -134,7 +134,7 @@ def test_cli_managers_show_team_strength_scores(tmp_path: Path) -> None:
     assert any("Example RB One" in line and "proj=" in line and "vorp=" in line for line in lines)
 
 
-def test_cli_summary_shows_rollout_when_user_is_on_clock(tmp_path: Path) -> None:
+def test_cli_summary_does_not_auto_run_rollout_when_user_is_on_clock(tmp_path: Path) -> None:
     snapshot, state = load_snapshot_and_draft_state()
     controller = CliDraftController(
         snapshot=snapshot,
@@ -146,12 +146,28 @@ def test_cli_summary_shows_rollout_when_user_is_on_clock(tmp_path: Path) -> None
     )
 
     assert controller.state.manager_on_clock == "user_manager"
-    assert any("Best path:" in line and "score=" in line for line in controller.view_lines())
-    assert any(
-        "Rollout: avg VORP" in line and "downside" in line and "vol" in line
-        for line in controller.view_lines()
+    assert any("Path analysis: run Simulation with a" in line for line in controller.view_lines())
+    assert not any("Rollout: avg VORP" in line for line in controller.view_lines())
+
+
+def test_cli_summary_stays_light_at_later_user_pick(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state(
+        "data/processed/dynastyprocess_rankings_2026.json"
     )
-    assert any("Next pick options:" in line for line in controller.view_lines())
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(save_path=tmp_path / "draft.json", auto_pick_to_user=True),
+    )
+    while controller.state.current_overall_pick < 21:
+        controller.draft_selected_player()
+
+    assert controller.state.manager_on_clock == "user_manager"
+
+    lines = controller.view_lines()
+
+    assert any("Path analysis: run Simulation with a" in line for line in lines)
+    assert not any("Rollout: avg VORP" in line for line in lines)
 
 
 def test_cli_simulation_tab_shows_path_analysis(tmp_path: Path) -> None:
@@ -506,7 +522,7 @@ def test_cli_controller_renders_recommendations_roster_health_and_picks(
     controller.view_index = 2
     recommendation_lines = controller.view_lines()
     assert recommendation_lines[0] == "Top 5 by positions you still need"
-    assert any("Best path rollout" in line for line in recommendation_lines)
+    assert any("Path analysis:" in line for line in recommendation_lines)
     assert any("Best overall recommendation" in line for line in recommendation_lines)
     assert any("RB need=" in line for line in recommendation_lines)
     assert any("WR need=" in line for line in recommendation_lines)
@@ -532,7 +548,7 @@ def test_cli_controller_renders_recommendations_roster_health_and_picks(
     assert any("manager_01" in line for line in controller.view_lines())
 
 
-def test_cli_recommendations_show_rollout_section_on_user_pick(tmp_path: Path) -> None:
+def test_cli_recommendations_use_cached_path_guidance_on_user_pick(tmp_path: Path) -> None:
     snapshot, state = load_snapshot_and_draft_state()
     controller = CliDraftController(
         snapshot=snapshot,
@@ -543,8 +559,10 @@ def test_cli_recommendations_show_rollout_section_on_user_pick(tmp_path: Path) -
         ),
     )
     controller.view_index = 2
+
+    assert any("Path analysis: run Simulation with a" in line for line in controller.view_lines())
+
+    controller.run_path_analysis()
     lines = controller.view_lines()
 
-    assert any("Best path rollout" in line for line in lines)
-    assert any("avg_vorp=" in line for line in lines)
-    assert any("path pick" in line or "same as best-now" in line for line in lines)
+    assert any("Path analysis: best next-pick direction" in line for line in lines)
