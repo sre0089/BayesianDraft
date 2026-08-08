@@ -18,6 +18,8 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
     assert any("Pick 1/" in line for line in controller.view_lines())
     assert any("Live entry:" in line for line in controller.view_lines())
     assert any("| __ )" in line for line in controller.view_lines())
+    assert any("Best overall recommendation" in line for line in controller.view_lines())
+    assert any(line.startswith("Best overall:") for line in controller.view_lines())
 
     controller.move_view(1)
 
@@ -26,6 +28,25 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
     assert any(line.startswith(">") for line in controller.view_lines())
     assert any("Selected:" in line for line in controller.view_lines())
     assert any("Projection: mean=" in line for line in controller.view_lines())
+
+
+def test_cli_summary_recommendation_updates_after_pick(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(save_path=tmp_path / "draft.json"),
+    )
+
+    before = next(
+        line for line in controller.view_lines() if line.startswith("Best overall:")
+    )
+
+    controller.draft_selected_player()
+
+    after = next(line for line in controller.view_lines() if line.startswith("Best overall:"))
+    assert before != after
+    assert "Example RB One" not in after
 
 
 def test_cli_product_prompt_helpers(tmp_path: Path) -> None:

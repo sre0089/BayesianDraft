@@ -16,6 +16,7 @@ from bayesiandraft.rankings import RankingRow, build_baseline_rankings
 from bayesiandraft.recommendations import (
     PositionalRecommendationGroup,
     RecommendationResult,
+    RecommendationScore,
     recommend_players,
     recommend_players_by_needed_position,
 )
@@ -262,6 +263,8 @@ class CliDraftController:
             f"Your roster {summary.user_roster_size}",
             f"Next user pick {next_pick}",
             "",
+            *self._best_overall_recommendation_lines(include_header=True),
+            "",
             "Live entry: draft the selected player for whoever is currently on clock.",
             (
                 "Shortcuts: left/right views, up/down select players/managers, "
@@ -299,12 +302,7 @@ class CliDraftController:
             "",
         ]
         for row in rows:
-            ranking = self._ranking_by_id(row.player_id)
-            name = ranking.full_name if ranking else row.player_id
-            lines.append(
-                f"{row.rank:>3}. {name:<28} score={row.total_score:>7.1f} "
-                f"need={row.need_score:>5.1f} avail={row.next_pick_availability:.0%}"
-            )
+            lines.append(self._recommendation_score_line(row, include_rank=True))
             lines.extend(f"     - {item}" for item in row.explanation)
             lines.append("")
         return lines
@@ -330,6 +328,51 @@ class CliDraftController:
         if not lines:
             lines.append("No open starter or flex needs remain.")
         return lines
+
+    def _best_overall_recommendation_lines(self, *, include_header: bool) -> list[str]:
+        recommendation = self.recommendation()
+        if recommendation is None:
+            if include_header:
+                return ["Best overall recommendation", "No recommendation available."]
+            return ["No recommendation available."]
+
+        primary = recommendation.primary
+        lines: list[str] = []
+        if include_header:
+            lines.extend(
+                [
+                    "Best overall recommendation",
+                    (
+                        "Adjusted for your current roster, open needs, player value, "
+                        "tier, ADP, and availability."
+                    ),
+                ]
+            )
+        lines.extend(
+            [
+                self._recommendation_score_line(primary, include_rank=False),
+                f"Availability before next pick: {primary.next_pick_availability:.0%}",
+                "Why:",
+                *[f"- {item}" for item in primary.explanation[:4]],
+            ]
+        )
+        return lines
+
+    def _recommendation_score_line(
+        self,
+        recommendation: RecommendationScore,
+        *,
+        include_rank: bool,
+    ) -> str:
+        ranking = self._ranking_by_id(recommendation.player_id)
+        name = ranking.full_name if ranking else recommendation.player_id
+        position = "-" if ranking is None else ranking.position.value
+        prefix = f"{recommendation.rank:>3}. " if include_rank else "Best overall: "
+        return (
+            f"{prefix}{name} ({position}) score={recommendation.total_score:.1f} "
+            f"need={recommendation.need_score:.1f} value={recommendation.value_score:.1f} "
+            f"tier={recommendation.tier_score:.1f} market={recommendation.market_score:.1f}"
+        )
 
     def _roster_lines(self) -> list[str]:
         user_manager_id = self.state.league_config.league.user_manager_id
@@ -683,7 +726,6 @@ def _draw_summary_workspace(
     right_width = 38
     center_width = width - left_width - right_width - 2
     summary = summarize_draft_state(controller.state)
-    recommendation = controller.recommendation()
     user_manager_id = controller.state.league_config.league.user_manager_id
     user_roster = controller.state.rosters[user_manager_id]
 
@@ -706,27 +748,10 @@ def _draw_summary_workspace(
     center_x = x + left_width + 1
     _draw_box(screen, y, center_x, height, center_width, "Decision")
     decision_lines = [
-        "Live board",
-        "Enter every pick as it happens. Recommendations update after each pick.",
+        *controller._best_overall_recommendation_lines(include_header=True),
         "",
+        "Enter every pick as it happens; this updates after each pick.",
     ]
-    if recommendation is None:
-        decision_lines.append("No recommendation available.")
-    else:
-        primary = recommendation.primary
-        ranking = controller._ranking_by_id(primary.player_id)
-        name = ranking.full_name if ranking else primary.player_id
-        decision_lines.extend(
-            [
-                f"Primary: {name}",
-                f"Score: {primary.total_score:.1f}",
-                f"Confidence: {primary.confidence:.0%}",
-                f"Next-pick availability: {primary.next_pick_availability:.0%}",
-                "",
-                "Why:",
-                *[f"- {item}" for item in primary.explanation[:5]],
-            ]
-        )
     _draw_lines(screen, decision_lines, y + 1, center_x + 2, height - 2, center_width - 4)
 
     right_x = center_x + center_width + 1
