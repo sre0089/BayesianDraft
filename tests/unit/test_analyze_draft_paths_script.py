@@ -46,7 +46,7 @@ def test_analyze_draft_paths_formats_summary() -> None:
     assert "Manager Results" in report
     assert "Your Team" in report
     assert "Your Strategy Outcomes" in report
-    assert "RB early path" in report
+    assert "Next pick RB" in report
     assert "Risk" in report
     assert "Best case:" in report
     assert "Top 3 rate:" in report

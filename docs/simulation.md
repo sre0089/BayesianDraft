@@ -48,8 +48,8 @@ Manager Results
 2. Your Team    avg VORP   298.8   avg pts  2835.7   avg finish  3.0
 
 Your Strategy Outcomes
-RB early path   avg VORP   304.2   avg pts  2860.5   top3   42%
-WR early path   avg VORP   296.8   avg pts  2824.1   top3   38%
+Next pick RB    avg VORP   304.2   avg pts  2860.5   top3   42%
+Next pick WR    avg VORP   296.8   avg pts  2824.1   top3   38%
 
 Risk
 Best case:   338.5 VORP

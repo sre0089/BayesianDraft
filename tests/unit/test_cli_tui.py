@@ -124,10 +124,10 @@ def test_cli_simulation_tab_shows_path_analysis(tmp_path: Path) -> None:
     lines = controller.view_lines()
 
     assert any(line.startswith("After 40 simulated draft paths:") for line in lines)
-    assert "Manager Results" in lines
+    assert "Manager Results (ranked by avg finish)" in lines
     assert "Draft Strategy Analysis" in lines
     assert any(
-        "early path" in line and "avg VORP" in line and "target" in line
+        "Next pick" in line and "avg VORP" in line and "target" in line
         for line in lines
     )
     assert "Risk" in lines

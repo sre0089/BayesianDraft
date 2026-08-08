@@ -209,7 +209,7 @@ def _strategy_summary(
     forced_player_id = _most_common(outcome.forced_player_id for outcome in outcomes)
     forced_player_name = _most_common(outcome.forced_player_name for outcome in outcomes)
     return StrategyPathSummary(
-        label=f"{position} early path",
+        label=f"Next pick {position}",
         position=position,
         forced_player_id=forced_player_id,
         forced_player_name=forced_player_name,

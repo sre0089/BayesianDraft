@@ -736,7 +736,7 @@ class CliDraftController:
         lines = [
             f"After {league_result.simulation_count} simulated draft paths:",
             "",
-            "Manager Results",
+            "Manager Results (ranked by avg finish)",
         ]
         for index, manager in enumerate(league_result.manager_results[:8], start=1):
             lines.append(
@@ -796,7 +796,11 @@ class CliDraftController:
         if self._path_analysis_cache_key == cache_key and self._path_analysis_cache is not None:
             return self._path_analysis_cache
 
-        draft_config = DraftSimulationConfig(simulation_count=40, seed=71, candidate_limit=120)
+        draft_config = DraftSimulationConfig(
+            simulation_count=40,
+            seed=71,
+            candidate_limit=max(len(self._rankings), 1),
+        )
         league_result = analyze_league_paths(
             self.state,
             self._rankings,
