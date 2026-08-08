@@ -26,6 +26,14 @@ from bayesiandraft.simulation.league_paths import (
     UserRiskSummary,
     analyze_league_paths,
 )
+from bayesiandraft.simulation.path_bank import (
+    DraftPath,
+    DraftPathBank,
+    PathBankMetadata,
+    PathBankPick,
+    build_path_bank,
+    league_config_hash,
+)
 from bayesiandraft.simulation.roster_strength import RosterStrengthScore, score_roster_strength
 from bayesiandraft.simulation.strategy_paths import (
     StrategyPathAnalysisResult,
@@ -41,11 +49,15 @@ __all__ = [
     "AvailabilityEstimate",
     "CandidateRolloutResult",
     "DraftSimulationConfig",
+    "DraftPath",
+    "DraftPathBank",
     "LeaguePathAnalysisResult",
     "LeaguePathProgress",
     "LeaguePathProgressCallback",
     "LeaguePathSimulationConfig",
     "ManagerPathSummary",
+    "PathBankMetadata",
+    "PathBankPick",
     "RosterStrengthScore",
     "SimulatedDraft",
     "SimulationBenchmarkResult",
@@ -58,8 +70,10 @@ __all__ = [
     "analyze_league_paths",
     "analyze_user_strategy_paths",
     "benchmark_remaining_draft",
+    "build_path_bank",
     "estimate_all_availability",
     "estimate_availability",
+    "league_config_hash",
     "simulate_candidate_rollout",
     "simulate_remaining_draft",
     "score_roster_strength",
