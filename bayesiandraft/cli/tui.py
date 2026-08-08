@@ -447,6 +447,8 @@ class CliDraftController:
             "",
             *self._positional_recommendation_lines(),
             "",
+            *self._rollout_recommendation_lines(recommendation.primary.player_id),
+            "",
             "Best overall recommendation",
             "Scores combine VORP, starter need, tier, ADP value, availability, and penalties.",
             "",
@@ -478,6 +480,39 @@ class CliDraftController:
             lines.append("")
         if not lines:
             lines.append("No open starter or flex needs remain.")
+        return lines
+
+    def _rollout_recommendation_lines(self, baseline_player_id: str) -> list[str]:
+        rollout = self.rollout_recommendation()
+        if rollout is None:
+            return [
+                "Best path rollout",
+                "Available when your team is on clock.",
+            ]
+
+        lines = [
+            "Best path rollout",
+            "Simulates candidate picks and ranks the resulting roster paths.",
+            "",
+        ]
+        for index, candidate in enumerate([rollout.primary, *rollout.alternatives], start=1):
+            ranking = self._ranking_by_id(candidate.player_id)
+            name = ranking.full_name if ranking else candidate.player_id
+            marker = (
+                "same as best-now"
+                if candidate.player_id == baseline_player_id
+                else "path pick"
+            )
+            lines.append(
+                f"{index}. {name:<26} score={candidate.optimizer_score:>7.1f} {marker}"
+            )
+            lines.append(
+                f"   avg_vorp={candidate.average_vorp:.1f} "
+                f"avg_pts={candidate.average_projected_points:.1f} "
+                f"roster={candidate.average_roster_size:.1f}"
+            )
+            lines.extend(f"   - {item}" for item in candidate.explanation[:3])
+            lines.append("")
         return lines
 
     def _best_overall_recommendation_lines(self, *, include_header: bool) -> list[str]:

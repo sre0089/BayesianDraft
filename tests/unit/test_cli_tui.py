@@ -349,6 +349,7 @@ def test_cli_controller_renders_recommendations_roster_health_and_picks(
     controller.view_index = 2
     recommendation_lines = controller.view_lines()
     assert recommendation_lines[0] == "Top 5 by positions you still need"
+    assert any("Best path rollout" in line for line in recommendation_lines)
     assert any("Best overall recommendation" in line for line in recommendation_lines)
     assert any("RB need=" in line for line in recommendation_lines)
     assert any("WR need=" in line for line in recommendation_lines)
@@ -372,3 +373,21 @@ def test_cli_controller_renders_recommendations_roster_health_and_picks(
 
     controller.view_index = 7
     assert any("manager_01" in line for line in controller.view_lines())
+
+
+def test_cli_recommendations_show_rollout_section_on_user_pick(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(
+            save_path=tmp_path / "draft.json",
+            scenario_path=Path("data/fixtures/rehearsal_user_pick_8.json"),
+        ),
+    )
+    controller.view_index = 2
+    lines = controller.view_lines()
+
+    assert any("Best path rollout" in line for line in lines)
+    assert any("avg_vorp=" in line for line in lines)
+    assert any("path pick" in line or "same as best-now" in line for line in lines)
