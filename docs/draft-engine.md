@@ -80,7 +80,7 @@ Use the roster balance command:
 PYTHONPATH=. python scripts/roster_balance.py
 ```
 
-This reports positional counts, starter targets, remaining starter needs, and surplus for a manager.
+This reports positional counts, starter targets, Flex status, remaining starter needs, and surplus for a manager.
 
 ## Current Assumption
 

@@ -26,7 +26,7 @@ Current components:
 
 - `value_score`: points over replacement from baseline rankings.
 - `draft_phase`: early, middle, or late based on the current draft round.
-- `need_score`: starter vacancy boost weighted by draft phase. It matters less early and more later.
+- `need_score`: starter vacancy boost weighted by draft phase. It includes configured Flex slots once base eligible-position needs are filled. It matters less early and more later.
 - `tier_score`: boost for higher-tier players.
 - `tier_drop_score`: boost when few same-position players remain in the candidate's tier.
 - `market_score`: boost when ADP is later than model rank.
@@ -49,7 +49,7 @@ The engine returns:
 - estimated next-pick availability
 - explanation bullets
 
-The CLI also groups recommendations by positions the configured user roster still needs. Each group shows up to five available players ranked by the same recommendation score for that position.
+The CLI also groups recommendations by positions the configured user roster still needs. Each group shows up to five available players ranked by the same recommendation score for that position. For the configured `FLEX` slot, eligible RB/WR/TE groups stay open after the base RB/WR/TE starters are filled until the Flex requirement is covered.
 
 ## Candidate Rollout Optimizer
 

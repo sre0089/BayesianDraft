@@ -63,11 +63,11 @@ PYTHONPATH=. python scripts/analyze_draft_paths.py \
 
 ## Views
 
-- `Summary`: current pick, manager on clock, available player count, roster size, save status, next user pick, Draft Assistant readout, and best-now recommendation. The Draft Assistant shows a live quick direction that updates after every pick from the current board, plus cached deep-simulation guidance when it is still fresh.
+- `Summary`: current pick, manager on clock, available player count, roster size, Flex need, save status, next user pick, Draft Assistant readout, and best-now recommendation. The Draft Assistant shows a live quick direction that updates after every pick from the current board, plus cached deep-simulation guidance when it is still fresh.
 - `Rankings`: scrollable available-player table, match count, pick preview, and selected-player detail when the terminal is wide enough. Press `/` or start typing while on Rankings to filter immediately.
 - `Recommendations`: best overall recommendation, live positional groups, score breakdown, stale/fresh path-analysis status, and top five available players for each position your roster still needs.
 - `Managers`: yazi-style manager browser with every competitor roster, pick count, projected points, VORP, and position counts.
-- `Roster`: configured user manager roster and positional starter needs.
+- `Roster`: configured user manager roster, positional starter needs, and Flex status.
 - `Health`: snapshot coverage and warnings.
 - `Simulation`: multi-path draft analysis showing simulated manager results, draft strategy analysis for your next pick, and risk summary. Press `a` to start the analysis from inside the TUI; the run log updates during the league-path phase and the next-pick strategy phase. When the board changes after analysis, the view marks the results stale, but Summary still keeps its quick direction live without rerunning the deep simulation.
 - `Picks`: recent completed picks.

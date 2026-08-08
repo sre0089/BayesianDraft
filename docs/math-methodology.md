@@ -183,17 +183,17 @@ where:
 | Q(p, t) | Next-pick risk boost |
 | C(p, R<sub>mᵤ</sub>, t) | Draft timing and roster-construction penalty |
 
-The need term rewards filling starter requirements, but the weight depends on draft phase $\phi$:
+The need term rewards filling roster requirements, but the weight depends on draft phase $\phi$. It includes base starter needs and configured Flex needs:
 
 $$
 N_\phi(p, R_{m_u}) =
 \begin{cases}
-\lambda_c \cdot w_\phi, & \mathrm{count}(R_{m_u}, c_p) < \mathrm{starterTarget}(c_p) \\
+\lambda_c \cdot w_\phi, & \mathrm{baseNeed}(c_p) + \mathrm{flexNeed}(c_p) > 0 \\
 0, & \mathrm{otherwise}
 \end{cases}
 $$
 
-The baseline uses a lower $w_\phi$ early, a medium $w_\phi$ in the middle rounds, and a higher $w_\phi$ late. This keeps the engine from blindly filling positions early while still forcing roster completion later.
+For the configured `FLEX` slot, $\mathrm{flexNeed}(c_p)$ applies only to eligible positions after the base eligible-position starter targets have been covered. The baseline uses a lower $w_\phi$ early, a medium $w_\phi$ in the middle rounds, and a higher $w_\phi$ late. This keeps the engine from blindly filling positions early while still forcing roster completion later.
 
 Tier-drop pressure rewards a candidate when only a few available players remain in the same position tier:
 
