@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 from bayesiandraft import __version__
+from bayesiandraft.audit import DecisionAuditEvent, append_decision_event
 from bayesiandraft.data import PlayerSnapshot, build_snapshot_health_report
 from bayesiandraft.draft import (
     DraftState,
@@ -46,6 +47,7 @@ COMPACT_LOGO_LINES = (
 @dataclass(frozen=True)
 class CliDraftConfig:
     save_path: Path
+    audit_path: Path | None = None
     scenario_path: Path | None = None
     auto_pick_to_user: bool = False
     autosave: bool = True
@@ -208,6 +210,7 @@ class CliDraftController:
 
         player = rows[self.selection_index]
         try:
+            recommendation = self.recommendation()
             self.state = self.state.record_pick(player.player_id)
         except DraftStateError as exc:
             self.status_message = str(exc)
@@ -217,9 +220,10 @@ class CliDraftController:
         self.selection_index = min(self.selection_index, max_index)
         self._sync_ranking_scroll(visible_count=30)
         autosave_message = self._autosave()
+        audit_message = self._audit_pick(player.player_id, recommendation)
         self.status_message = (
             f"Drafted {player.full_name} for {self.state.completed_picks[-1].manager_id}."
-            f" {autosave_message}"
+            f" {autosave_message} {audit_message}"
         )
 
     def undo(self) -> None:
@@ -253,6 +257,39 @@ class CliDraftController:
         self.state.save(self.config.save_path)
         saved_at = datetime.now().strftime("%H:%M:%S")
         self.last_save_message = f"Autosaved {saved_at} to {self.config.save_path}"
+
+    def _audit_pick(
+        self,
+        selected_player_id: str,
+        recommendation: RecommendationResult | None,
+    ) -> str:
+        if self.config.audit_path is None:
+            return ""
+        completed_pick = self.state.completed_picks[-1]
+        event = DecisionAuditEvent(
+            event_id=f"{self.state.draft_id}-{completed_pick.overall_pick}",
+            draft_id=self.state.draft_id,
+            overall_pick=completed_pick.overall_pick,
+            selected_player_id=selected_player_id,
+            recommended_player_id=(
+                None if recommendation is None else recommendation.primary.player_id
+            ),
+            alternative_player_ids=[]
+            if recommendation is None
+            else [alternative.player_id for alternative in recommendation.alternatives],
+            model_versions={"bayesiandraft": __version__},
+            data_snapshot_id=self.snapshot.snapshot.snapshot_id,
+            notes=[
+                (
+                    "Accepted primary recommendation."
+                    if recommendation is not None
+                    and selected_player_id == recommendation.primary.player_id
+                    else "Recorded manual draft pick."
+                )
+            ],
+        )
+        append_decision_event(self.config.audit_path, event)
+        return f"Audit logged to {self.config.audit_path}"
 
     def auto_pick_to_user(self) -> int:
         user_manager_id = self.state.league_config.league.user_manager_id

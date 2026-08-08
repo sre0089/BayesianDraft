@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from bayesiandraft.audit import load_decision_audit
 from bayesiandraft.cli import CliDraftConfig, CliDraftController
 from bayesiandraft.cli.tui import _footer_prompt, _handle_live_search_key, _progress_bar
 from scripts.common import load_snapshot_and_draft_state
@@ -141,6 +142,28 @@ def test_cli_controller_filters_and_drafts_selected_player(tmp_path: Path) -> No
     assert "Drafted Example RB One" in controller.status_message
     assert "Autosaved" in controller.status_message
     assert save_path.exists()
+
+
+def test_cli_controller_logs_decision_audit_event(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    audit_path = tmp_path / "audit.json"
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(
+            save_path=tmp_path / "draft.json",
+            audit_path=audit_path,
+        ),
+    )
+
+    controller.draft_selected_player()
+    audit_log = load_decision_audit(audit_path)
+
+    assert len(audit_log.events) == 1
+    assert audit_log.events[0].selected_player_id == "rb_001"
+    assert audit_log.events[0].recommended_player_id == "rb_001"
+    assert audit_log.events[0].alternative_player_ids
+    assert "Audit logged" in controller.status_message
 
 
 def test_cli_controller_filters_rankings_by_position(tmp_path: Path) -> None:

@@ -29,6 +29,10 @@ def main() -> None:
         action="store_true",
         help="Resume the draft state from --save-path if the file exists.",
     )
+    parser.add_argument(
+        "--audit-path",
+        help="Optional path for accepted-pick audit events.",
+    )
     args = parser.parse_args()
 
     snapshot, state = load_snapshot_and_draft_state(args.snapshot)
@@ -37,6 +41,7 @@ def main() -> None:
         state=state,
         config=CliDraftConfig(
             save_path=Path(args.save_path),
+            audit_path=None if args.audit_path is None else Path(args.audit_path),
             scenario_path=None if args.scenario is None else Path(args.scenario),
             auto_pick_to_user=args.auto_pick_to_user,
             autosave=not args.no_autosave,
