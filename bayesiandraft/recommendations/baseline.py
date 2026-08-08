@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 from bayesiandraft.draft import DraftState
 from bayesiandraft.rankings import RankingRow
+from bayesiandraft.recommendations.path_context import PathBankContext
 
 
 class RecommendationScore(BaseModel):
@@ -13,6 +14,7 @@ class RecommendationScore(BaseModel):
     need_score: float
     tier_score: float
     tier_drop_score: float
+    opportunity_cost_score: float = 0
     market_score: float
     next_pick_risk_score: float
     penalty: float
@@ -47,11 +49,12 @@ def recommend_players(
     rankings: list[RankingRow],
     *,
     limit: int = 4,
+    path_context: PathBankContext | None = None,
 ) -> RecommendationResult:
     available_ids = set(draft_state.available_player_ids)
     ranking_by_id = {ranking.player_id: ranking for ranking in rankings}
     scored = [
-        _score_candidate(draft_state, ranking, rankings)
+        _score_candidate(draft_state, ranking, rankings, path_context=path_context)
         for ranking in rankings
         if ranking.player_id in available_ids
     ]
@@ -70,6 +73,7 @@ def recommend_players_by_needed_position(
     rankings: list[RankingRow],
     *,
     per_position_limit: int = 5,
+    path_context: PathBankContext | None = None,
 ) -> list[PositionalRecommendationGroup]:
     available_ids = set(draft_state.available_player_ids)
     ranking_by_id = {ranking.player_id: ranking for ranking in rankings}
@@ -78,7 +82,7 @@ def recommend_players_by_needed_position(
 
     for position, remaining_need in needed_positions.items():
         scored = [
-            _score_candidate(draft_state, ranking, rankings)
+            _score_candidate(draft_state, ranking, rankings, path_context=path_context)
             for ranking in rankings
             if ranking.player_id in available_ids and ranking.position.value == position
         ]
@@ -100,6 +104,8 @@ def _score_candidate(
     draft_state: DraftState,
     ranking: RankingRow,
     rankings: list[RankingRow],
+    *,
+    path_context: PathBankContext | None = None,
 ) -> RecommendationScore:
     roster = draft_state.rosters[draft_state.league_config.league.user_manager_id]
     drafted_position_count = roster.positional_counts.get(ranking.position.value, 0)
@@ -116,6 +122,7 @@ def _score_candidate(
     need_score = starting_need * 35 * need_weight
     tier_score = max(4 - ranking.tier, 0) * 8
     tier_drop_score = _tier_drop_score(draft_state, ranking, rankings, draft_phase)
+    opportunity_cost_score = _opportunity_cost_score(path_context, ranking)
     market_score = max(ranking.adp_delta or 0, 0) * 0.5
     penalty = _late_position_penalty(draft_state, ranking, drafted_position_count)
     next_pick_availability = _estimate_next_pick_availability(draft_state, ranking)
@@ -125,6 +132,7 @@ def _score_candidate(
         + need_score
         + tier_score
         + tier_drop_score
+        + opportunity_cost_score
         + market_score
         + next_pick_risk_score
         - penalty
@@ -140,6 +148,7 @@ def _score_candidate(
         need_score=round(need_score, 3),
         tier_score=round(tier_score, 3),
         tier_drop_score=round(tier_drop_score, 3),
+        opportunity_cost_score=round(opportunity_cost_score, 3),
         market_score=round(market_score, 3),
         next_pick_risk_score=round(next_pick_risk_score, 3),
         penalty=round(penalty, 3),
@@ -153,6 +162,8 @@ def _score_candidate(
             draft_phase=draft_phase,
             need_weight=need_weight,
             tier_drop_score=tier_drop_score,
+            opportunity_cost_score=opportunity_cost_score,
+            path_context=path_context,
             market_score=market_score,
             next_pick_risk_score=next_pick_risk_score,
             penalty=penalty,
@@ -227,6 +238,18 @@ def _flex_need_for_position(draft_state: DraftState, position: str) -> int:
         )
         flex_need += max(base_target + flex_slots - eligible_count, 0)
     return flex_need
+
+
+def _opportunity_cost_score(
+    path_context: PathBankContext | None,
+    ranking: RankingRow,
+) -> float:
+    if path_context is None:
+        return 0
+    estimate = path_context.opportunity_for(ranking.position.value)
+    if estimate is None:
+        return 0
+    return min(estimate.opportunity_cost * 0.35, 35)
 
 
 def _late_position_penalty(
@@ -324,6 +347,8 @@ def _explain(
     draft_phase: str,
     need_weight: float,
     tier_drop_score: float,
+    opportunity_cost_score: float,
+    path_context: PathBankContext | None,
     market_score: float,
     next_pick_risk_score: float,
     penalty: float,
@@ -343,6 +368,15 @@ def _explain(
         explanation.append("Still sits in the top tier at the position.")
     if tier_drop_score > 0:
         explanation.append("Gets a tier-drop boost because similar options are thinning.")
+    if opportunity_cost_score > 0 and path_context is not None:
+        estimate = path_context.opportunity_for(ranking.position.value)
+        if estimate is not None and estimate.expected_later_player_name is not None:
+            explanation.append(
+                "Gets an opportunity-cost boost because the expected later "
+                f"{ranking.position} is {estimate.expected_later_player_name}."
+            )
+        else:
+            explanation.append("Gets an opportunity-cost boost from the path bank.")
     if market_score > 0:
         explanation.append(
             f"Market cost is favorable by {ranking.adp_delta:.1f} picks versus rank."

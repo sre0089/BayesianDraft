@@ -4,8 +4,13 @@ from bayesiandraft.config import load_league_config
 from bayesiandraft.data import load_player_snapshot
 from bayesiandraft.draft import DraftState, Player
 from bayesiandraft.rankings import build_baseline_rankings
-from bayesiandraft.recommendations import recommend_players, recommend_players_by_needed_position
+from bayesiandraft.recommendations import (
+    build_path_bank_context,
+    recommend_players,
+    recommend_players_by_needed_position,
+)
 from bayesiandraft.recommendations.baseline import _need_weight
+from bayesiandraft.simulation import build_path_bank
 
 
 def _draft_state() -> DraftState:
@@ -118,3 +123,26 @@ def test_flex_need_boosts_eligible_candidates_after_base_slots_are_full() -> Non
     assert rb_group.remaining_need == 1
     assert rb_group.candidates[0].need_score > 0
     assert any("FLEX" in item for item in rb_group.candidates[0].explanation)
+
+
+def test_recommendations_can_use_path_bank_opportunity_cost() -> None:
+    snapshot = load_player_snapshot(Path("data/fixtures/baseline_players_2026.json"))
+    state = _draft_state()
+    rankings = build_baseline_rankings(snapshot)
+    path_bank = build_path_bank(
+        state,
+        rankings,
+        snapshot_id=snapshot.snapshot.snapshot_id,
+        simulation_count=4,
+        seed=41,
+        candidate_limit=30,
+    )
+    context = build_path_bank_context(state, rankings, path_bank)
+
+    result = recommend_players(state, rankings, path_context=context)
+
+    assert result.primary.opportunity_cost_score >= 0
+    assert any(
+        score.opportunity_cost_score > 0
+        for score in [result.primary, *result.alternatives]
+    )
