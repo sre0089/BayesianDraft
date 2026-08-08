@@ -468,6 +468,16 @@ class CliDraftController:
             "More: [/] cycle positions, 0 all, 1-6 positions, c clear, u undo, r redo, s save.",
         ]
 
+    def summary_decision_lines(self) -> list[str]:
+        return [
+            *self._draft_assistant_lines(),
+            self.recommendation_change_message,
+            "",
+            *self._best_overall_recommendation_lines(include_header=True),
+            "",
+            "Enter every pick as it happens; this updates after each pick.",
+        ]
+
     def _ranking_lines(self) -> list[str]:
         rows = self.selectable_rankings()
         if not rows:
@@ -1388,14 +1398,9 @@ def _draw_summary_workspace(
 
     center_x = x + left_width + 1
     _draw_box(screen, y, center_x, height, center_width, "Decision")
-    decision_lines = [
-        *controller._best_overall_recommendation_lines(include_header=True),
-        "",
-        "Enter every pick as it happens; this updates after each pick.",
-    ]
     _draw_decision_lines(
         screen,
-        decision_lines,
+        controller.summary_decision_lines(),
         y + 1,
         center_x + 2,
         height - 2,
@@ -1507,6 +1512,12 @@ def _draw_decision_lines(
 
 
 def _decision_line_attrs(line: str) -> int:
+    if line == "Draft Assistant":
+        return curses.color_pair(4) | curses.A_BOLD
+    if line.startswith("Quick direction:"):
+        return curses.color_pair(5) | curses.A_BOLD | curses.A_REVERSE
+    if line.startswith("Deep sim:"):
+        return curses.color_pair(6) | curses.A_BOLD
     if line == "Best overall recommendation":
         return curses.color_pair(4) | curses.A_BOLD
     if line.startswith("Best overall:"):

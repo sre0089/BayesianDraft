@@ -51,6 +51,21 @@ def test_cli_controller_renders_summary_and_rankings(tmp_path: Path) -> None:
     assert any("Projection: mean=" in line for line in controller.view_lines())
 
 
+def test_cli_wide_summary_decision_panel_shows_quick_direction(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(save_path=tmp_path / "draft.json"),
+    )
+
+    lines = controller.summary_decision_lines()
+
+    assert "Draft Assistant" in lines
+    assert any("Quick direction:" in line for line in lines)
+    assert any("Deep sim: run Simulation" in line for line in lines)
+
+
 def test_cli_summary_recommendation_updates_after_pick(tmp_path: Path) -> None:
     snapshot, state = load_snapshot_and_draft_state()
     controller = CliDraftController(
