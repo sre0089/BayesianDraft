@@ -72,6 +72,7 @@ def test_candidate_rollout_adds_candidate_to_user_roster() -> None:
     assert result.downside_vorp <= result.average_vorp
     assert result.vorp_volatility >= 0
     assert result.roster_position_counts["RB"] >= 1
+    assert isinstance(result.next_pick_position_options, dict)
 
 
 def test_candidate_rollout_requires_user_on_clock() -> None:

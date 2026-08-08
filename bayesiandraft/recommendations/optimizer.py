@@ -23,6 +23,7 @@ class OptimizedCandidate(BaseModel):
     vorp_volatility: float
     average_roster_size: float
     roster_position_counts: dict[str, float] = Field(default_factory=dict)
+    next_pick_position_options: dict[str, float] = Field(default_factory=dict)
     explanation: list[str]
 
 
@@ -148,6 +149,7 @@ def _optimize_candidate(
         vorp_volatility=rollout.vorp_volatility,
         average_roster_size=rollout.average_roster_size,
         roster_position_counts=rollout.roster_position_counts,
+        next_pick_position_options=rollout.next_pick_position_options,
         explanation=_explain_candidate(candidate_ranking, rollout.average_vorp),
     )
 

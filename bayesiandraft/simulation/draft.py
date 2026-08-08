@@ -5,7 +5,7 @@ from statistics import pstdev
 
 from pydantic import BaseModel, Field, PositiveInt
 
-from bayesiandraft.draft import DraftPick, DraftState
+from bayesiandraft.draft import DraftPick, DraftState, pick_slot_for_overall_pick
 from bayesiandraft.opponents import (
     OpponentDraftProfile,
     build_opponent_profiles,
@@ -39,6 +39,7 @@ class CandidateRolloutResult(BaseModel):
     vorp_volatility: float
     average_roster_size: float
     roster_position_counts: dict[str, float] = Field(default_factory=dict)
+    next_pick_position_options: dict[str, float] = Field(default_factory=dict)
 
 
 def simulate_remaining_draft(
@@ -98,6 +99,7 @@ def simulate_candidate_rollout(
     vorp_values: list[float] = []
     roster_sizes: list[int] = []
     position_totals: Counter[str] = Counter()
+    next_pick_position_options: Counter[str] = Counter()
 
     for offset in range(simulation_config.simulation_count):
         seed = simulation_config.seed + offset
@@ -107,6 +109,15 @@ def simulate_candidate_rollout(
             rankings,
             seed=seed,
             config=simulation_config,
+        )
+        next_pick_position_options.update(
+            _next_user_pick_options(
+                candidate_state,
+                simulated,
+                rankings,
+                user_manager_id=user_manager_id,
+                candidate_limit=simulation_config.candidate_limit,
+            )
         )
         roster = _roster_for_completed_picks(
             simulated.completed_picks,
@@ -134,6 +145,10 @@ def simulate_candidate_rollout(
         roster_position_counts={
             position: round(count / simulation_config.simulation_count, 4)
             for position, count in sorted(position_totals.items())
+        },
+        next_pick_position_options={
+            position: round(count / simulation_config.simulation_count, 4)
+            for position, count in sorted(next_pick_position_options.items())
         },
     )
 
@@ -211,6 +226,38 @@ def _roster_for_completed_picks(
         for pick in completed_picks
         if pick.manager_id == user_manager_id
     ]
+
+
+def _next_user_pick_options(
+    candidate_state: DraftState,
+    simulated: SimulatedDraft,
+    rankings: list[RankingRow],
+    *,
+    user_manager_id: str,
+    candidate_limit: int,
+) -> Counter[str]:
+    future_picks = [
+        pick
+        for pick in range(candidate_state.current_overall_pick, candidate_state.total_picks + 1)
+        if pick_slot_for_overall_pick(pick, candidate_state.league_config).manager_id
+        == user_manager_id
+    ]
+    if not future_picks:
+        return Counter()
+
+    next_user_pick = future_picks[0]
+    drafted_before_next_pick = {
+        pick.player_id
+        for pick in simulated.completed_picks
+        if pick.overall_pick < next_user_pick
+    }
+    available_at_next_pick = [
+        ranking
+        for ranking in rankings
+        if ranking.player_id not in drafted_before_next_pick
+        and ranking.player_id in candidate_state.players
+    ][:candidate_limit]
+    return Counter(ranking.position.value for ranking in available_at_next_pick[:12])
 
 
 def _mean(values: list[float] | list[int]) -> float:
