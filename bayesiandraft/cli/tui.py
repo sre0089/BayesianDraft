@@ -1071,6 +1071,9 @@ def _curses_main(screen: curses.window, controller: CliDraftController) -> None:
             controller.start_search()
         elif key == ord("?"):
             controller.toggle_help()
+        elif controller.current_view == "Rankings" and _is_quick_search_key(key):
+            controller.start_search()
+            controller.append_search_character(chr(key))
 
 
 def _draw(screen: curses.window, controller: CliDraftController) -> None:
@@ -1096,6 +1099,13 @@ def _handle_live_search_key(controller: CliDraftController, key: int) -> None:
         return
     if 0 <= key <= 255:
         controller.append_search_character(chr(key))
+
+
+def _is_quick_search_key(key: int) -> bool:
+    if not 0 <= key <= 255:
+        return False
+    character = chr(key)
+    return character.isalnum() or character in {" ", "'", "-", "."}
 
 
 def _run_path_analysis_interactive(

@@ -2,7 +2,12 @@ from pathlib import Path
 
 from bayesiandraft.audit import load_decision_audit
 from bayesiandraft.cli import CliDraftConfig, CliDraftController
-from bayesiandraft.cli.tui import _footer_prompt, _handle_live_search_key, _progress_bar
+from bayesiandraft.cli.tui import (
+    _footer_prompt,
+    _handle_live_search_key,
+    _is_quick_search_key,
+    _progress_bar,
+)
 from scripts.common import load_snapshot_and_draft_state
 
 
@@ -226,6 +231,25 @@ def test_cli_controller_live_search_filters_without_enter(tmp_path: Path) -> Non
     _handle_live_search_key(controller, ord("\n"))
 
     assert controller.search_active is False
+
+
+def test_cli_rankings_can_start_search_by_typing(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(save_path=tmp_path / "draft.json"),
+    )
+    controller.move_view(1)
+
+    assert _is_quick_search_key(ord("r")) is True
+    controller.start_search()
+    controller.append_search_character("r")
+    controller.append_search_character("b")
+
+    assert controller.search_query == "rb"
+    assert controller.selectable_rankings()
+    assert {ranking.position.value for ranking in controller.selectable_rankings()} == {"RB"}
 
 
 def test_cli_live_search_preserves_selected_match(tmp_path: Path) -> None:
