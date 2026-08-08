@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, PositiveInt
 from bayesiandraft.draft import DraftPick, DraftState
 from bayesiandraft.rankings import RankingRow
 from bayesiandraft.simulation.draft import DraftSimulationConfig, simulate_remaining_draft
+from bayesiandraft.simulation.roster_strength import score_roster_strength
 
 
 class LeaguePathSimulationConfig(BaseModel):
@@ -86,6 +87,7 @@ def analyze_league_paths(
             simulated.completed_picks,
             manager_ids=manager_ids,
             ranking_by_id=ranking_by_id,
+            draft_state=draft_state,
         )
         finishes = _finish_ranks(path_scores)
         if progress_callback is not None:
@@ -140,15 +142,25 @@ def _score_path(
     *,
     manager_ids: list[str],
     ranking_by_id: dict[str, RankingRow],
+    draft_state: DraftState,
 ) -> dict[str, _PathScore]:
-    scores = {manager_id: _PathScore() for manager_id in manager_ids}
+    player_ids_by_manager: dict[str, list[str]] = {
+        manager_id: [] for manager_id in manager_ids
+    }
     for pick in completed_picks:
-        ranking = ranking_by_id.get(pick.player_id)
-        if ranking is None:
-            continue
-        score = scores[pick.manager_id]
-        score.projected_points += ranking.projected_points
-        score.vorp += ranking.vorp
+        if pick.manager_id in player_ids_by_manager:
+            player_ids_by_manager[pick.manager_id].append(pick.player_id)
+    scores = {}
+    for manager_id, player_ids in player_ids_by_manager.items():
+        strength = score_roster_strength(
+            player_ids,
+            rankings=ranking_by_id,
+            league_config=draft_state.league_config,
+        )
+        scores[manager_id] = _PathScore(
+            projected_points=strength.projected_points,
+            vorp=strength.vorp,
+        )
     return scores
 
 
