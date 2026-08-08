@@ -24,6 +24,11 @@ def main() -> None:
         action="store_true",
         help="Disable automatic saves after draft, undo, redo, and auto-pick actions.",
     )
+    parser.add_argument(
+        "--load-save",
+        action="store_true",
+        help="Resume the draft state from --save-path if the file exists.",
+    )
     args = parser.parse_args()
 
     snapshot, state = load_snapshot_and_draft_state(args.snapshot)
@@ -35,6 +40,7 @@ def main() -> None:
             scenario_path=None if args.scenario is None else Path(args.scenario),
             auto_pick_to_user=args.auto_pick_to_user,
             autosave=not args.no_autosave,
+            load_existing_save=args.load_save,
         ),
     )
     run_tui(controller)

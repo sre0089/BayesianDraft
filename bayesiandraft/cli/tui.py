@@ -49,6 +49,7 @@ class CliDraftConfig:
     scenario_path: Path | None = None
     auto_pick_to_user: bool = False
     autosave: bool = True
+    load_existing_save: bool = False
 
 
 class CliDraftController:
@@ -78,7 +79,11 @@ class CliDraftController:
         }
         self._adp_by_player_id = {adp.player_id: adp for adp in snapshot.adp}
 
-        if config.scenario_path is not None:
+        if config.load_existing_save and config.save_path.exists():
+            self.state = DraftState.load(config.save_path)
+            self.status_message = f"Loaded saved draft from {config.save_path}"
+            self.last_save_message = f"Loaded save {config.save_path}"
+        elif config.scenario_path is not None:
             self.state = apply_rehearsal_scenario(
                 self.state,
                 load_rehearsal_scenario(config.scenario_path),

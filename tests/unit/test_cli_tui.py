@@ -243,6 +243,23 @@ def test_cli_controller_can_disable_autosave(tmp_path: Path) -> None:
     assert "Autosave off." in controller.status_message
 
 
+def test_cli_controller_loads_existing_save(tmp_path: Path) -> None:
+    snapshot, state = load_snapshot_and_draft_state()
+    save_path = tmp_path / "draft.json"
+    saved_state = state.record_pick("rb_001")
+    saved_state.save(save_path)
+
+    controller = CliDraftController(
+        snapshot=snapshot,
+        state=state,
+        config=CliDraftConfig(save_path=save_path, load_existing_save=True),
+    )
+
+    assert controller.state.current_overall_pick == 2
+    assert controller.state.completed_picks[0].player_id == "rb_001"
+    assert "Loaded saved draft" in controller.status_message
+
+
 def test_cli_controller_loads_scenario(tmp_path: Path) -> None:
     snapshot, state = load_snapshot_and_draft_state()
     controller = CliDraftController(
