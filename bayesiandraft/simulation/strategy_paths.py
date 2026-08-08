@@ -1,5 +1,5 @@
 from collections import Counter, defaultdict
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from statistics import median
 
 from pydantic import BaseModel, Field, PositiveInt
@@ -36,6 +36,17 @@ class StrategyPathAnalysisResult(BaseModel):
     paths: list[StrategyPathSummary]
 
 
+class StrategyPathProgress(BaseModel):
+    completed_paths: int
+    total_paths: int
+    board_sample: int
+    position: str
+    forced_player_name: str | None
+
+
+StrategyPathProgressCallback = Callable[[StrategyPathProgress], None]
+
+
 class _StrategyOutcome(BaseModel):
     forced_player_id: str
     forced_player_name: str
@@ -54,6 +65,7 @@ def analyze_user_strategy_paths(
     rankings: list[RankingRow],
     *,
     config: StrategyPathSimulationConfig | None = None,
+    progress_callback: StrategyPathProgressCallback | None = None,
 ) -> StrategyPathAnalysisResult:
     strategy_config = config or StrategyPathSimulationConfig()
     user_manager_id = draft_state.league_config.league.user_manager_id
@@ -67,6 +79,8 @@ def analyze_user_strategy_paths(
     ranking_by_id = {ranking.player_id: ranking for ranking in rankings}
     outcomes_by_position: dict[str, list[_StrategyOutcome]] = defaultdict(list)
     positions = tuple(dict.fromkeys(strategy_config.positions))
+    total_paths = strategy_config.simulation_count * max(len(positions), 1)
+    completed_paths = 0
 
     for sample_index in range(strategy_config.simulation_count):
         arrival_state = _state_at_next_user_pick(
@@ -79,6 +93,17 @@ def analyze_user_strategy_paths(
         for position_index, position in enumerate(positions):
             candidate = _best_available_at_position(rankings, available_ids, position)
             if candidate is None:
+                completed_paths += 1
+                if progress_callback is not None:
+                    progress_callback(
+                        StrategyPathProgress(
+                            completed_paths=completed_paths,
+                            total_paths=total_paths,
+                            board_sample=sample_index + 1,
+                            position=position,
+                            forced_player_name=None,
+                        )
+                    )
                 continue
             forced_state = arrival_state.record_pick(candidate.player_id)
             simulated = simulate_remaining_draft(
@@ -106,6 +131,17 @@ def analyze_user_strategy_paths(
                     finish=finishes[user_manager_id],
                 )
             )
+            completed_paths += 1
+            if progress_callback is not None:
+                progress_callback(
+                    StrategyPathProgress(
+                        completed_paths=completed_paths,
+                        total_paths=total_paths,
+                        board_sample=sample_index + 1,
+                        position=position,
+                        forced_player_name=candidate.full_name,
+                    )
+                )
 
     paths = [
         _strategy_summary(position, outcomes)

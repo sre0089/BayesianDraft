@@ -28,6 +28,8 @@ from bayesiandraft.simulation.league_paths import (
 )
 from bayesiandraft.simulation.strategy_paths import (
     StrategyPathAnalysisResult,
+    StrategyPathProgress,
+    StrategyPathProgressCallback,
     StrategyPathSimulationConfig,
     StrategyPathSummary,
     analyze_user_strategy_paths,
@@ -46,6 +48,8 @@ __all__ = [
     "SimulatedDraft",
     "SimulationBenchmarkResult",
     "StrategyPathAnalysisResult",
+    "StrategyPathProgress",
+    "StrategyPathProgressCallback",
     "StrategyPathSimulationConfig",
     "StrategyPathSummary",
     "UserRiskSummary",
