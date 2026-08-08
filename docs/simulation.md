@@ -10,15 +10,64 @@ Current implementation:
 
 - `simulate_remaining_draft` rolls forward from a `DraftState` until the draft is complete or the ranked player pool is exhausted.
 - `simulate_candidate_rollout` records a user pick, simulates the remaining draft repeatedly, and summarizes the user's resulting roster value.
+- `analyze_league_paths` runs many full-draft paths and aggregates manager projected points, VORP, median outcome, volatility, average finish, top-three rate, and first-place rate.
+- `analyze_user_strategy_paths` forces the user's next pick by position and compares how each early-position path performs after the rest of the draft is simulated.
 - `DraftSimulationConfig` controls simulation count, seed, ADP spread, roster-need weight, and candidate pool size.
 - Remaining-draft simulation uses first-pass opponent profiles inferred from completed picks.
 - All stochastic paths are seeded and reproducible.
+
+## Multi-Path Draft Analysis
+
+Multi-path analysis answers a broader draft-day question than a single recommendation: if the current draft continues in many plausible ways, which teams usually end up strongest and which first-pick strategy gives the user the best final roster distribution?
+
+The standalone report script can run heavier analysis from a fresh snapshot, a rehearsal state, or a saved live draft:
+
+```bash
+PYTHONPATH=. python scripts/analyze_draft_paths.py \
+  --snapshot data/processed/dynastyprocess_rankings_2026.json \
+  --draft-state data/processed/live_draft_state.json \
+  --simulations 500
+```
+
+For a scratch rehearsal that jumps to the configured user pick:
+
+```bash
+PYTHONPATH=. python scripts/analyze_draft_paths.py \
+  --snapshot data/processed/dynastyprocess_rankings_2026.json \
+  --auto-pick-to-user \
+  --simulations 500
+```
+
+The report format is intentionally compact:
+
+```text
+After 500 simulated draft paths:
+
+Manager Results
+1. Team 04      avg VORP   312.4   avg pts  2870.2   avg finish  2.1
+2. Your Team    avg VORP   298.8   avg pts  2835.7   avg finish  3.0
+
+Your Strategy Outcomes
+RB early path   avg VORP   304.2   avg pts  2860.5   top3   42%
+WR early path   avg VORP   296.8   avg pts  2824.1   top3   38%
+
+Risk
+Best case:   338.5 VORP
+Median:      299.2 VORP
+Worst:       241.0 VORP
+Volatility:   22.8
+Top 3 rate:   41%
+Win rate:     13%
+```
+
+The CLI `Simulation` tab uses the same analysis code with a smaller path count so it remains responsive while entering picks live.
 
 Current limitations:
 
 - Opponent behavior is still heuristic and only uses the current draft.
 - The fixture player pool is intentionally small, so fixture simulations stop when ranked players run out.
-- Candidate rollout summarizes projected points and VORP, but does not yet estimate playoff or championship probability.
+- Draft-path analysis compares roster strength using projection and VORP totals, not full weekly schedule outcomes.
+- Candidate rollout and path analysis do not yet estimate playoff or championship probability.
 
 ## Season Simulation
 

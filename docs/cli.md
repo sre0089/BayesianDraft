@@ -43,15 +43,33 @@ PYTHONPATH=. python scripts/draft_tui.py \
   --auto-pick-to-user
 ```
 
+Run a heavier path analysis report outside the interactive UI:
+
+```bash
+PYTHONPATH=. python scripts/analyze_draft_paths.py \
+  --snapshot data/processed/dynastyprocess_rankings_2026.json \
+  --draft-state data/processed/live_draft_state.json \
+  --simulations 500
+```
+
+For a scratch rehearsal report that jumps directly to your configured draft slot:
+
+```bash
+PYTHONPATH=. python scripts/analyze_draft_paths.py \
+  --snapshot data/processed/dynastyprocess_rankings_2026.json \
+  --auto-pick-to-user \
+  --simulations 500
+```
+
 ## Views
 
 - `Summary`: current pick, manager on clock, available player count, roster size, save status, next user pick, best-now recommendation, and best-path rollout when your team is on clock.
 - `Rankings`: scrollable available-player table, match count, pick preview, and selected-player detail when the terminal is wide enough.
 - `Recommendations`: best overall recommendation, best-path rollout comparison, score breakdown, and top five available players for each position your roster still needs.
-- `Managers`: yazi-style manager browser with every competitor roster, pick count, and position counts.
+- `Managers`: yazi-style manager browser with every competitor roster, pick count, projected points, VORP, and position counts.
 - `Roster`: configured user manager roster and positional starter needs.
 - `Health`: snapshot coverage and warnings.
-- `Simulation`: seeded remaining-draft benchmark metadata.
+- `Simulation`: multi-path draft analysis showing simulated manager results, user strategy outcomes, and risk summary.
 - `Picks`: recent completed picks.
 
 ## Controls
