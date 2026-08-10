@@ -203,7 +203,7 @@ def test_cli_managers_show_team_strength_scores(tmp_path: Path) -> None:
     lines = controller.view_lines()
 
     assert any("Proj" in line and "VORP" in line for line in lines)
-    assert any("Team 01" in line and "285.0" in line and "100.0" in line for line in lines)
+    assert any("Manager 01" in line and "285.0" in line and "100.0" in line for line in lines)
     assert "Team totals: projected=285.0 VORP=100.0" in lines
     assert any("Example RB One" in line and "proj=" in line and "vorp=" in line for line in lines)
 
@@ -648,7 +648,7 @@ def test_cli_controller_renders_recommendations_roster_health_and_picks(
 
     controller.view_index = 3
     assert any("Managers" in line for line in controller.view_lines())
-    assert any("Your Team" in line for line in controller.view_lines())
+    assert any("Manager 08" in line for line in controller.view_lines())
 
     controller.move_selection(-1)
     assert controller.manager_selection_index == 6
@@ -660,7 +660,7 @@ def test_cli_controller_renders_recommendations_roster_health_and_picks(
     assert any("Snapshot:" in line for line in controller.view_lines())
 
     controller.view_index = 7
-    assert any("manager_01" in line for line in controller.view_lines())
+    assert any("Manager 01" in line for line in controller.view_lines())
 
 
 def test_cli_recommendations_use_cached_path_guidance_on_user_pick(tmp_path: Path) -> None:

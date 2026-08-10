@@ -342,7 +342,8 @@ class CliDraftController:
         autosave_message = self._autosave()
         audit_message = self._audit_pick(player.player_id, recommendation)
         self.status_message = (
-            f"Drafted {player.full_name} for {self.state.completed_picks[-1].manager_id}."
+            f"Drafted {player.full_name} for "
+            f"{self._manager_label(self.state.completed_picks[-1].manager_id)}."
             f" {autosave_message} {audit_message}"
         )
 
@@ -494,7 +495,7 @@ class CliDraftController:
         clock_line = (
             "YOUR PICK NOW"
             if self.is_user_on_clock()
-            else f"On clock {summary.manager_on_clock}"
+            else f"On clock {self._manager_label(summary.manager_on_clock)}"
         )
         return [
             "BayesianDraft",
@@ -1233,7 +1234,8 @@ class CliDraftController:
             player = self.state.players[pick.player_id]
             lines.append(
                 f"{pick.overall_pick:>3}. R{pick.round}.{pick.round_pick:<2} "
-                f"{pick.manager_id:<14} {player.position:<3} {player.full_name}"
+                f"{self._manager_label(pick.manager_id):<14} "
+                f"{player.position:<3} {player.full_name}"
             )
         return lines
 
@@ -1257,9 +1259,12 @@ class CliDraftController:
     def _selected_manager_id(self) -> str:
         return self.state.league_config.draft_order[self.manager_selection_index].id
 
-    def _manager_label(self, manager_id: str) -> str:
-        if manager_id == self.state.league_config.league.user_manager_id:
-            return "Your Team"
+    def _manager_label(self, manager_id: str | None) -> str:
+        if manager_id is None:
+            return "-"
+        for manager in self.state.league_config.draft_order:
+            if manager.id == manager_id:
+                return manager.name
         return manager_id.replace("manager_", "Team ")
 
     def _position_count_text(self, counts: dict[str, int]) -> str:
@@ -1317,7 +1322,7 @@ class CliDraftController:
         summary = summarize_draft_state(self.state)
         return (
             f"Confirm pick {summary.current_overall_pick}: "
-            f"{summary.manager_on_clock} drafts {ranking.full_name} "
+            f"{self._manager_label(summary.manager_on_clock)} drafts {ranking.full_name} "
             f"({ranking.position.value}, {ranking.nfl_team_id or 'FA'})"
         )
 
@@ -1470,7 +1475,7 @@ def _draw_header(screen: curses.window, controller: CliDraftController, width: i
     clock_text = (
         "YOUR PICK NOW"
         if controller.is_user_on_clock()
-        else f"Clock {summary.manager_on_clock}"
+        else f"Clock {controller._manager_label(summary.manager_on_clock)}"
     )
     status = (
         f"Version {__version__}  "
@@ -1621,7 +1626,7 @@ def _draw_summary_workspace(
     clock_line = (
         "YOUR PICK NOW"
         if controller.is_user_on_clock()
-        else f"Clock: {summary.manager_on_clock}"
+        else f"Clock: {controller._manager_label(summary.manager_on_clock)}"
     )
     status_lines = [
         "BayesianDraft",
@@ -1672,7 +1677,10 @@ def _draw_summary_workspace(
     pick_lines = []
     for pick in controller.state.completed_picks[-8:]:
         player = controller.state.players[pick.player_id]
-        pick_lines.append(f"{pick.overall_pick:>3} {pick.manager_id:<10} {player.full_name}")
+        pick_lines.append(
+            f"{pick.overall_pick:>3} "
+            f"{controller._manager_label(pick.manager_id):<10} {player.full_name}"
+        )
     if not pick_lines:
         pick_lines.append("No picks recorded.")
     _draw_lines(screen, pick_lines, recent_y + 1, right_x + 2, bottom_height - 2, right_width - 4)

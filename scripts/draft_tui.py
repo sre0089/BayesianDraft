@@ -2,12 +2,17 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 from bayesiandraft.cli import CliDraftConfig, CliDraftController, run_tui
-from scripts.common import add_snapshot_argument, load_snapshot_and_draft_state
+from scripts.common import (
+    add_league_config_argument,
+    add_snapshot_argument,
+    load_snapshot_and_draft_state,
+)
 
 
 def main() -> None:
     parser = ArgumentParser(description="Run the interactive BayesianDraft terminal UI.")
     add_snapshot_argument(parser)
+    add_league_config_argument(parser)
     parser.add_argument("--scenario", help="Optional rehearsal scenario to load at startup.")
     parser.add_argument(
         "--auto-pick-to-user",
@@ -39,7 +44,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    snapshot, state = load_snapshot_and_draft_state(args.snapshot)
+    snapshot, state = load_snapshot_and_draft_state(args.snapshot, args.league_config)
     controller = CliDraftController(
         snapshot=snapshot,
         state=state,

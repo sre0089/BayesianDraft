@@ -52,6 +52,8 @@ def scan_repo(root: str | Path = ".") -> list[str]:
 
 def _skipped(path: Path) -> bool:
     path_text = path.as_posix()
+    if path.name.endswith(".local.yaml"):
+        return True
     return any(
         part in path.parts or f"/{part}/" in path_text or path_text.startswith(f"{part}/")
         for part in SKIP_DIRS
