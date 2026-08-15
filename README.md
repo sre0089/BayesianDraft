@@ -115,7 +115,6 @@ The full methodology is in [docs/math-methodology.md](docs/math-methodology.md).
 - [Architecture](docs/architecture.md)
 - [Simulation and path banks](docs/simulation.md)
 - [Data import](docs/data-import.md)
-- [Testing](docs/testing.md)
 - [Contributing](CONTRIBUTING.md)
 
 ## Privacy
