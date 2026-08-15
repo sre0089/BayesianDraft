@@ -10,7 +10,7 @@ BayesianDraft is organized as a local-first monorepo. The core draft logic lives
 - `configs/`: public-safe league settings. Local overrides, such as real manager names, should use ignored `*.local.yaml` files.
 - `data/`: synthetic fixtures plus ignored folders for raw downloads, processed snapshots, and draft saves.
 - `docs/`: longer notes on methodology, data, simulation, UI, and maintenance.
-- `models/`: placeholder folders for future model artifacts, metadata, and registry files.
+- `bayesiandraft/modeling/`: local model registry helpers. Model artifacts and metadata should be created locally and kept out of git unless they are small, public, and intentionally versioned.
 - `scripts/`: command-line tools for importing data, running the TUI, building path banks, exporting reports, and validating the repo.
 - `tests/`: Python tests for the engine and scripts. API and web tests live next to those apps.
 

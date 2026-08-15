@@ -26,10 +26,11 @@ data/processed/*
 data/snapshots/*
 configs/leagues/*.local.yaml
 models/artifacts/*
+models/metadata/*
+models/registry/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 !data/snapshots/.gitkeep
-!models/artifacts/.gitkeep
 *.duckdb
 *.sqlite
 *.sqlite3
