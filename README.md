@@ -36,6 +36,17 @@ PYTHONPATH=. python scripts/draft_tui.py
 
 The fixture data is synthetic, so it is mainly for testing the flow. To use real player data, import or pull a snapshot first.
 
+Quick smoke commands that work with the committed fixture data:
+
+```bash
+PYTHONPATH=. python scripts/draft_summary.py
+PYTHONPATH=. python scripts/league_report.py
+PYTHONPATH=. python scripts/sim_benchmark.py
+PYTHONPATH=. python scripts/export_recommendations.py \
+  --out /tmp/bayesiandraft_recommendations.json \
+  --scenario data/fixtures/rehearsal_user_pick_8.json
+```
+
 Pull a public DynastyProcess snapshot:
 
 ```bash
@@ -106,6 +117,13 @@ That file is ignored by git. `scripts/draft_tui.py` will use it automatically wh
 The technical writeup lives in [docs/math-methodology.md](docs/math-methodology.md). It covers VORP, tier pressure, roster need, ADP value, next-pick availability, simulation paths, and how those pieces feed the recommendation score.
 
 Short version: the current engine is intentionally transparent. It uses deterministic scoring plus seeded simulations so recommendations can be inspected, tested, and reproduced.
+
+## Current Limits
+
+- The main workflow is manual pick entry. ESPN sync is intentionally not required.
+- The committed player data is synthetic; real draft use needs an imported or pulled snapshot.
+- Availability, opponent behavior, and simulations are transparent baselines, not calibrated betting-style probabilities.
+- Path banks can take a while to build at large simulation counts, so they are best generated before draft time.
 
 ## Development Checks
 
