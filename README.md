@@ -79,7 +79,17 @@ The full methodology is in [docs/math-methodology.md](docs/math-methodology.md).
 
 ## Screenshots
 
-Screenshots are not committed yet. The capture checklist is in [docs/screenshots.md](docs/screenshots.md), and the README is ready for images once they are captured from a clean local run.
+### Summary
+
+![BayesianDraft TUI summary view](docs/assets/tui-summary.png)
+
+### Rankings
+
+![BayesianDraft rankings view](docs/assets/tui-rankings.png)
+
+### Recommendations
+
+![BayesianDraft recommendations view](docs/assets/tui-recommendations.png)
 
 ## Project Layout
 

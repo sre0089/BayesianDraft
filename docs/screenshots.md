@@ -1,6 +1,6 @@
 # Screenshot Guide
 
-The README is ready for screenshots, but the images should be captured from a clean local run instead of mocked.
+The README uses a small set of real TUI screenshots captured from a local run.
 
 ## Where To Put Images
 
@@ -77,7 +77,7 @@ npm run dev
 
 ## README Snippet
 
-After screenshots are added, use a short section like this near the top of `README.md`:
+The README should stay limited to the clearest two or three screenshots:
 
 ```md
 ## Screenshots
@@ -87,7 +87,15 @@ After screenshots are added, use a short section like this near the top of `READ
 ![BayesianDraft rankings view](docs/assets/tui-rankings.png)
 ```
 
-Keep the README to two or three screenshots. Put extra images in docs if needed.
+Put extra images in docs if needed.
+
+## Current Images
+
+![BayesianDraft TUI summary](assets/tui-summary.png)
+
+![BayesianDraft rankings view](assets/tui-rankings.png)
+
+![BayesianDraft recommendations view](assets/tui-recommendations.png)
 
 ## Privacy Check
 
