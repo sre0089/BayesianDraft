@@ -22,8 +22,6 @@ These are small command-line helpers for local development and draft-day prep. M
 
 - `export_baseline_rankings.py`: exports the current baseline board to JSON or CSV.
 - `export_recommendations.py`: exports the current recommendation set.
-- `audit_fast_recommendations.py`: quick runtime check for recommendation responsiveness.
-- `audit_model_roster_completion.py`: simulates drafts where the model follows its own top pick and checks roster completeness.
 
 ## Simulation
 

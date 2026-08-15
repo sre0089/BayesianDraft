@@ -4,13 +4,12 @@ BayesianDraft is organized as a local-first monorepo. The core draft logic lives
 
 ## Main Pieces
 
-- `bayesiandraft/`: the core Python package. This is where draft state, scoring, rankings, recommendations, simulations, data loading, audits, and model helpers live.
+- `bayesiandraft/`: the core Python package. This is where draft state, scoring, rankings, recommendations, simulations, and data loading live.
 - `apps/api/`: a FastAPI service for local draft-room workflows.
 - `apps/web/`: a React/TypeScript draft room.
 - `configs/`: public-safe league settings. Local overrides, such as real manager names, should use ignored `*.local.yaml` files.
 - `data/`: synthetic fixtures plus ignored folders for raw downloads, processed snapshots, and draft saves.
-- `docs/`: longer notes on methodology, data, simulation, UI, and maintenance.
-- `bayesiandraft/modeling/`: local model registry helpers. Model artifacts and metadata should be created locally and kept out of git unless they are small, public, and intentionally versioned.
+- `docs/`: longer notes on methodology, data, simulation, and the draft-room workflow.
 - `scripts/`: command-line tools for importing data, running the TUI, building path banks, exporting reports, and validating the repo.
 - `tests/`: Python tests for the engine and scripts. API and web tests live next to those apps.
 
