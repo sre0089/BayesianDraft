@@ -1,397 +1,397 @@
 # Math And Methodology
 
-BayesianDraft is designed to rank draft decisions, not only players. The engine combines player value, roster construction, draft position, market cost, availability estimates, and simulated downstream outcomes into recommendations that can be explained and reproduced.
+BayesianDraft ranks draft decisions, not just players.
 
-This document describes the current methodology and the intended direction of the model. The present implementation uses transparent deterministic and seeded baseline models. More advanced Bayesian and machine-learning components should replace these baselines only after they beat them in historical validation.
+That distinction matters. A player can be great in a vacuum and still be the wrong pick if your roster is already full at that position, if a similar player is likely to come back later, or if another position is about to dry up. The engine tries to combine those draft-day tradeoffs into one recommendation and then show the pieces that caused it.
 
-## Notation
+This document explains the current engine in practical terms. The implementation is still a transparent baseline: mostly projections, rankings, roster rules, ADP, and seeded simulations. More complicated Bayesian or machine-learning models should only replace these pieces when they beat the simpler version in validation.
 
-The notation table uses HTML subscripts and Unicode symbols so it renders cleanly in Markdown tables.
+## The Big Idea
 
-| Symbol | Meaning |
-| --- | --- |
-| P | Set of all players in the current player pool |
-| A<sub>t</sub> ⊆ P | Players available before pick t |
-| M | Set of draft managers |
-| m<sub>u</sub> ∈ M | Configured user manager |
-| R<sub>m</sub>(t) | Roster for manager m before pick t |
-| x<sub>p</sub> | Feature vector for player p |
-| μ<sub>p</sub> | Projected mean season points for player p |
-| q<sub>p,α</sub> | Projection quantile for player p at quantile α |
-| π<sub>p</sub> | Market cost for player p, represented by overall ADP |
-| s<sub>p</sub> | Engine score for player p |
-| S | Number of simulation samples |
+For every available player, BayesianDraft asks:
 
-The draft state at pick $t$ is:
+- How good is this player compared with a normal starter or replacement player?
+- Does this player fill something my roster still needs?
+- Is this position about to run out of strong options?
+- Is the market letting this player fall farther than expected?
+- If I skip this player, how likely are they to survive to my next pick?
+- What do saved simulated drafts suggest I can still get later?
+- Is this an awkward pick for the draft phase, like taking a kicker too early?
 
-$$
-D_t = \left(A_t, \{R_m(t)\}_{m \in M}, t, \mathrm{slot}(t)\right)
-$$
+The recommendation is the player with the best combined answer to those questions.
 
-where $\mathrm{slot}(t)$ maps an overall pick to round, round pick, and manager on clock.
+## Draft State
 
-## Draft State And Snake Order
+The engine keeps a live draft state:
 
-For a league with $N$ managers, the round for overall pick $t$ is:
+- the players still available
+- every manager's roster
+- the current pick number
+- the current round
+- which manager is on the clock
+- the user's next pick
 
-$$
-r(t) = \left\lfloor \frac{t - 1}{N} \right\rfloor + 1
-$$
+In a snake draft, the order reverses each round. In a 14-team league, pick 1 goes to Manager 01, pick 14 goes to Manager 14, pick 15 also goes to Manager 14, and pick 28 goes back to Manager 01.
 
-The zero-based index within the round is:
+When you record a pick, the update is simple:
 
-$$
-i(t) = (t - 1) \bmod N
-$$
+1. Remove that player from the available pool.
+2. Add the player to the manager who was on the clock.
+3. Move the draft clock to the next pick.
+4. Recalculate rankings, roster needs, recommendations, and path-bank context.
 
-The manager index is:
+This is why the TUI can update after every pick.
 
-$$
-j(t) =
-\begin{cases}
-i(t), & r(t)\ \mathrm{is\ odd} \\
-N - i(t) - 1, & r(t)\ \mathrm{is\ even}
-\end{cases}
-$$
+## Player Projections
 
-This makes draft transitions deterministic. Recording a pick removes the player from $A_t$, appends the pick to history, and updates the selected manager's roster:
+The starting point is a player snapshot. Each player can have:
 
-$$
-A_{t+1} = A_t \setminus \{p\}
-$$
+- projected fantasy points
+- floor and ceiling estimates
+- position
+- team
+- bye week
+- ADP
+- optional stat projections
 
-$$
-R_{m}(t+1) =
-\begin{cases}
-R_m(t) \cup \{p\}, & m = \mathrm{manager}(t) \\
-R_m(t), & \mathrm{otherwise}
-\end{cases}
-$$
+The main projection is the player's expected season points. In plain English, this means:
 
-## Player Projection Model
+> If this season were played many times, what would this player average?
 
-The current baseline starts from normalized player projection records. Each player has a mean projection, optional floor and ceiling values, and games-played assumptions.
-
-For a player $p$, the baseline season projection is:
-
-$$
-\mu_p = E[Y_p]
-$$
-
-where $Y_p$ is season fantasy points under the configured scoring rules.
-
-Weekly sampling uses a simple distributional approximation derived from season-level projection intervals. If floor and ceiling are available, the weekly standard deviation is approximated from the spread:
-
-$$
-\sigma_{p,w} \approx \frac{q_{p,0.85} - q_{p,0.15}}{2z_{0.85}\sqrt{G_p}}
-$$
-
-where $G_p$ is expected games played and $z_{0.85}$ is the standard normal quantile. Samples are floored at zero:
-
-$$
-Y_{p,w}^{(s)} = \max \left(0, \mathcal{N}(\mu_{p,w}, \sigma_{p,w}^2)\right)
-$$
-
-This is intentionally simple. It gives the simulator uncertainty-aware behavior without pretending the baseline is already calibrated.
+If a running back has a projection of 300 points, the engine treats 300 as the center of that player's season outcome. Floor and ceiling give the simulator a rough idea of uncertainty, but the current ranking baseline mostly uses the main projection.
 
 ## Scoring
 
-Fantasy points are computed from stat-line components and league scoring weights. For an offensive player:
+When stat projections are available, fantasy points are calculated from league scoring rules.
 
-$$
-\mathrm{FP}(p) = \sum_{k \in K_{\mathrm{pass}}} w_k z_{p,k} + \sum_{k \in K_{\mathrm{rush}}} w_k z_{p,k} + \sum_{k \in K_{\mathrm{rec}}} w_k z_{p,k}
-$$
+For example, if a league gives:
 
-where $z_{p,k}$ is a stat value and $w_k$ is the configured fantasy scoring weight.
+- 1 point per reception
+- 0.1 points per receiving yard
+- 6 points per receiving touchdown
 
-Kicker and defense/special teams scoring use the same weighted-stat pattern plus bucketed rules. For bucketed scoring, the active bucket is selected by the observed value:
+and a wide receiver is projected for:
 
-$$
-\mathrm{bucket}(v) = b \quad \mathrm{such\ that} \quad l_b \le v \le u_b
-$$
+- 90 catches
+- 1,200 receiving yards
+- 8 touchdowns
 
-The implementation keeps scoring pure and configuration-driven so projections, simulations, and tests all use the same league rules.
+then the projected receiving score is:
 
-## Replacement Value And Rankings
+```text
+90 catches * 1.0
++ 1200 yards * 0.1
++ 8 touchdowns * 6.0
+= 90 + 120 + 48
+= 258 points
+```
 
-The ranking baseline converts projected points into value over replacement. For player $p$ at position $c$:
+The same idea applies to passing, rushing, kicking, and defense settings. The important part is that scoring is configuration-driven, so the same league rules are used for rankings, simulations, exports, and tests.
 
-$$
-\mathrm{VORP}_p = \mu_p - \mu_{\mathrm{replacement}(c)}
-$$
+## Replacement Value
 
-where $\mu_{\mathrm{replacement}(c)}$ is the projected point total for the configured replacement rank at that position.
+Raw points are useful, but they can be misleading across positions.
 
-Value above starter is:
+A top quarterback may score more points than a top running back, but if many quarterbacks score well, the quarterback may not be as valuable relative to the other options at that position.
 
-$$
-\mathrm{VAS}_p = \mu_p - \mu_{\mathrm{starter}(c)}
-$$
+BayesianDraft uses value over replacement, or VORP:
 
-where $\mu_{\mathrm{starter}(c)}$ is the starter-threshold projection for the position.
+```text
+VORP = player projected points - replacement player projected points
+```
 
-Market value is represented by ADP delta:
+Example:
 
-$$
-\Delta_{\mathrm{ADP},p} = \pi_p - \mathrm{rank}_p
-$$
+- RB A projects for 300 points.
+- The replacement-level RB projects for 210 points.
+- RB A has 90 VORP.
 
-A positive $\Delta_{\mathrm{ADP},p}$ means the model ranks the player earlier than the market price. A negative value means the player is expensive relative to the model.
+That means RB A is worth about 90 points more than a normal fallback RB.
 
-The baseline overall ranking is sorted by:
+Another example:
 
-1. $\mathrm{VORP}_p$, descending.
-2. $\mu_p$, descending.
-3. Player name, ascending for deterministic ties.
+- QB A projects for 340 points.
+- The replacement-level QB projects for 300 points.
+- QB A has 40 VORP.
 
-## Tiering
+Even though QB A scores more raw points than RB A, RB A is more valuable in this simplified comparison because the RB advantage over replacement is larger.
 
-Tiers are assigned within each position based on projection gaps. If players $p_i$ and $p_{i-1}$ are adjacent in positional rank, a new tier begins when:
+## Starter Value
 
-$$
-\mu_{p_{i-1}} - \mu_{p_i} \ge \tau_c
-$$
+The engine also tracks value above starter.
 
-where $\tau_c$ is the configured tier-gap threshold for position $c$.
+This asks:
 
-Tiers help the recommendation engine distinguish a replaceable rank difference from a real drop-off in the player pool.
+> How far above a normal starting-caliber player is this player?
 
-## Recommendation Score
+This helps separate elite players from players who are merely above replacement. It is especially useful in early rounds, where the difference between a true tier-one player and a normal starter matters more.
 
-The current baseline recommendation score is additive and explainable:
+## ADP And Market Value
 
-$$
-s_p =
-\mathrm{VORP}_p
-+ N_\phi(p, R_{m_u})
-+ T(p)
-+ D(p, A_t)
-+ V(p)
-+ Q(p, t)
-- C(p, R_{m_u}, t)
-$$
+ADP means average draft position. It is the market's rough expectation of where a player usually gets picked.
 
-where:
+BayesianDraft compares its own ranking to ADP:
 
-| Term | Meaning |
-| --- | --- |
-| VORP<sub>p</sub> | Player value over replacement |
-| N<sub>φ</sub>(p, R<sub>mᵤ</sub>) | Draft-phase-weighted roster need boost |
-| T(p) | Tier-quality boost |
-| D(p, A<sub>t</sub>) | Tier-drop pressure from the remaining available pool |
-| V(p) | Market value boost from ADP delta |
-| Q(p, t) | Next-pick risk boost |
-| C(p, R<sub>mᵤ</sub>, t) | Draft timing and roster-construction penalty |
+```text
+ADP delta = ADP - BayesianDraft rank
+```
 
-The need term rewards filling roster requirements, but the weight depends on draft phase $\phi$. It includes base starter needs and configured Flex needs:
+Positive ADP delta means the player may be a value.
 
-$$
-N_\phi(p, R_{m_u}) =
-\begin{cases}
-\lambda_c \cdot w_\phi, & \mathrm{baseNeed}(c_p) + \mathrm{flexNeed}(c_p) > 0 \\
-0, & \mathrm{otherwise}
-\end{cases}
-$$
+Example:
 
-For the configured `FLEX` slot, $\mathrm{flexNeed}(c_p)$ applies only to eligible positions after the base eligible-position starter targets have been covered. The baseline uses a lower $w_\phi$ early, a medium $w_\phi$ in the middle rounds, and a higher $w_\phi$ late. This keeps the engine from blindly filling positions early while still forcing roster completion later.
+- The model ranks a player 25th.
+- The player's ADP is 40.
+- ADP delta is +15.
 
-Tier-drop pressure rewards a candidate when only a few available players remain in the same position tier:
+That means the model likes the player 15 picks earlier than the market usually takes them.
 
-$$
-D(p, A_t) \propto
-\max(4 - |\{j \in A_t: c_j = c_p,\ \mathrm{tier}_j = \mathrm{tier}_p\}|, 0)
-$$
+Negative ADP delta means the player may be expensive.
 
-The market term rewards players the model likes more than the market:
+Example:
 
-$$
-V(p) = \lambda_{\mathrm{adp}} \cdot \max(\Delta_{\mathrm{ADP},p}, 0)
-$$
+- The model ranks a player 40th.
+- The player's ADP is 25.
+- ADP delta is -15.
 
-The next-pick risk term boosts players who are unlikely to survive until the configured user's next pick:
+That means the market is usually taking the player earlier than the model would.
 
-$$
-Q(p,t) = \lambda_q \cdot (1 - \hat{P}(p \in A_k \mid D_t))
-$$
+ADP is not treated as truth. It is just a signal about price.
 
-The timing penalty currently discourages early kicker and defense selections and duplicate low-flexibility roster construction:
+## Tiers
 
-$$
-C(p, R_{m_u}, t) =
-C_{\mathrm{early}}(p,t) + C_{\mathrm{duplicate}}(p, R_{m_u})
-$$
+Tiers group players when their projections are close together.
 
-This structure is deliberately readable. Every recommendation can be decomposed into value, phase-weighted need, tier quality, tier-drop pressure, market value, next-pick risk, and penalty components.
+For example, suppose the available wide receivers look like this:
+
+```text
+WR 1: 285 points
+WR 2: 283 points
+WR 3: 281 points
+WR 4: 260 points
+```
+
+The first three are close enough that they probably belong in the same tier. WR 4 is a bigger drop. If only one player remains in a tier, the engine becomes more urgent about that position.
+
+This is what tier pressure means:
+
+> If I skip this position now, will the next option be meaningfully worse?
+
+## Roster Need
+
+Roster need is the part of the score that protects you from building an incomplete or lopsided roster.
+
+If your league requires:
+
+- 1 QB
+- 2 RB
+- 2 WR
+- 1 TE
+- 1 FLEX
+- 1 DST
+- 1 K
+
+and your roster has no running backs, then RB gets a need boost. If you already have two RBs but your Flex is still open, RB can still receive some need credit because RB is Flex-eligible.
+
+Need is draft-phase aware:
+
+- Early draft: need matters, but the engine still prioritizes elite value.
+- Middle draft: need and value are more balanced.
+- Late draft: need gets stronger so the roster actually gets completed.
+
+This keeps the engine from blindly filling positions early while still making sure the roster is not incomplete at the end.
 
 ## Availability
 
-Availability estimates answer: "What is the chance this player reaches a future target pick?"
+Availability means:
 
-For player $p$ and target pick $k > t$, the desired probability is:
+> If I do not take this player now, what is the chance they are still there at my next pick?
 
-$$
-P(p \in A_k \mid D_t)
-$$
+The engine estimates this through seeded simulations.
 
-The baseline approximates this with seeded draft simulation:
+Here is the simple version:
 
-$$
-\widehat{P}(p \in A_k \mid D_t) =
-\frac{1}{S}\sum_{s=1}^{S} \mathbb{1}\left[p \in A_k^{(s)}\right]
-$$
+1. Simulate the picks between now and your next pick many times.
+2. In each simulated path, check whether the player survives.
+3. Count how often the player is still available.
 
-Each simulated path drafts players according to a heuristic utility:
+Example:
 
-$$
-u_{m,p} = \alpha \cdot \mathrm{rankValue}_p + \beta \cdot \mathrm{need}_{m,p} + \gamma \cdot \mathrm{market}_{p} + \delta \cdot \mathrm{opponentPreference}_{m,p} + \epsilon_{s,p}
-$$
+- The engine runs 100 simulated paths.
+- A player is still available at your next pick in 18 of them.
+- Estimated availability is 18%.
 
-where $\epsilon_{s,p}$ is seeded randomness. The same seed and state produce the same estimate.
+That does not mean the real draft has an exact 18% probability. It means that under the current simulator assumptions, this player usually does not make it back.
 
-The current model is not calibrated probability yet. It is a reproducible baseline for comparing decisions and detecting obvious availability tradeoffs.
+This is similar to expected value for dice. If each die roll has a 1 out of 6 chance, the average roll is:
 
-## Opponent Profiles
+```text
+1/6 * 1
++ 1/6 * 2
++ 1/6 * 3
++ 1/6 * 4
++ 1/6 * 5
++ 1/6 * 6
+= 3.5
+```
 
-Opponent behavior is represented by lightweight profiles inferred from current draft behavior. For manager $m$, the position preference for position $c$ is smoothed:
+The draft simulator uses the same kind of averaging idea, but over possible draft paths instead of die rolls.
 
-$$
-\theta_{m,c} =
-\frac{n_{m,c} + a_c}{\sum_{c'} n_{m,c'} + \sum_{c'} a_{c'}}
-$$
+## Path Banks
 
-where $n_{m,c}$ is the count of drafted players at position $c$, and $a_c$ is a prior smoothing weight.
+A path bank is a saved set of simulated drafts.
 
-The simulator can use $\theta_{m,c}$ as part of the opponent preference term:
+Instead of running thousands of simulations during the draft, BayesianDraft can build a large bank before draft time and quickly look up similar situations while you are drafting.
 
-$$
-\mathrm{opponentPreference}_{m,p} = \theta_{m,c_p}
-$$
+The path bank helps answer questions like:
 
-Future versions should learn these profiles from historical draft behavior when user-provided history is available.
+- If I take RB now, what kind of WR usually comes back later?
+- If I wait on QB, how much value do I usually lose?
+- Which position gets more expensive to skip?
+- What player is commonly still available at my next pick?
 
-## Candidate Rollout Optimization
+This produces the quick direction shown in the TUI.
 
-Candidate rollout asks: "If the user drafts player $p$ now, what roster outcomes are expected after the rest of the draft?"
+For example:
 
-For each candidate $p \in A_t$, the engine creates a copied state:
+```text
+Opportunity: RB +8 | WR +2 | QB +14 | TE +1
+```
 
-$$
-D_{t+1}^{p} = \mathrm{recordPick}(D_t, p)
-$$
+This would mean the saved paths think waiting on QB is more costly than waiting on WR or TE. It does not automatically force a QB pick, but it pushes the recommendation in that direction if the player value also supports it.
 
-Then it simulates the remaining draft $S$ times and evaluates the resulting user roster:
+## Recommendation Score
 
-$$
-Q(p) =
-\frac{1}{S}\sum_{s=1}^{S}
-U\left(R_{m_u}^{(s)}(T)\right)
-$$
+The current score is additive. That means each player gets points from several understandable pieces:
 
-The current roster utility is based on projected points and roster VORP:
+```text
+Total score =
+  player value
++ roster need
++ tier quality
++ tier drop pressure
++ opportunity cost
++ next-pick risk
++ market value
+- penalties
+```
 
-$$
-U(R) = \sum_{p \in R} \mu_p + \eta \sum_{p \in R} \mathrm{VORP}_p
-$$
+The TUI shows this as a compact breakdown:
 
-The selected candidate is:
+```text
+need +24.5 | value +90.2 | tier +24.0 | opp +8.4 | risk +17.6 | market +1.2 | penalty 0.0
+```
 
-$$
-p^* = \arg\max_{p \in C_t} Q(p)
-$$
+How to read that:
 
-where $C_t$ is the configured candidate pool. Candidate rollouts are more expensive than the baseline recommendation score, but they better capture second-order effects such as positional scarcity and future pick timing.
+- `value`: how much the player adds over replacement.
+- `need`: how much the player helps fill your roster, including Flex.
+- `tier`: how strong the player's tier is.
+- `drop`: whether the position is close to a tier cliff.
+- `opp`: opportunity cost from the path bank.
+- `risk`: how unlikely the player is to reach your next pick.
+- `market`: whether the player is cheaper than the model thinks they should be.
+- `penalty`: draft timing or roster construction concerns.
+
+The final recommendation is the available player with the best total score for the current draft state.
+
+## A Simple Recommendation Example
+
+Imagine it is your pick and the top candidates are:
+
+```text
+Player        Pos   Value   Need   Tier   Risk   Market   Total
+RB A          RB     90      25     20     15      2       152
+QB A          QB     55      10     18     30      8       121
+WR A          WR     70      20     15     10      5       120
+```
+
+RB A wins because the engine sees a strong mix of raw value, roster need, and tier strength.
+
+But if RBs are still likely to be available later and QBs are about to collapse, the path-bank opportunity cost could change the picture:
+
+```text
+Player        Pos   Base Score   Opportunity Cost   New Total
+RB A          RB       152              +1             153
+QB A          QB       121             +35             156
+WR A          WR       120              +4             124
+```
+
+Now QB A can become the better strategic pick, even if RB A looked better from static rankings alone.
+
+This is the kind of situation the path bank is meant to catch.
+
+## Opponent Behavior
+
+The current opponent model is intentionally lightweight.
+
+It looks at what each manager has drafted so far and uses that to slightly adjust future simulated picks. If a manager has already taken several wide receivers, the simulator can reduce the urgency for that manager to take another one. If a manager has no quarterback later in the draft, quarterback becomes more likely.
+
+This is not a fully learned opponent model yet. It is a transparent baseline that makes simulated drafts more realistic than simply picking the highest-ranked available player every time.
+
+## Candidate Rollouts
+
+The normal recommendation answers:
+
+> Who is the best pick right now?
+
+Candidate rollout asks a deeper question:
+
+> If I take this player now, what does my roster usually look like by the end of the draft?
+
+The process is:
+
+1. Pick a candidate player.
+2. Pretend you draft that player.
+3. Simulate the rest of the draft many times.
+4. Score your final roster in each simulation.
+5. Average those outcomes.
+6. Repeat for other candidate players.
+
+This is slower than the normal recommendation, but it better captures future effects. It is useful when two players are close and you want to compare likely roster paths.
 
 ## Lineup And Season Simulation
 
-For a weekly roster $R$, lineup optimization selects eligible players into starting slots to maximize projected or sampled points:
+For a completed roster, the season simulator estimates how strong the team is by choosing the best legal weekly lineup.
 
-$$
-L^* =
-\arg\max_{L \subseteq R}
-\sum_{p \in L} Y_{p,w}
-$$
+For example, if your roster has four running backs but only two RB slots and one Flex, the simulator does not score all four as starters. It chooses the best legal combination based on the league's lineup rules.
 
-subject to roster slot constraints:
-
-$$
-\mathrm{eligible}(p, q) = 1
-$$
-
-for every player $p$ assigned to slot $q$.
-
-The current season simulator repeats this process across weeks using seeded player outcomes:
-
-$$
-\mathrm{SeasonPoints}(R) =
-\sum_{w=1}^{W}
-\max_{L_w \subseteq R}
-\sum_{p \in L_w} Y_{p,w}
-$$
-
-This currently estimates roster scoring strength, not full league standings or playoff probability. A later model can extend the utility function to:
-
-$$
-U(R) = E[\mathrm{Points}(R)] + \kappa_1 P(\mathrm{Playoffs} \mid R) + \kappa_2 P(\mathrm{Championship} \mid R)
-$$
+At the moment, this estimates roster scoring strength. It does not yet fully model head-to-head schedules, playoff brackets, or championship odds.
 
 ## Backtesting And Calibration
 
-The engine should earn complexity through validation. Core metrics include:
+The engine should become more complicated only when testing proves that the added complexity helps.
 
-Projection error:
+The main validation ideas are:
 
-$$
-\mathrm{MAE} =
-\frac{1}{n}\sum_{i=1}^{n}
-\left|y_i - \hat{y}_i\right|
-$$
+- Projection error: how far projected points were from real points.
+- Availability accuracy: whether players actually survived to later picks as often as predicted.
+- Draft regret: how much value was lost by taking one player instead of another.
+- Time-aware testing: historical drafts must only use information that existed before that draft happened.
 
-Availability probability quality:
+For example, if the engine says a player has a 20% chance to reach your next pick, then across many similar cases, that player should actually survive about 20% of the time. If that does not happen, the availability model needs calibration.
 
-$$
-\mathrm{Brier} =
-\frac{1}{n}\sum_{i=1}^{n}
-(\hat{p}_i - y_i)^2
-$$
+## Current Limits
 
-Binary log loss:
-
-$$
-\mathrm{LogLoss} =
--\frac{1}{n}\sum_{i=1}^{n}
-\left[
-y_i \log(\hat{p}_i) + (1-y_i)\log(1-\hat{p}_i)
-\right]
-$$
-
-Draft regret for a pick can be measured as:
-
-$$
-\mathrm{Regret}_t =
-U(R_T^{\mathrm{best\ available\ at}\ t}) - U(R_T^{\mathrm{actual\ pick\ at}\ t})
-$$
-
-Backtests must be time-aware. A model for a historical draft should only use information that existed before that draft.
-
-## Current Limitations
-
-- Fixture data is synthetic and exists to exercise the system, not to produce real draft advice.
+- Fixture data is synthetic and exists to test the system, not to produce real draft advice.
 - Baseline rankings depend on simple replacement assumptions.
 - Recommendation terms are heuristic and additive.
-- Availability simulation is reproducible but not calibrated.
+- Availability simulation is reproducible, but not yet calibrated against many real drafts.
 - Opponent profiles only use observed picks in the current draft.
 - Season simulation estimates roster points, not head-to-head standings or playoff odds.
 - ESPN integration is dry-run only.
 
-## Methodology Direction
+## Direction
 
-The long-term engine should move from transparent baselines toward calibrated probabilistic decision optimization:
+The long-term goal is a more validated decision engine, not just a more complicated one.
 
-1. Replace synthetic fixtures with reproducible projection, ADP, injury, and depth-chart snapshots.
-2. Validate projection distributions with historical seasons.
-3. Calibrate availability probabilities against historical draft rooms.
+The next modeling improvements should be:
+
+1. Use reproducible projection, ADP, injury, and depth-chart snapshots.
+2. Validate projection ranges against historical seasons.
+3. Calibrate availability estimates against real draft rooms.
 4. Learn opponent tendencies from user-provided draft history.
-5. Evaluate candidate picks by playoff and championship probability, not only projected roster points.
-6. Keep every model version tied to data snapshots, validation metrics, and reproducible seeds.
+5. Compare candidate picks by final roster outcomes, then eventually playoff and championship probability.
+6. Keep every model tied to data snapshots, validation metrics, and reproducible seeds.
 
-The goal is not model complexity for its own sake. The goal is better draft decisions with explanations that can be audited after the season.
+The goal is better draft decisions with explanations that can still be audited later.
