@@ -86,3 +86,19 @@ PYTHONPATH=.:apps/api/src python scripts/ci_local.py
 ```
 
 This gathers the Python, API, and web checks that are worth running before pushing larger changes.
+
+## Fresh-Clone Smoke Check
+
+Before a public-facing release, it is worth testing the README commands from a clean copy:
+
+```bash
+git clone /path/to/BayesianDraft /tmp/bayesiandraft-fresh-audit
+cd /tmp/bayesiandraft-fresh-audit
+PYTHONPATH=. python scripts/draft_summary.py
+PYTHONPATH=. python scripts/league_report.py
+PYTHONPATH=. python scripts/sim_benchmark.py
+PYTHONPATH=. python scripts/check_docs_index.py
+PYTHONPATH=. python scripts/privacy_scan.py
+```
+
+This catches commands that accidentally depend on ignored local data, caches, or personal config.
