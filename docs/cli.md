@@ -1,6 +1,6 @@
 # Interactive CLI
 
-BayesianDraft includes a keyboard-driven terminal UI for testing the draft engine without running the web app.
+BayesianDraft includes a keyboard-driven terminal UI for running a live draft from your terminal. It is the easiest way to test the engine and the most practical interface for draft day right now.
 
 Launch with the built-in fixture:
 
@@ -8,10 +8,11 @@ Launch with the built-in fixture:
 PYTHONPATH=. python scripts/draft_tui.py
 ```
 
-The CLI starts at pick 1 by default. During a live draft, select the drafted player and press Enter or `d`; the pick is recorded for whichever manager is currently on clock. Rankings, recommendations, rosters, and availability update immediately after each pick. Draft, undo, redo, and auto-pick actions autosave by default.
-The Summary view opens as a compact dashboard with status, the current best overall recommendation, roster, recent-pick, version, and snapshot context.
+The CLI starts at pick 1 by default. During a live draft, select the drafted player and press Enter or `d`; the pick is recorded for whoever is on the clock. Rankings, recommendations, rosters, and availability update right away. Draft, undo, redo, and auto-pick actions autosave by default.
 
-Start directly at the pick-8 rehearsal scenario only when you want a quick local demo:
+The Summary view opens as a compact dashboard with the current pick, best recommendation, roster snapshot, recent picks, version, and data snapshot context.
+
+Start directly at the pick-8 rehearsal scenario when you want a quick local demo:
 
 ```bash
 PYTHONPATH=. python scripts/draft_tui.py \
@@ -50,7 +51,7 @@ PYTHONPATH=. python scripts/draft_tui.py \
   --path-bank data/processed/path_bank_2026.json
 ```
 
-Use `--scenario` only with snapshots that contain the player IDs referenced by that scenario. The built-in pick-8 scenario is designed for the built-in synthetic fixture.
+Use `--scenario` only with snapshots that contain the player IDs referenced by that scenario. The built-in pick-8 scenario is meant for the built-in synthetic fixture.
 
 For rehearsal runs where you want BayesianDraft to simulate the early picks and jump directly to your configured draft slot, add:
 
@@ -83,7 +84,7 @@ PYTHONPATH=. python scripts/analyze_draft_paths.py \
 - `Summary`: current pick, manager on clock, available player count, roster size, Flex need, save status, next user pick, Draft Assistant readout, and best-now recommendation. The Draft Assistant shows a live quick direction that updates after every pick from the current board, path-bank opportunity-cost guidance when loaded, plus cached deep-simulation guidance when it is still fresh.
 - `Rankings`: scrollable available-player table, match count, pick preview, and selected-player detail when the terminal is wide enough. Press `/` or start typing while on Rankings to filter immediately.
 - `Recommendations`: best overall recommendation, live positional groups, score breakdown including `opp` opportunity cost, stale/fresh path-analysis status, and top five available players for each position your roster still needs.
-- `Managers`: yazi-style manager browser with every competitor roster, pick count, projected points, VORP, and position counts.
+- `Managers`: manager browser with every competitor roster, pick count, projected points, VORP, and position counts.
 - `Roster`: configured user manager roster, positional starter needs, and Flex status.
 - `Health`: snapshot coverage and warnings.
 - `Simulation`: multi-path draft analysis showing simulated manager results, draft strategy analysis for your next pick, and risk summary. Press `a` to start the analysis from inside the TUI; the run log updates during the league-path phase and the next-pick strategy phase. When the board changes after analysis, the view marks the results stale, but Summary still keeps its quick direction live without rerunning the deep simulation.

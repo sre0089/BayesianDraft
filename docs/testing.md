@@ -1,6 +1,6 @@
 # Testing
 
-Testing should scale with risk and change scope.
+The test suite is meant to keep draft-day behavior boring and predictable. Small documentation changes do not need every check, but anything touching draft state, recommendations, scoring, simulation, data loading, or the UI should get real coverage.
 
 ## Test Types
 
@@ -9,7 +9,7 @@ Testing should scale with risk and change scope.
 - Simulation: reproducibility, legal picks, legal lineups, probability sanity checks, runtime.
 - Failure: missing data, stale data, duplicate picks, invalid player IDs, sync failure, restart recovery.
 
-Tests must use fixtures instead of live services.
+Tests should use fixtures instead of live services. Live data pulls belong in scripts, not unit tests.
 
 ## Draft-Day Preflight
 
@@ -85,4 +85,4 @@ PYTHONPATH=.:apps/api/src python scripts/ci_local.py --list
 PYTHONPATH=.:apps/api/src python scripts/ci_local.py
 ```
 
-This gathers the Python, API, and web checks used before pushing larger changes.
+This gathers the Python, API, and web checks that are worth running before pushing larger changes.
