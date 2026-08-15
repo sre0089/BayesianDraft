@@ -1,15 +1,20 @@
 # Recommendations
 
-BayesianDraft includes a deterministic baseline recommendation engine.
+BayesianDraft's recommendation engine is intentionally transparent. It does not just print the top ranked player; it scores each available player against the current draft state and shows why the top option makes sense.
 
 ## Inputs
 
-- Current `DraftState`
-- Baseline `RankingRow` values
-- Available-player set
-- Primary user roster counts
+The baseline engine uses:
 
-## Score Components
+- the current `DraftState`
+- available players
+- baseline `RankingRow` values
+- the configured user's roster
+- optional path-bank context
+
+## Score Shape
+
+The current score is additive:
 
 ```text
 TotalScore =
@@ -23,74 +28,75 @@ TotalScore =
   - Penalty
 ```
 
-Current components:
+The point of this shape is not to hide the decision behind a model. Each part maps to something you would naturally think about during a draft:
 
-- `value_score`: points over replacement from baseline rankings.
-- `draft_phase`: early, middle, or late based on the current draft round.
-- `need_score`: starter vacancy boost weighted by draft phase. It includes configured Flex slots once base eligible-position needs are filled. It matters less early and more later.
-- `tier_score`: boost for higher-tier players.
-- `tier_drop_score`: boost when few same-position players remain in the candidate's tier.
-- `opportunity_cost_score`: optional path-bank boost when the best current player at a position is much better than the expected option at the user's next pick.
-- `market_score`: boost when ADP is later than model rank.
-- `next_pick_risk_score`: boost when the player is unlikely to make it back to the configured user's next pick.
-- `penalty`: early K/DST and duplicate K/DST penalty.
-- `next_pick_availability`: simple ADP and pick-distance heuristic.
-- Availability model support exists in `bayesiandraft.simulation`, but the baseline recommendation engine still uses a lightweight inline heuristic until recommendation orchestration is wired to the simulator.
-- `confidence`: deterministic heuristic derived from score shape. This is retained in the model output for now, but it is not calibrated and should not be treated as a probability.
+- `value_score`: how much projected value the player adds over replacement.
+- `need_score`: how much the pick helps your current roster construction, including Flex.
+- `tier_score`: how strong the player's current tier is.
+- `tier_drop_score`: how close that position is to a tier cliff.
+- `opportunity_cost_score`: how much worse the expected later option is at the same position, when a path bank is loaded.
+- `market_score`: whether ADP suggests the market is letting the player fall.
+- `next_pick_risk_score`: how unlikely the player is to reach your next pick.
+- `penalty`: timing penalties, mainly for early K/DST picks and duplicate low-flexibility roster construction.
 
-## Output
+The CLI shows this as a compact breakdown, for example:
 
-The engine returns:
+```text
+need +24.5 | value +90.2 | tier +24.0 | opp +8.4 | risk +17.6 | market +1.2 | penalty 0.0
+```
 
-- primary recommendation
-- top alternatives
-- total score
-- component scores
-- draft phase
-- confidence
-- estimated next-pick availability
-- explanation bullets
+## What The Recommendation Means
 
-The CLI also groups recommendations by positions the configured user roster still needs. Each group shows up to five available players ranked by the same recommendation score for that position. For the configured `FLEX` slot, eligible RB/WR/TE groups stay open after the base RB/WR/TE starters are filled until the Flex requirement is covered.
+The primary recommendation is the best current pick according to the live board and your roster. It is not meant to be followed blindly. It is meant to give you a defensible starting point:
 
-When a path bank is loaded, the recommendation engine prices the choice as:
+- If the recommendation has high `value` and high `risk`, the player is strong and probably will not come back.
+- If `need` is doing most of the work, the engine is protecting roster construction.
+- If `opp` is high, the path bank thinks waiting at that position gets expensive.
+- If `market` is positive, the model likes the player more than the ADP market does.
+
+## Position Groups
+
+The TUI also shows recommendations by positions your roster still needs. This is useful when the best overall player and the best strategic direction are not obviously the same thing.
+
+For each open position group, the engine lists up to five available players using the same scoring components. For Flex, RB/WR/TE remain open after base starters are filled until the Flex requirement is covered.
+
+## Path-Bank Context
+
+When a path bank is loaded, the engine can compare:
 
 ```text
 take this position now
 vs
-expected best same-position option at the user's next pick
+expected best same-position option at your next pick
 ```
 
-This is how the engine can prefer a high-upside QB over a need-based RB when the saved paths suggest the RB replacement later is acceptable, or prefer RB when the RB tier is expected to collapse before the next pick.
+This is what lets the tool reason about opportunity cost. For example, it can prefer a high-value QB over a need-based RB if saved paths suggest a useful RB is usually still available later. It can also push RB harder when the saved paths show the RB tier is likely to collapse before your next pick.
 
-## Candidate Rollout Optimizer
+## Candidate Rollouts
 
-`optimize_candidates` evaluates draft candidates with seeded rollout summaries.
+`optimize_candidates` is the heavier candidate comparison path. It:
 
-Current behavior:
+1. Requires the configured user manager to be on the clock.
+2. Picks a candidate pool from needed positions and top overall players.
+3. Records each candidate as the user's current pick in a copied draft state.
+4. Simulates the rest of the draft with seeded paths.
+5. Ranks candidates by the resulting roster value.
 
-- Requires the configured user manager to be on clock.
-- Seeds the candidate pool with top options from positions the configured user roster still needs, then fills remaining slots by overall rank.
-- Records each candidate as the user's pick in a copied draft state.
-- Runs seeded remaining-draft simulations.
-- Ranks candidates by rollout VORP with lightweight draft-value context.
-- Returns a primary optimized candidate, alternatives, rollout summaries, and explanations.
-
-In the CLI, this appears as a best-path comparison. The best-now recommendation is the immediate additive score; the best-path rollout is the simulated roster path after taking a candidate and letting the rest of the draft play out.
+In practice, the baseline recommendation answers "who is best right now?" while rollout analysis asks "what does my roster tend to look like if I take this player now?"
 
 ## Export
 
-Use the export command to write recommendation snapshots:
+Export recommendation snapshots with:
 
 ```bash
-PYTHONPATH=. python scripts/export_recommendations.py --out /tmp/recommendations.json --scenario data/fixtures/rehearsal_user_pick_8.json
+PYTHONPATH=. python scripts/export_recommendations.py \
+  --out /tmp/recommendations.json \
+  --scenario data/fixtures/rehearsal_user_pick_8.json
 ```
 
-This exports baseline recommendation JSON for a fresh draft state, optionally after applying a rehearsal scenario.
+## Current Limits
 
-## Current Limitations
-
-- Availability is a heuristic, not a calibrated probability model.
-- Candidate rollout uses the current heuristic draft simulator.
-- Opponent personalization is a first-pass profile heuristic, not a calibrated model.
-- Recommendation utility is not yet tied to season simulation or championship probability.
+- Availability is still a heuristic, not a calibrated probability model.
+- Opponent behavior is based on simple draft profiles.
+- Candidate rollout depends on the current draft simulator.
+- The recommendation score does not yet optimize playoff or championship probability directly.

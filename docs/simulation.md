@@ -1,27 +1,36 @@
 # Simulation
 
-Simulation must be reproducible from explicit seeds.
+Simulation is used for two jobs in BayesianDraft:
+
+1. Estimate what might still be available later.
+2. Compare draft paths instead of judging one pick in isolation.
+
+All stochastic simulation paths use explicit seeds, so a run can be reproduced from the same state and config.
 
 ## Draft Simulation
 
-The draft simulator should simulate remaining picks conditional on the current draft state, opponent behavior, roster needs, ADP distributions, and position runs.
+The draft simulator starts from a `DraftState` and rolls forward until the draft is complete or the ranked player pool runs out.
 
-Current implementation:
+Current pieces:
 
-- `simulate_remaining_draft` rolls forward from a `DraftState` until the draft is complete or the ranked player pool is exhausted.
-- `simulate_candidate_rollout` records a user pick, simulates the remaining draft repeatedly, and summarizes the user's resulting roster value.
-- `analyze_league_paths` runs many full-draft paths and aggregates manager projected points, VORP, median outcome, volatility, average finish, top-three rate, and first-place rate.
-- `analyze_user_strategy_paths` samples possible boards at the user's next pick, forces that next pick by position, and compares how each path performs after the rest of the draft is simulated.
-- `score_roster_strength` scores simulated teams by best legal starting lineup plus discounted positive bench value instead of raw full-roster totals.
-- `DraftSimulationConfig` controls simulation count, seed, ADP spread, roster-need weight, and candidate pool size.
-- Remaining-draft simulation uses first-pass opponent profiles inferred from completed picks.
-- All stochastic paths are seeded and reproducible.
+- `simulate_remaining_draft`: simulates the rest of the draft from the current state.
+- `simulate_candidate_rollout`: records a user pick, runs remaining-draft simulations, and summarizes the resulting user roster.
+- `analyze_league_paths`: runs many full-draft paths and compares manager outcomes.
+- `analyze_user_strategy_paths`: samples possible boards at the user's next pick, forces a next-pick position, and compares final roster outcomes.
+- `score_roster_strength`: scores teams by best legal starting lineup plus discounted positive bench value.
+- `DraftSimulationConfig`: controls simulation count, seed, ADP spread, roster-need weight, and candidate pool size.
+
+Opponent behavior is still heuristic. The simulator uses first-pass opponent profiles inferred from completed picks, but it is not trying to perfectly predict every manager.
 
 ## Multi-Path Draft Analysis
 
-Multi-path analysis answers a broader draft-day question than a single recommendation: if the current draft continues in many plausible ways, which teams usually end up strongest and which next-pick strategy gives the user the best final roster distribution?
+Multi-path analysis is useful when you want a bigger-picture read:
 
-The standalone report script can run heavier analysis from a fresh snapshot, a rehearsal state, or a saved live draft:
+- Which managers tend to finish strongest from this board?
+- Which next-pick position tends to produce the best final roster?
+- What does the user's best/median/worst outcome look like?
+
+Run the standalone report from a saved live draft:
 
 ```bash
 PYTHONPATH=. python scripts/analyze_draft_paths.py \
@@ -30,7 +39,7 @@ PYTHONPATH=. python scripts/analyze_draft_paths.py \
   --simulations 500
 ```
 
-For a scratch rehearsal that jumps to the configured user pick:
+For a rehearsal that jumps to the configured user pick:
 
 ```bash
 PYTHONPATH=. python scripts/analyze_draft_paths.py \
@@ -39,7 +48,7 @@ PYTHONPATH=. python scripts/analyze_draft_paths.py \
   --simulations 500
 ```
 
-The report format is intentionally compact:
+Example output:
 
 ```text
 After 500 simulated draft paths:
@@ -61,11 +70,15 @@ Top 3 rate:   41%
 Win rate:     13%
 ```
 
-The CLI `Simulation` tab uses the same analysis code with a smaller path count so it remains responsive while entering picks live.
+The TUI `Simulation` tab uses the same analysis code with a smaller run size so it stays responsive.
 
 ## Path Bank
 
-A path bank is a pre-draft cache of many seeded draft paths plus lookup tables for player availability, expected positional value by pick, and positional drop-off by pick.
+A path bank is a precomputed draft cache. Instead of rerunning thousands of deep simulations during the draft, BayesianDraft can look up similar saved paths and quickly estimate:
+
+- player availability by pick
+- expected positional value by pick
+- positional drop-off by pick
 
 Build it before the draft:
 
@@ -76,49 +89,51 @@ PYTHONPATH=. python scripts/build_path_bank.py \
   --out data/processed/path_bank_2026.json
 ```
 
-Inspect and latency-test it:
+Inspect it:
 
 ```bash
 PYTHONPATH=. python scripts/inspect_path_bank.py data/processed/path_bank_2026.json
-PYTHONPATH=. python scripts/audit_fast_recommendations.py \
+```
+
+Load it into the TUI:
+
+```bash
+PYTHONPATH=. python scripts/draft_tui.py \
   --snapshot data/processed/dynastyprocess_rankings_2026.json \
   --path-bank data/processed/path_bank_2026.json
 ```
 
-During a live draft, the TUI can load the path bank and update opportunity-cost recommendations after every pick without rerunning deep simulation. The engine uses exact matching paths when the real draft follows a saved path, compatible similar paths when possible, and falls back to the full bank when the live draft diverges too far.
-
-Current limitations:
-
-- Opponent behavior is still heuristic and only uses the current draft.
-- The fixture player pool is intentionally small, so fixture simulations stop when ranked players run out.
-- Draft-path analysis compares roster strength using projected best-lineup and discounted-bench value, not full weekly schedule outcomes.
-- Candidate rollout and path analysis do not yet estimate playoff or championship probability.
+During a live draft, the TUI updates path-bank opportunity-cost context after each pick without rerunning the full simulation. Exact saved paths are used when possible, similar paths are used when the real draft diverges, and the full bank is used as a fallback.
 
 ## Season Simulation
 
-The season simulator should sample weekly player outcomes, account for injuries and byes, optimize legal lineups, simulate matchups, determine playoff qualification, and simulate playoffs.
+The season simulator samples weekly player outcomes and optimizes legal lineups.
 
-Current implementation:
+Current pieces:
 
-- `optimize_lineup` fills fixed starting slots and configured flex slots from weekly player scores.
-- `simulate_weekly_lineup` samples weekly projection outcomes for a roster and returns the optimized lineup.
-- `simulate_roster_season` repeats weekly lineup simulation across a configured week range and summarizes total and average points.
-- All weekly sampling uses explicit seeds.
+- `optimize_lineup`: fills fixed starting slots and Flex slots from weekly player scores.
+- `simulate_weekly_lineup`: samples weekly projection outcomes and returns the optimized lineup.
+- `simulate_roster_season`: repeats weekly lineup simulation across a week range.
 
-Current limitations:
+Current limits:
 
-- This is a roster points simulator, not a full league schedule simulator.
-- Matchups, standings, playoff qualification, and playoff brackets are deferred.
-- Bye weeks, waiver moves, lineup locks, and injury-week availability are not integrated yet.
-
-Runtime, cache behavior, and seed reproducibility must be measured and tested.
+- It is a roster-points simulator, not a full league schedule simulator.
+- Matchups, standings, playoff qualification, and playoff brackets are not wired in yet.
+- Bye weeks, waiver moves, lineup locks, and week-specific injury availability are not fully integrated yet.
 
 ## Benchmark Smoke Check
 
-Use the benchmark smoke check:
+Use the benchmark smoke check when you want a quick runtime sanity test:
 
 ```bash
 PYTHONPATH=. python scripts/sim_benchmark.py
 ```
 
-This reports elapsed time and completion metadata for a seeded remaining-draft smoke simulation.
+It prints elapsed time and completion metadata for a seeded remaining-draft simulation.
+
+## Current Limits
+
+- Opponent behavior is heuristic.
+- Fixture simulations can stop early because the public fixture player pool is small.
+- Draft-path analysis uses projected best-lineup value and discounted bench value, not full schedule outcomes.
+- Candidate rollout and path analysis do not yet estimate playoff or championship probability.
