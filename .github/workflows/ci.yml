@@ -19,7 +19,11 @@ jobs:
       - name: Ruff
         run: ruff check .
       - name: Mypy
-        run: mypy bayesiandraft apps/api/src
+        run: mypy bayesiandraft apps/api/src scripts
+      - name: Privacy scan
+        run: PYTHONPATH=. python scripts/privacy_scan.py
+      - name: Docs index
+        run: PYTHONPATH=. python scripts/check_docs_index.py
       - name: Pytest
         run: pytest
 
