@@ -11,7 +11,6 @@ SKIP_DIRS = {
     "data/raw",
     "data/snapshots",
     "dist",
-    "models/artifacts",
     "node_modules",
 }
 

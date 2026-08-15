@@ -98,7 +98,7 @@ The full methodology is in [docs/math-methodology.md](docs/math-methodology.md).
 - `apps/web/`: React/Vite draft room.
 - `configs/`: public-safe league config.
 - `data/`: synthetic fixtures plus ignored local data folders.
-- `docs/`: architecture, CLI, methodology, data, and model notes.
+- `docs/`: architecture, CLI, methodology, data, and simulation notes.
 - `scripts/`: local import, simulation, validation, and draft-room commands.
 - `tests/`: Python tests, with app-specific tests under `apps/`.
 
