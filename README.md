@@ -1,125 +1,136 @@
 # BayesianDraft
 
-BayesianDraft is a local-first probabilistic fantasy football draft assistant for configurable fantasy football leagues.
+BayesianDraft is a local-first fantasy football draft assistant. It is built for a live snake draft where you enter picks as they happen and the tool keeps updating the board, roster needs, and recommendation logic.
 
-Most fantasy tools rank players. BayesianDraft ranks decisions. The target product recommends the available player who maximizes expected final roster strength, and eventually playoff and championship probability, given the live draft state.
+The main idea is simple: rankings are useful, but draft decisions depend on context. A good pick should account for who is still available, what your roster needs, what might make it back to you, where the market is discounting players, and how different paths could affect the final roster.
 
 ## What It Does
 
-- Tracks a snake draft with manual picks, rosters, availability, undo/redo, and save/restore.
-- Scores players with configuration-driven full-PPR league settings.
-- Builds baseline rankings from projections, replacement levels, ADP, tiers, and risk signals.
-- Explains recommendations with roster needs, player value, scarcity, and next-pick availability.
-- Runs seeded draft simulations and candidate rollouts for repeatable strategy comparison.
-- Keeps ESPN integration behind a dry-run boundary so local manual mode stays reliable.
+- Tracks a full snake draft with manual pick entry, undo/redo, save/load, and roster views.
+- Ranks available players using projections, VORP, tiers, ADP, roster need, and availability risk.
+- Explains recommendations with a compact score breakdown instead of just giving a name.
+- Shows position-aware recommendations so you can compare the best QB/RB/WR/TE paths.
+- Runs seeded draft simulations and path-bank analysis for faster draft-day context.
+- Provides both a terminal draft room and a small local web/API surface.
 
-## Tech Stack
+## Why I Built It
 
-- Backend: Python 3.12, FastAPI, Pydantic, Polars, DuckDB or SQLite
-- Frontend: React, TypeScript, Vite, Vitest, React Testing Library
-- Testing: pytest, Ruff, mypy where practical, Vitest
-- Modeling: scikit-learn first, CatBoost/LightGBM only when validated
-- Storage: local configuration, data snapshots, draft sessions, model artifacts, and audit logs
+Most draft tools are either static rankings or mock draft rooms. BayesianDraft is closer to a live decision assistant: it tries to answer “what should I do from this exact board state?” after every pick.
 
-## Repository Layout
+It is intentionally local-first. You can use public or user-provided projection data, keep your actual league details out of git, and run the whole workflow from your machine.
 
-- `bayesiandraft/`: scoring, draft state, rankings, recommendations, simulation, data, modeling, and audit logic.
-- `apps/api/`: local FastAPI service for the draft room and supporting tooling.
-- `apps/web/`: browser-based draft room UI.
-- `configs/`: league settings and anonymized draft configuration.
-- `data/`: committed fixtures plus ignored raw, processed, and snapshot data directories.
-- `docs/`: public product, architecture, data, modeling, and API notes.
-- `scripts/`: local validation, export, preflight, and reporting commands.
+## Quick Start
 
-## Technical Methodology
-
-The engine methodology is documented in [docs/math-methodology.md](docs/math-methodology.md), including draft-state notation, VORP, tiering, recommendation scoring, availability simulation, candidate rollouts, lineup simulation, and validation metrics.
-
-## Local Data Import
-
-User-provided projection CSVs can be converted into validated snapshot JSON with:
+Install Python and Node dependencies:
 
 ```bash
-PYTHONPATH=. python scripts/import_snapshot.py --mode points --players path/to/projections.csv --out data/processed/my_snapshot.json --season 2026 --source "user-provided"
+pip install -e ".[dev]"
+npm install
 ```
 
-Use `--mode stats` for stat-line projection CSVs that need to be scored with the league config. The CSV contracts and privacy guidance are documented in [docs/data-import.md](docs/data-import.md).
+Run the terminal draft room with the included fixture data:
 
-Imported snapshots can be passed to local commands with `--snapshot` or to the API with `BAYESIANDRAFT_PLAYER_SNAPSHOT_PATH`.
+```bash
+PYTHONPATH=. python scripts/draft_tui.py
+```
 
-Pull public DynastyProcess/FantasyPros rankings into a local snapshot:
+The fixture data is synthetic, so it is mainly for testing the flow. To use real player data, import or pull a snapshot first.
+
+Pull a public DynastyProcess snapshot:
 
 ```bash
 PYTHONPATH=. python scripts/pull_dynastyprocess.py
 ```
 
-Pull FantasyPros projections with an API key:
+Then run the TUI with that snapshot:
 
 ```bash
-export FANTASYPROS_API_KEY="..."
-PYTHONPATH=. python scripts/pull_fantasypros_projections.py
+PYTHONPATH=. python scripts/draft_tui.py \
+  --snapshot data/processed/dynastyprocess_rankings_2026.json
 ```
 
-Then launch the CLI with real player names:
-
-```bash
-PYTHONPATH=. python scripts/draft_tui.py --snapshot data/processed/dynastyprocess_rankings_2026.json
-```
-
-For faster draft-day recommendations, build a simulated path bank first and load it into the TUI:
+For faster live recommendations, build a path bank ahead of time:
 
 ```bash
 PYTHONPATH=. python scripts/build_path_bank.py \
   --snapshot data/processed/dynastyprocess_rankings_2026.json \
   --simulations 10000 \
   --out data/processed/path_bank_2026.json
+
 PYTHONPATH=. python scripts/draft_tui.py \
   --snapshot data/processed/dynastyprocess_rankings_2026.json \
   --path-bank data/processed/path_bank_2026.json
 ```
 
-## Interactive CLI
+## Using The TUI
 
-Run the keyboard-driven terminal draft room with:
+The terminal UI starts at pick 1. Enter every pick as it happens, including picks before your slot. The recommendation panel updates after each pick.
 
-```bash
-PYTHONPATH=. python scripts/draft_tui.py
+Useful controls:
+
+- Arrow keys: move between players, tabs, and manager views
+- Enter or `d`: draft the selected player for whoever is on the clock
+- `/`: live search
+- `[` and `]`: cycle position filters
+- `u` / `r`: undo and redo
+- `s`: save
+- `q`: quit
+
+More details are in [docs/cli.md](docs/cli.md).
+
+## Local League Names
+
+The public config uses anonymized manager labels. If you want your local TUI to show real names, create:
+
+```text
+configs/leagues/espn_2026.local.yaml
 ```
 
-Use arrow keys to move, Enter or `d` to draft, `/` to search, `u`/`r` for undo/redo, `s` to save, and `q` to quit. See [docs/cli.md](docs/cli.md) for the full shortcut list and custom snapshot usage.
+That file is ignored by git. `scripts/draft_tui.py` will use it automatically when it exists.
 
-The live draft workflow starts at pick 1. Enter each competitor pick as it happens, and BayesianDraft will update availability, rosters, rankings, and recommendations after every pick.
-The CLI includes split-pane rankings, selected-player details, and a manager roster browser for tracking every competitor during the draft.
+## Project Layout
 
-## Local Setup
+- `bayesiandraft/`: core Python package for draft state, scoring, rankings, recommendations, simulations, data loading, and audits.
+- `apps/api/`: local FastAPI app.
+- `apps/web/`: React/Vite draft room.
+- `configs/`: public-safe league configuration.
+- `data/`: synthetic fixtures plus ignored raw/processed/snapshot folders.
+- `docs/`: architecture, CLI, methodology, data, and model notes.
+- `scripts/`: import, validation, simulation, export, and draft-room commands.
+- `tests/`: Python unit tests plus web/API tests under their app folders.
 
-Backend checks:
+## Methodology
+
+The technical writeup lives in [docs/math-methodology.md](docs/math-methodology.md). It covers VORP, tier pressure, roster need, ADP value, next-pick availability, simulation paths, and how those pieces feed the recommendation score.
+
+Short version: the current engine is intentionally transparent. It uses deterministic scoring plus seeded simulations so recommendations can be inspected, tested, and reproduced.
+
+## Development Checks
+
+Python:
 
 ```bash
-pip install -e ".[dev]"
 pytest
 ruff check .
-mypy bayesiandraft apps/api/src
+mypy bayesiandraft apps/api/src scripts
+PYTHONPATH=. python scripts/privacy_scan.py
 ```
 
-The project targets Python 3.12. The current local machine also has an older system `python3`; use a modern interpreter explicitly if needed.
-
-Frontend checks:
+Web:
 
 ```bash
-npm install
 npm test
 npm run lint
-npm run build
+npm --workspace apps/web run build
 ```
 
-Run the local API:
+Local API:
 
 ```bash
 uvicorn bayesiandraft_api.main:app --app-dir apps/api/src --reload
 ```
 
-Run the web app:
+Web app:
 
 ```bash
 npm run dev
@@ -127,13 +138,6 @@ npm run dev
 
 ## Data And Privacy
 
-BayesianDraft is designed to run locally. Committed examples use anonymized manager labels and synthetic fixture data. Do not commit real league credentials, cookies, ESPN tokens, private league data, local databases, or raw downloaded datasets.
+BayesianDraft is designed to keep real league data local. Do not commit private league exports, API keys, ESPN cookies, local draft saves, raw downloaded datasets, or real manager names.
 
-## Development
-
-- Keep league settings configuration-driven.
-- Keep scoring and draft state deterministic and heavily tested.
-- Prefer fixtures over live services in tests.
-- Preserve data provenance and avoid historical leakage.
-- Keep manual draft mode reliable before adding ESPN synchronization.
-- Keep `main` runnable with focused commits and clear validation.
+The repo includes a privacy scan and `.gitignore` rules for common local artifacts, but it is still worth checking `git status --ignored` before publishing anything.
