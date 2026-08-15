@@ -37,6 +37,7 @@ This folder has the longer notes behind BayesianDraft. The README is the fastest
 - [Testing](testing.md)
 - [Decision Audit](audit.md)
 - [Release Notes](release.md)
+- [GitHub Metadata](github-metadata.md)
 
 ## Architecture Decisions
 
