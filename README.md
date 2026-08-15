@@ -78,6 +78,8 @@ Useful controls:
 
 More details are in [docs/cli.md](docs/cli.md).
 
+Screenshots are not committed yet. The capture checklist is in [docs/screenshots.md](docs/screenshots.md) so the README images can be added from a clean local run.
+
 ## Local League Names
 
 The public config uses anonymized manager labels. If you want your local TUI to show real names, create:

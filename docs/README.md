@@ -6,6 +6,7 @@ This folder has the longer notes behind BayesianDraft. The README is the fastest
 
 - [Architecture](architecture.md): how the Python package, API, web app, scripts, and data folders are organized.
 - [Interactive CLI](cli.md): how to run the terminal draft room and what each tab does.
+- [Screenshot Guide](screenshots.md): which views to capture for the README and docs.
 - [Math And Methodology](math-methodology.md): the scoring and recommendation logic in more detail.
 - [Recommendations](recommendations.md): how the model turns a live board into a pick suggestion.
 - [Simulation](simulation.md): draft simulations, path banks, and strategy comparison.
