@@ -1,5 +1,9 @@
 # BayesianDraft
 
+[![CI](https://github.com/sre0089/BayesianDraft/actions/workflows/ci.yml/badge.svg)](https://github.com/sre0089/BayesianDraft/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.12-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 BayesianDraft is a local-first fantasy football draft assistant for live snake drafts.
 
 You enter picks as they happen. BayesianDraft keeps the board, rosters, and recommendations updated, then explains why it likes a player instead of just handing you a static ranking.
