@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 
 from bayesiandraft.audit import load_decision_audit
@@ -12,8 +13,17 @@ from bayesiandraft.cli.tui import (
     _ranking_stats_start_column,
     _summary_flex_need_line,
 )
+from bayesiandraft.data import (
+    SnapshotImportOptions,
+    import_player_snapshot_csv,
+    write_player_snapshot,
+)
 from bayesiandraft.rankings import build_baseline_rankings
-from bayesiandraft.simulation import build_path_bank
+from bayesiandraft.simulation import (
+    LeaguePathProgress,
+    StrategyPathProgress,
+    build_path_bank,
+)
 from scripts.common import load_snapshot_and_draft_state
 
 
@@ -241,9 +251,8 @@ def test_cli_marks_user_on_clock_in_summary(tmp_path: Path) -> None:
 
 
 def test_cli_summary_stays_light_at_later_user_pick(tmp_path: Path) -> None:
-    snapshot, state = load_snapshot_and_draft_state(
-        "data/processed/dynastyprocess_rankings_2026.json"
-    )
+    snapshot_path = _write_large_test_snapshot(tmp_path)
+    snapshot, state = load_snapshot_and_draft_state(snapshot_path)
     controller = CliDraftController(
         snapshot=snapshot,
         state=state,
@@ -258,6 +267,32 @@ def test_cli_summary_stays_light_at_later_user_pick(tmp_path: Path) -> None:
 
     assert any("Path analysis: run Simulation with a" in line for line in lines)
     assert not any("Rollout: avg VORP" in line for line in lines)
+
+
+def _write_large_test_snapshot(tmp_path: Path) -> Path:
+    csv_path = tmp_path / "players.csv"
+    snapshot_path = tmp_path / "snapshot.json"
+    positions = ["RB", "WR", "QB", "TE", "K", "DST"]
+    rows = ["player_id,full_name,position,projected_points,overall_adp"]
+    for index in range(1, 41):
+        position = positions[(index - 1) % len(positions)]
+        rows.append(
+            f"player_{index:03},Example {position} {index:03},"
+            f"{position},{320 - index},{index}"
+        )
+    csv_path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    snapshot = import_player_snapshot_csv(
+        csv_path,
+        options=SnapshotImportOptions(
+            snapshot_id="large_tui_test_snapshot",
+            season=2026,
+            source="test",
+            retrieval_timestamp=datetime.fromisoformat("2026-08-04T00:00:00+00:00"),
+        ),
+        processed_path=snapshot_path,
+    )
+    write_player_snapshot(snapshot, snapshot_path)
+    return snapshot_path
 
 
 def test_cli_simulation_tab_shows_path_analysis(tmp_path: Path) -> None:
@@ -278,8 +313,8 @@ def test_cli_simulation_tab_shows_path_analysis(tmp_path: Path) -> None:
     assert any("Press a to run" in line for line in lines)
     assert "a analyze" in _footer_prompt(controller)
 
-    progress_events = []
-    strategy_progress_events = []
+    progress_events: list[LeaguePathProgress] = []
+    strategy_progress_events: list[StrategyPathProgress] = []
     controller.run_path_analysis(
         progress_callback=progress_events.append,
         strategy_progress_callback=strategy_progress_events.append,
