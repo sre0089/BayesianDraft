@@ -1,8 +1,8 @@
 # Data Schema
 
-This document defines stable internal schemas before live data integrations are added.
+This document describes the stable internal records BayesianDraft uses for players, projections, draft state, recommendations, and simulation outputs.
 
-Implemented Pydantic records live in `bayesiandraft.domain`.
+Most implemented Pydantic records live in `bayesiandraft.domain`.
 
 ## Common Rules
 
