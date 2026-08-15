@@ -1,35 +1,45 @@
-# BayesianDraft Docs
+# Documentation
 
-Start here when navigating the repository docs.
+This folder has the longer notes behind BayesianDraft. The README is the fastest way to run the project; these docs are for when you want to understand how the engine, data, and draft-room pieces fit together.
 
-## Core
+## Best Place To Start
 
-- [Product Spec](product-spec.md)
-- [Architecture](architecture.md)
-- [Math And Methodology](math-methodology.md)
+- [Architecture](architecture.md): how the Python package, API, web app, scripts, and data folders are organized.
+- [Interactive CLI](cli.md): how to run the terminal draft room and what each tab does.
+- [Math And Methodology](math-methodology.md): the scoring and recommendation logic in more detail.
+- [Recommendations](recommendations.md): how the model turns a live board into a pick suggestion.
+- [Simulation](simulation.md): draft simulations, path banks, and strategy comparison.
+
+## Product And UI
+
+- [Product Notes](product-spec.md)
 - [Roadmap](roadmap.md)
-
-## Draft Day
-
-- [Draft Engine](draft-engine.md)
-- [Interactive CLI](cli.md)
-- [Recommendations](recommendations.md)
-- [Simulation](simulation.md)
-- [UI](ui.md)
+- [UI Notes](ui.md)
 - [API](api.md)
 - [ESPN Integration](espn.md)
-- [Decision Audit](audit.md)
 
 ## Data And Models
 
 - [Data Sources](data-sources.md)
 - [Local Data Import](data-import.md)
 - [Data Schema](data-schema.md)
+- [Scoring](scoring.md)
 - [Rankings](rankings.md)
+- [Availability](availability.md)
+- [Opponents](opponents.md)
 - [Modeling](modeling.md)
 - [Model Registry](model-registry.md)
 - [Backtesting](backtesting.md)
-- [Opponents](opponents.md)
-- [Availability](availability.md)
-- [Scoring](scoring.md)
+
+## Maintenance
+
 - [Testing](testing.md)
+- [Decision Audit](audit.md)
+- [Release Notes](release.md)
+
+## Architecture Decisions
+
+- [ADR Template](decisions/ADR-0000-template.md)
+- [Repository Structure](decisions/ADR-0001-repository-structure.md)
+- [Manual-First ESPN Integration](decisions/ADR-0002-manual-first-espn-integration.md)
+- [Simulation Reproducibility](decisions/ADR-0003-simulation-reproducibility.md)

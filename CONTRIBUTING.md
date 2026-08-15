@@ -1,38 +1,70 @@
 # Contributing
 
-BayesianDraft is built in focused, runnable slices. Each change should keep the repository usable and avoid unrelated refactors.
+Thanks for checking out BayesianDraft. This is a small local-first project, so the best contributions are usually focused: a clearer command, a tighter test, a better explanation, or one draft-room improvement that is easy to review.
 
-## Before Starting Work
+## Before You Change Code
 
-1. Read the relevant docs in `docs/`.
-2. Summarize the current repository state.
-3. State the change objective.
-4. List files expected to change.
-5. Identify tests and acceptance criteria.
-6. Ask for approval when a change is large, destructive, or ambiguous.
+- Skim the README and the doc page closest to the thing you want to touch.
+- Check whether there is already a script or helper for the workflow.
+- Keep real league data local. Public examples should use anonymized managers and synthetic fixtures.
 
-## During Work
+## How To Work
 
-- Make focused changes.
-- Keep public interfaces typed.
-- Use deterministic seeds for simulations.
-- Use synthetic fixtures instead of live services in tests.
-- Do not commit secrets, credentials, cookies, ESPN tokens, local databases, virtual environments, node modules, build output, or large raw datasets.
+- Make one meaningful change at a time.
+- Prefer boring, readable code over clever abstractions.
+- Keep scoring, draft state, and simulations deterministic when possible.
+- Use fixtures in tests instead of live services.
+- Add tests when behavior changes, especially around draft state, recommendations, simulation, or data loading.
 
-## Before Commit
+## Local Checks
 
-Run the relevant checks:
+Python:
 
 ```bash
 pytest
 ruff check .
-mypy bayesiandraft apps/api
-npm test
-npm run lint
+mypy bayesiandraft apps/api/src scripts
+PYTHONPATH=. python scripts/privacy_scan.py
 ```
 
-If a command is not relevant to the change, note that in the change summary.
+Web:
 
-## Git
+```bash
+npm test
+npm run lint
+npm --workspace apps/web run build
+```
 
-Use focused commits. Do not push rewritten history unless explicitly needed and coordinated.
+For a broader local sweep:
+
+```bash
+PYTHONPATH=.:apps/api/src python scripts/ci_local.py
+```
+
+## Public Safety
+
+Please do not commit:
+
+- real manager names
+- private league exports
+- ESPN cookies or tokens
+- API keys
+- local draft saves
+- raw downloaded datasets
+- `node_modules`, virtual environments, caches, or build output
+
+If you want the TUI to show your real league names, use a local ignored config such as:
+
+```text
+configs/leagues/espn_2026.local.yaml
+```
+
+## Pull Requests
+
+A good PR includes:
+
+- what changed
+- how you tested it
+- any limitations or follow-up work
+
+Small PRs are much easier to review than large cleanups mixed with feature work.
